@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 from mtaffiliate.domain.product.models import ProductObservation, ProductScore, ShortlistEntry
 
