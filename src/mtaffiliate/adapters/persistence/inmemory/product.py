@@ -3,10 +3,7 @@ from __future__ import annotations
 from threading import RLock
 
 from mtaffiliate.domain.product.models import ProductObservation
-
-
-class ObservationConflictError(ValueError):
-    """Raised when an observation_id is reused with different facts."""
+from mtaffiliate.ports.repositories.product import ObservationConflictError
 
 
 class InMemoryProductRepository:
