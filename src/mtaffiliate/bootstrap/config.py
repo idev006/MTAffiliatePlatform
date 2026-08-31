@@ -49,6 +49,35 @@ class Program1Config(BaseModel):
     scoring: Program1ScoringConfig = Program1ScoringConfig()
 
 
+class Program2ScoringConfig(BaseModel):
+    commission_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    rating_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    review_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    demand_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def validate_weight_sum(self) -> Program2ScoringConfig:
+        if (
+            self.commission_weight
+            + self.rating_weight
+            + self.review_weight
+            + self.demand_weight
+            <= 0
+        ):
+            raise ValueError("at least one Program 2 scoring weight must be positive")
+        return self
+
+
+class Program2Config(BaseModel):
+    backup_offer_count: int = Field(default=2, ge=0, le=20)
+    scoring: Program2ScoringConfig = Program2ScoringConfig()
+
+
+class Program3Config(BaseModel):
+    duplicate_policy_version: str = Field(default="duplicate-v1", min_length=1)
+    block_ambiguous_outcomes: bool = True
+
+
 class WorkerConfig(BaseModel):
     heartbeat_seconds: int = Field(default=30, ge=5)
     batch_size: int = Field(default=50, ge=1)
@@ -63,6 +92,8 @@ class Settings(BaseModel):
     app: AppConfig = AppConfig()
     paths: PathsConfig = PathsConfig()
     program1: Program1Config = Program1Config()
+    program2: Program2Config = Program2Config()
+    program3: Program3Config = Program3Config()
     worker: WorkerConfig = WorkerConfig()
     database: DatabaseConfig = DatabaseConfig()
 
