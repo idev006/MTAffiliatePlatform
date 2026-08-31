@@ -1,10 +1,11 @@
 # Engineering Governance — Design-First / Error-Prevention Policy
 
 Status: ACCEPTED PROJECT POLICY
+Updated: 2026-08-31
 Governing rule: **Project must follow the document.**
 
 ## Purpose
-Prevent avoidable implementation rework by requiring architecture, process, data, state, reliability and interface defects to be identified and corrected in documentation before affected implementation proceeds.
+Prevent avoidable implementation rework by requiring architecture, process, data, state, reliability, interface and testability defects to be identified and corrected in documentation before affected implementation proceeds.
 
 ## Lifecycle
 `DESIGN_DRAFT -> ACCEPTED_DESIGN_BASELINE -> PRE_IMPLEMENTATION_REVIEW -> IMPLEMENTATION_READY -> IMPLEMENTED -> VERIFIED`
@@ -12,41 +13,72 @@ Prevent avoidable implementation rework by requiring architecture, process, data
 An accepted design baseline permits downstream design; it does not automatically make every feature implementation-ready.
 
 ## Review Roles
-- Senior Software Engineer
+- Senior Software Engineer / Architect
 - Senior Process Engineer
 - Product/Business Strategist
 - QA/Test perspective
+- Security/Compliance perspective where affected
 
 ## Mandatory Gates
+
 ### G1 Business Objective
-objective, inputs/outputs, success/failure and non-goals are explicit.
+Objective, inputs/outputs, success/failure and non-goals are explicit.
 
 ### G2 Process
-happy path, handoffs, retries, recovery, manual intervention, concurrency and backpressure are explicit.
+Happy path, handoffs, retries, recovery, manual intervention, concurrency and backpressure are explicit.
 
 ### G3 Architecture
-ownership and boundaries are explicit; SSOT authority is unique; adapters replaceable; scale does not require redesign.
+Ownership and boundaries are explicit; SSOT authority is unique; adapters replaceable; scale does not require redesign.
+
+Additional mandatory rules:
+- business logic is engine/application owned, not UI/adapter owned;
+- dependency direction is inward;
+- composition root owns concrete wiring;
+- UI remains optional for core execution.
 
 ### G4 Data
-identity/provenance, unknown/null semantics, immutable history/current state, dedupe/idempotency and retention are explicit.
+Identity/provenance, unknown/null semantics, immutable history/current state, dedupe/idempotency and retention are explicit.
 
 ### G5 Interface / Contract
 Back Office↔Worker and Step-to-Step contracts are versioned with request/result/error semantics.
 
+Commands/queries/results must use stable DTO/contracts rather than exposing UI widgets, ORM entities, DOM structures or Android selector details as business interfaces.
+
 ### G6 Reliability
-restart, checkpoint, ACK, ambiguous-state, failure isolation and endurance expectations are defined.
+Restart, checkpoint, ACK, ambiguous-state, failure isolation and endurance expectations are defined.
 
 ### G7 Configuration
-configuration ownership, overrides and auditable effective configuration are explicit.
+Configuration ownership, overrides and auditable effective configuration are explicit.
+
+Business policy that may vary operationally must not be buried as unexplained implementation constants.
 
 ### G8 Security / Compliance
-credentials/secrets separated and design does not depend on bypassing authentication, CAPTCHA, anti-abuse or access controls.
+Credentials/secrets separated and design does not depend on bypassing authentication, CAPTCHA, anti-abuse or access controls.
 
 ### G9 Testability
-acceptance, failure injection, scale/concurrency, integrity and migration/recovery tests exist.
+Testability is an architecture gate, not a post-implementation activity.
+
+Before Implementation Ready:
+- critical domain behavior can run without graphical UI;
+- external side effects are behind ports/adapters;
+- deterministic time/ID/randomness can be controlled where behavior depends on them;
+- unit/component acceptance cases are defined;
+- error/failure/recovery cases are defined;
+- required fake/in-memory adapters are known;
+- integration/compatibility environment needs are known;
+- physical devices/browser sessions are not required to test business logic that can be simulated;
+- critical state transitions and invariants have a test plan.
+
+Governing detail: `TEST_STRATEGY_AND_QUALITY_GATES.md`.
 
 ### G10 Senior Review
-Senior Software Engineer and Senior Process Engineer pass; unresolved CRITICAL/HIGH design issues = 0 for affected implementation.
+Senior Software Engineer/Architect and Senior Process Engineer pass; QA/Testability review passes for affected slice; unresolved CRITICAL/HIGH design issues = 0 for affected implementation.
+
+## Implementation-Ready Slice Requirement
+
+Every coding card/slice must satisfy `IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`.
+
+A team may begin foundation code only for areas whose boundaries/contracts are ready. Pending real-world validation must remain isolated behind ports/configuration and cannot be guessed into production policy.
 
 ## Severity
 - CRITICAL — implementation prohibited.
@@ -55,7 +87,19 @@ Senior Software Engineer and Senior Process Engineer pass; unresolved CRITICAL/H
 - LOW — may defer if documented.
 
 ## Quality Priority
-`Correctness > Recoverability > Traceability > Maintainability > Throughput > Raw Speed`
+`Correctness > Recoverability > Traceability > Testability > Maintainability > Throughput > Raw Speed`
+
+## Architecture Drift Triggers
+
+The following require review before merge:
+- business logic added to PySide6/View/ViewModel event handlers;
+- UI or worker directly mutates canonical database tables;
+- domain/engine imports infrastructure framework/library;
+- concrete browser/Android/database implementation leaks into public application contracts;
+- new lifecycle owner duplicates existing SSOT;
+- retry is added without idempotency/reconciliation analysis;
+- long DB transaction spans remote/browser/device work;
+- physical-infrastructure-only implementation makes otherwise deterministic logic untestable.
 
 ## Change Control
 When a material design defect/change is found:
@@ -63,6 +107,14 @@ When a material design defect/change is found:
 2. update governing docs first;
 3. record ADR when material;
 4. update contracts/data/state models;
-5. review gates;
-6. resume implementation;
-7. verify conformance.
+5. update tests/test plan;
+6. review gates;
+7. resume implementation;
+8. verify conformance.
+
+## Governing Companion Documents
+- `PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`
+- `TEST_STRATEGY_AND_QUALITY_GATES.md`
+- `UI_SHELL_AND_PRESENTATION_ARCHITECTURE.md`
+- `IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`
+- `DEVELOPMENT_HANDOFF_MASTER.md`
