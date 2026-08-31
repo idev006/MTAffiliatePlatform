@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Program 1 Worker</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; }
+    input, button { width: 100%; box-sizing: border-box; margin: 6px 0; padding: 8px; }
+    #status { white-space: pre-wrap; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h2>Program 1 Worker</h2>
+  <label>Backend URL</label>
+  <input id="backendUrl" placeholder="Configure backend URL" />
+  <label>Worker ID</label>
+  <input id="workerId" placeholder="worker-01" />
+  <button id="save">Save Settings</button>
+  <button id="capture">Capture Fixture Page</button>
+  <button id="flush">Flush Outbox</button>
+  <div id="status"></div>
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+[app]
+name = "MTAffiliatePlatform"
+environment = "development"
+
+[paths]
+data_dir = "data"
+log_dir = "logs"
+outbox_dir = "runtime/outbox"
+artifact_dir = "runtime/artifacts"
+
+[program1]
+platform = "shopee"
+shortlist_limit = 20
+minimum_score = 0.0
+
+[program1.scoring]
+demand_weight = 1.0
+rating_weight = 1.0
+review_weight = 1.0
+price_fit_weight = 1.0
+
+[worker]
+heartbeat_seconds = 30
+batch_size = 50
