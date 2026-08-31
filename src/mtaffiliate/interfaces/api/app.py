@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
-from mtaffiliate.adapters.persistence.inmemory.product import InMemoryProductRepository
-from mtaffiliate.application.program1 import Program1Service
+from mtaffiliate.adapters.persistence.inmemory.product import (
+    InMemoryProductRepository,
+    ObservationConflictError,
+)
+from mtaffiliate.application.program1 import IngestionBatchConflictError, Program1Service
 from mtaffiliate.bootstrap.config import Settings
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
 from mtaffiliate.engines.product_intelligence_engine.service import (
@@ -14,7 +17,7 @@ from mtaffiliate.engines.product_intelligence_engine.service import (
 
 
 class ObservationBatch(BaseModel):
-    batch_id: str
+    batch_id: str = Field(min_length=1)
     observations: list[ProductObservation]
 
 
@@ -48,7 +51,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/v1/program1/observations")
     def ingest(batch: ObservationBatch) -> dict[str, int | str]:
-        result = program1.ingest(batch.observations)
+        try:
+            result = program1.ingest_batch(batch.batch_id, batch.observations)
+        except (IngestionBatchConflictError, ObservationConflictError) as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {
             "batch_id": batch.batch_id,
             "received_count": result.received_count,
