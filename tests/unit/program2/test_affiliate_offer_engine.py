@@ -3,7 +3,10 @@ from datetime import UTC, datetime
 import pytest
 
 from mtaffiliate.domain.affiliate_offer.models import AffiliateOfferObservation
-from mtaffiliate.engines.affiliate_offer_engine.service import AffiliateOfferEngine, OfferScoringPolicy
+from mtaffiliate.engines.affiliate_offer_engine.service import (
+    AffiliateOfferEngine,
+    OfferScoringPolicy,
+)
 
 
 def offer(**overrides) -> AffiliateOfferObservation:
@@ -31,14 +34,22 @@ def offer(**overrides) -> AffiliateOfferObservation:
 def test_eligible_offer_is_scored_with_stable_identity() -> None:
     engine = AffiliateOfferEngine(OfferScoringPolicy())
     score = engine.score(offer())
-    assert score.commercial_key == ("shopee", "shop-1", "item-1", "offer-1", "affiliate-1")
+    assert score.commercial_key == (
+        "shopee",
+        "shop-1",
+        "item-1",
+        "offer-1",
+        "affiliate-1",
+    )
     assert 0 <= score.total_score <= 100
 
 
 def test_unavailable_or_commissionless_offer_is_ineligible() -> None:
     engine = AffiliateOfferEngine(OfferScoringPolicy())
     assert not engine.is_eligible(offer(available=False))
-    assert not engine.is_eligible(offer(commission_rate=None, extra_commission_rate=None))
+    assert not engine.is_eligible(
+        offer(commission_rate=None, extra_commission_rate=None)
+    )
 
 
 def test_rank_excludes_ineligible_and_orders_score_descending() -> None:
