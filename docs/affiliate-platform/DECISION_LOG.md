@@ -195,11 +195,31 @@ This decision generalizes to Shared Job, publishing ledger and other irreversibl
 
 Governing records: `DATABASE_CONCURRENCY_AND_PORTABILITY_SPEC.md`, `APPLICATION_AND_ENGINE_CONTRACTS.md`, and `DEVELOPMENT_CYCLE_STANDARD.md`.
 
+## ADR-043 — Step 2 Is Operationally Named Program 2 and Foundation Development Is Authorized
+**Status: Accepted — 2026-08-31**
+
+The former Step 2 Affiliate Offer capability is operationally **Program 2 — Affiliate Offer Intelligence & Automation**. Foundation implementation is authorized for domain types, engines, ports, fakes, contracts, persistence abstractions and test harnesses. Real Shopee identity/account/export behavior remains production-gated.
+
+Governing record: `PROGRAM2_AFFILIATE_OFFER_DESIGN_AND_READINESS.md`.
+
+## ADR-044 — Step 3 Is Operationally Named Program 3 and Foundation Development Is Authorized
+**Status: Accepted — 2026-08-31**
+
+The former Step 3 Content Publishing capability is operationally **Program 3 — Content Publishing & Android Device Farm**. Foundation implementation is authorized for PublishPlan/Ledger/duplicate policy, Scene runtime models, Device Host ownership/resource logic, worker protocols, fakes and deterministic test fixtures. Real Shopee UI/device behavior remains production-gated.
+
+Governing record: `PROGRAM3_CONTENT_PUBLISHING_DESIGN_AND_READINESS.md`.
+
+## ADR-045 — Cross-Program Integration Uses Versioned Handoff Contracts
+**Status: Accepted — 2026-08-31**
+
+Program 1 -> Program 2 and Program 2 -> Program 3 integrate through explicit versioned business contracts, not direct persistence coupling. Programs may develop in parallel using fakes/contract tests. Breaking handoff changes require document/ADR/schema-version update and compatibility verification before implementation merge.
+
+Governing records: `PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`, `PROGRAM2_TO_PROGRAM3_HANDOFF_CONTRACT.md`, `PROGRAM2_PROGRAM3_IMPLEMENTATION_KANBAN.md`.
+
 ## Pending Validation / Implementation Gates
 - Product Scoring Model v1 exact formula.
 - Affiliate Offer Scoring Model v1 exact formula.
 - Product/Offer identity validation against real Shopee data.
-- Program 1→Program 2 and Program 2→Program 3 final handoff schemas.
 - observation normalization contract.
 - real Shopee Android Scene inventory/signatures/selectors.
 - Safe Anchor / transition / recovery validation.
