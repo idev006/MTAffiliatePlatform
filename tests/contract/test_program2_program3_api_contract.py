@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
 from mtaffiliate.interfaces.api.app import create_app
-
 
 NOW = datetime(2026, 8, 31, tzinfo=UTC).isoformat()
 
