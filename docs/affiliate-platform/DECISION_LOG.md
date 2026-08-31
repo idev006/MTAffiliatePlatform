@@ -134,6 +134,24 @@ Domain/engines cannot depend on FastAPI, PySide6, SQLAlchemy, browser APIs or An
 
 Governing record: `PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`.
 
+## ADR-036 — System Physiology Model
+**Status: Accepted — 2026-08-31**
+
+All significant platform components and workflows are reviewed through the control loop:
+
+`Input -> Sense -> Validate -> Decide -> Act -> Verify -> Record -> Feedback -> Recover`.
+
+A happy path alone is insufficient for Implementation Ready. Health detection, failure classification, containment and recovery are architecture concerns.
+
+Governing record: `SYSTEM_PHYSIOLOGY_MODEL.md`.
+
+## ADR-037 — Component Anatomy / Health and Recovery Contract
+**Status: Accepted — 2026-08-31**
+
+Every implementation-significant component must have one authority owner plus explicit inputs, processing responsibility, outputs, communication boundary, durable-state ownership, health signals, known failure modes, bounded recovery/escalation, resource considerations and test path. No durable capability may have two independent lifecycle authorities.
+
+Governing record: `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`.
+
 ## Pending Validation / Implementation Gates
 - Product Scoring Model v1 exact formula.
 - Affiliate Offer Scoring Model v1 exact formula.
