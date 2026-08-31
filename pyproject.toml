@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Document-driven affiliate intelligence and automation platform"
 requires-python = ">=3.12"
 dependencies = [
+  "alembic>=1.16,<2",
   "fastapi>=0.115,<1",
   "pydantic>=2.9,<3",
   "pydantic-settings>=2.5,<3",
@@ -35,6 +36,7 @@ testpaths = ["tests"]
 addopts = "-q --strict-markers"
 markers = [
   "stress: high-volume or load-oriented tests",
+  "integration: real adapter/database integration tests",
 ]
 
 [tool.coverage.run]
