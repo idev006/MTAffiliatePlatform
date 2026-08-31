@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from mtaffiliate.adapters.persistence.sqlalchemy import (
-    SQLAlchemyIngestionBatchStore,
     SQLAlchemyProductRepository,
+    SQLAlchemyProgram1BatchIngestor,
     build_engine,
     build_session_factory,
 )
@@ -33,5 +33,5 @@ def build_durable_program1(settings: Settings, *, project_root: Path) -> Program
         intelligence,
         shortlist_limit=settings.program1.shortlist_limit,
         minimum_score=settings.program1.minimum_score,
-        batch_store=SQLAlchemyIngestionBatchStore(sessions),
+        batch_ingestor=SQLAlchemyProgram1BatchIngestor(sessions),
     )
