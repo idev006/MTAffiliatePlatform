@@ -56,6 +56,7 @@ class WorkerConfig(BaseModel):
 
 class DatabaseConfig(BaseModel):
     url: str = "sqlite:///data/app.db"
+    auto_migrate: bool = False
 
 
 class Settings(BaseModel):
