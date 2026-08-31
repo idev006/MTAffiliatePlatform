@@ -1,6 +1,10 @@
 from datetime import UTC, datetime
 
-from mtaffiliate.domain.publishing.models import ApprovedOfferRef, PublishPlan, PublishingLedgerEntry
+from mtaffiliate.domain.publishing.models import (
+    ApprovedOfferRef,
+    PublishingLedgerEntry,
+    PublishPlan,
+)
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
 
 
@@ -28,7 +32,12 @@ def plan() -> PublishPlan:
     )
 
 
-def ledger(status: str, *, platform: str = "shopee", video_id: str = "video-1") -> PublishingLedgerEntry:
+def ledger(
+    status: str,
+    *,
+    platform: str = "shopee",
+    video_id: str = "video-1",
+) -> PublishingLedgerEntry:
     return PublishingLedgerEntry(
         publish_job_id="old-job",
         platform=platform,
@@ -52,11 +61,17 @@ def test_blocks_confirmed_publish_across_managed_accounts_on_same_platform() -> 
 
 
 def test_blocks_unknown_outcome_until_reconciled() -> None:
-    result = PublishingGuardEngine().evaluate_duplicate(plan(), [ledger("POST_OUTCOME_UNKNOWN")])
+    result = PublishingGuardEngine().evaluate_duplicate(
+        plan(),
+        [ledger("POST_OUTCOME_UNKNOWN")],
+    )
     assert not result.allowed
     assert result.reason == "PUBLISH_OUTCOME_REQUIRES_RECONCILIATION"
 
 
 def test_different_platform_does_not_block_platform_scoped_policy() -> None:
-    result = PublishingGuardEngine().evaluate_duplicate(plan(), [ledger("PUBLISHED", platform="other")])
+    result = PublishingGuardEngine().evaluate_duplicate(
+        plan(),
+        [ledger("PUBLISHED", platform="other")],
+    )
     assert result.allowed
