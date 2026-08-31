@@ -1,7 +1,7 @@
-from datetime import datetime, timezone, timedelta
-from decimal import Decimal
 import math
 import random
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 import pytest
 from pydantic import ValidationError
@@ -19,7 +19,7 @@ from mtaffiliate.engines.product_intelligence_engine.service import (
     ScoringPolicy,
 )
 
-NOW = datetime(2026, 8, 31, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 31, tzinfo=UTC)
 
 
 def make_observation(
