@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "MTAffiliate Program 1 Discovery Worker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Product Discovery Worker for MTAffiliatePlatform Program 1",
   "permissions": ["storage", "activeTab", "scripting", "sidePanel"],
-  "host_permissions": [],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": {"service_worker": "src/background.js", "type": "module"},
   "side_panel": {"default_path": "src/sidepanel.html"},
   "action": {"default_title": "Program 1 Worker"}
