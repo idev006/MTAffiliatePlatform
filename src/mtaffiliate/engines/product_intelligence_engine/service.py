@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 from mtaffiliate.domain.product.models import ProductObservation, ProductScore, ShortlistEntry
 
@@ -12,6 +13,20 @@ class ScoringPolicy:
     rating_weight: float = 1.0
     review_weight: float = 1.0
     price_fit_weight: float = 1.0
+
+    def __post_init__(self) -> None:
+        weights = (
+            self.demand_weight,
+            self.rating_weight,
+            self.review_weight,
+            self.price_fit_weight,
+        )
+        if any(not math.isfinite(weight) or weight < 0 for weight in weights):
+            raise ValueError("scoring weights must be finite and non-negative")
+        if sum(weights) <= 0:
+            raise ValueError("at least one scoring weight must be positive")
+        if not self.model_version.strip():
+            raise ValueError("model_version must be non-empty")
 
 
 class ProductIntelligenceEngine:
@@ -52,7 +67,7 @@ class ProductIntelligenceEngine:
                 self.policy.price_fit_weight,
             )
         )
-        total = weighted / weight_sum if weight_sum else 0.0
+        total = weighted / weight_sum
         reasons = [name for name, value in components.items() if value >= 70.0]
         return ProductScore(
             product_key=observation.canonical_key,
@@ -69,6 +84,11 @@ class ProductIntelligenceEngine:
         limit: int,
         minimum_score: float = 0.0,
     ) -> list[ShortlistEntry]:
+        if limit < 1:
+            raise ValueError("limit must be >= 1")
+        if not math.isfinite(minimum_score) or not 0.0 <= minimum_score <= 100.0:
+            raise ValueError("minimum_score must be finite and within [0, 100]")
+
         scores = [self.score(observation) for observation in observations]
         eligible = [score for score in scores if score.total_score >= minimum_score]
         eligible.sort(key=lambda item: (-item.total_score, item.product_key))
