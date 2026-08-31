@@ -71,7 +71,7 @@ class SQLAlchemyProgram1BatchIngestor:
             extractor_version=observation.extractor_version,
         )
 
-    def ingest_batch(
+    def _ingest_once(
         self,
         batch_id: str,
         fingerprint: str,
@@ -91,18 +91,8 @@ class SQLAlchemyProgram1BatchIngestor:
                 accepted_count=0,
                 received_count=len(observations),
             )
-            try:
-                with session.begin_nested():
-                    session.add(batch_row)
-                    session.flush()
-            except IntegrityError:
-                existing_batch = session.get(IngestionBatchRow, batch_id)
-                if existing_batch is None:
-                    raise
-                receipt = self._receipt(existing_batch)
-                if receipt.fingerprint != fingerprint:
-                    raise IngestionBatchConflictError(f"batch_id collision: {batch_id}") from None
-                return receipt
+            session.add(batch_row)
+            session.flush()
 
             accepted = 0
             for observation in observations:
@@ -118,21 +108,8 @@ class SQLAlchemyProgram1BatchIngestor:
                         )
                     continue
 
-                try:
-                    with session.begin_nested():
-                        session.add(self._observation_row(observation))
-                        session.flush()
-                except IntegrityError:
-                    existing = session.scalar(
-                        select(ProductObservationRow).where(
-                            ProductObservationRow.observation_id == observation.observation_id
-                        )
-                    )
-                    if existing is None or self._observation_from_row(existing) != observation:
-                        raise ObservationConflictError(
-                            f"observation_id collision: {observation.observation_id}"
-                        ) from None
-                    continue
+                session.add(self._observation_row(observation))
+                session.flush()
                 accepted += 1
 
             batch_row.accepted_count = accepted
@@ -141,3 +118,19 @@ class SQLAlchemyProgram1BatchIngestor:
                 accepted_count=accepted,
                 received_count=len(observations),
             )
+
+    def ingest_batch(
+        self,
+        batch_id: str,
+        fingerprint: str,
+        observations: list[ProductObservation],
+    ) -> IngestionBatchReceipt:
+        """Retry one whole transaction after a unique race.
+
+        Retrying the complete transaction avoids exposing a partially finalized
+        batch claim and keeps facts + ACK receipt in one atomic boundary.
+        """
+        try:
+            return self._ingest_once(batch_id, fingerprint, observations)
+        except IntegrityError:
+            return self._ingest_once(batch_id, fingerprint, observations)
