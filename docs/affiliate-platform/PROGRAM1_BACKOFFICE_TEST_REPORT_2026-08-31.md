@@ -1,6 +1,6 @@
 # Program 1 Back Office Test Report — 2026-08-31
 
-Status: ACTIVE VERIFICATION RECORD
+Status: VERIFIED FOR CURRENT FOUNDATION SLICE
 Scope: Program 1 Back Office foundation / headless thin slice
 Governing rule: Project must follow the documents.
 
@@ -107,42 +107,65 @@ A reconstructed current Back Office source snapshot was executed in an isolated 
 
 Result after fixes:
 - 25 tests passed in the local verification snapshot;
-- 0 source lines missed in the selected Back Office modules;
-- branch coverage approximately 97% for the selected Program 1 Back Office foundation modules.
+- selected Program 1 Back Office branch coverage approximately 97%.
 
-This local result is supporting evidence. GitHub Actions remains the authoritative repository CI verification because it executes the actual committed tree.
+Local verification is supporting evidence. GitHub Actions is the authoritative repository CI because it executes the committed tree.
 
-## 7. CI Quality Gates
+## 7. Authoritative GitHub CI Result
 
-GitHub Actions now separates:
+Verified code commit: `1e3441a86a5f71c61c492ebee08a975dd61fea13`
+GitHub Actions run: `CI #26` / run id `33348015044`
+Result: **SUCCESS**
 
-### `backoffice-core`
-- install current project/dev dependencies;
-- Ruff without relaxed lint rules;
-- non-stress tests;
-- branch coverage;
-- minimum selected Back Office coverage: 95%.
+### `backoffice-core` — SUCCESS
+- dependency installation: PASS
+- Ruff: PASS — `All checks passed!`
+- non-stress unit/component/contract/property/concurrency tests: **26 passed**
+- stress-marked test intentionally deselected from core run: 1
+- selected Program 1 Back Office branch coverage: **96.97%**
+- required coverage gate: **95%**
+- coverage gate: PASS
 
-### `backoffice-stress`
-- marked stress tests;
-- timeout guard;
-- 100k observation scenario.
+### `backoffice-stress` — SUCCESS
+- high-volume stress suite: PASS
+- 100,000-observation ingestion + shortlist scenario: PASS
+- timeout guard: PASS
 
-A failed lint/test/coverage/stress job blocks declaring the current commit verified.
+The code commit therefore satisfies the current Back Office foundation verification gate.
 
-## 8. Not Yet Claimed as Verified
+## 8. Non-Blocking Warning Observed
+
+The core CI emitted one ecosystem deprecation warning from the FastAPI/Starlette test-client stack concerning the current `httpx` integration. It did not affect test correctness or the pass result.
+
+Action:
+- track dependency compatibility during the dependency-lock/upgrade cycle;
+- do not suppress the warning globally merely to obtain a clean log;
+- update the test-client dependency path when the supported stack requires it.
+
+## 9. Not Yet Claimed as Verified
 
 The following must not be inferred from this test campaign:
 - SQLite repository semantics — not implemented yet in this Program 1 slice;
 - PostgreSQL repository semantics — not implemented yet;
 - Alembic migration compatibility for Program 1 tables — not implemented yet;
+- restart durability using a real SQL store — not yet testable;
 - multi-process/multi-host DB contention — requires persistence implementation;
 - real Shopee DOM/parser compatibility — belongs to Browser Plugin adapter validation;
 - production Product Scoring Model v1 correctness — formula remains a validation gate;
 - million-observation production DB performance — requires SQL persistence/load environment.
 
-## 9. Exit Rule
+## 10. Verification Decision
 
-Program 1 Back Office foundation may be marked `VERIFIED` for this slice only when the committed-tree CI passes lint, core/contract/property tests, coverage gate and stress suite.
+**Program 1 Back Office current in-memory/headless foundation slice = VERIFIED.**
 
-Production readiness remains feature-gated by the governing Program 1 readiness document.
+This verification covers the implemented scope only. It is not equivalent to full Program 1 production readiness.
+
+Next mandatory Back Office verification stage after implementation is:
+1. SQLAlchemy Program 1 persistence;
+2. SQLite repository contract suite;
+3. Alembic migration/restart/recovery tests;
+4. PostgreSQL repository compatibility suite;
+5. concurrency/lock/contention/failure-injection against real databases;
+6. larger persistence-backed load/endurance tests.
+
+Production readiness remains feature-gated by `PROGRAM1_IMPLEMENTATION_READINESS.md` and the governing project documents.
