@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from threading import Barrier, Thread
 
@@ -12,9 +12,9 @@ def make_observation() -> ProductObservation:
         platform="shopee",
         shop_id="shop-1",
         item_id="item-1",
-        collected_at=datetime(2026, 8, 31, tzinfo=timezone.utc),
+        collected_at=datetime(2026, 8, 31, tzinfo=UTC),
         product_name="Product",
-        price_current=Decimal("100"),
+        price_current=Decimal(100),
         sold_signal=100,
         rating=4.5,
         review_count=20,
