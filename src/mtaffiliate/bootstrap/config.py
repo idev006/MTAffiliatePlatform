@@ -30,7 +30,7 @@ class Program1ScoringConfig(BaseModel):
     price_fit_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
 
     @model_validator(mode="after")
-    def validate_weight_sum(self) -> "Program1ScoringConfig":
+    def validate_weight_sum(self) -> Program1ScoringConfig:
         if (
             self.demand_weight
             + self.rating_weight
