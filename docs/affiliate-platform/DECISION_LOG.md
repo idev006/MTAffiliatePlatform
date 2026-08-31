@@ -152,6 +152,20 @@ Every implementation-significant component must have one authority owner plus ex
 
 Governing record: `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`.
 
+## ADR-038 — Relative-First Paths via PathManager
+**Status: Accepted — 2026-08-31**
+
+All project/runtime-owned filesystem locations are resolved through a central injectable `PathManager`/`RuntimePaths` service using explicit managed roots and `pathlib.Path`. Source code must not depend on developer-specific absolute paths or the current working directory. Managed paths are relative/logical first and become absolute only at infrastructure/OS boundaries.
+
+Governing record: `PATH_AND_CONFIGURATION_POLICY.md`.
+
+## ADR-039 — TOML Typed Configuration / No Scattered Hard-Coding
+**Status: Accepted — 2026-08-31**
+
+TOML is the baseline human-editable configuration format. Typed settings, deterministic profile precedence and explicit secret references are mandatory. Operational/business values that may vary by deployment, policy, experiment, platform behavior or scale must not be scattered as source constants. Domain engines receive only the typed policy/config they require; running jobs retain captured versioned policy where semantics must remain stable.
+
+Governing record: `PATH_AND_CONFIGURATION_POLICY.md`.
+
 ## Pending Validation / Implementation Gates
 - Product Scoring Model v1 exact formula.
 - Affiliate Offer Scoring Model v1 exact formula.
