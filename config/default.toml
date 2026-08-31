@@ -30,7 +30,6 @@ demand_weight = 1.0
 
 [program3]
 duplicate_policy_version = "duplicate-v1"
-block_ambiguous_outcomes = true
 
 [worker]
 heartbeat_seconds = 30
