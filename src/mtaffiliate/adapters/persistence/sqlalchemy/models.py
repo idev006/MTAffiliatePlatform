@@ -26,3 +26,12 @@ class ProductObservationRow(Base):
     source_worker_id: Mapped[str | None] = mapped_column(String(128))
     source_query: Mapped[str | None] = mapped_column(String(1024))
     extractor_version: Mapped[str | None] = mapped_column(String(128))
+
+
+class IngestionBatchRow(Base):
+    __tablename__ = "ingestion_batches"
+
+    batch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    accepted_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    received_count: Mapped[int] = mapped_column(Integer, nullable=False)
