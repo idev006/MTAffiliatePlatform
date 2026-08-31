@@ -9,104 +9,127 @@ Both programs are developed as independent bounded capabilities over Shared Core
 No team waits for full Program 2 completion before Program 3 foundation work begins. Fake/contract-driven vertical slices allow safe parallel development.
 
 ## Program 2 Epics
-### P2-E1 Domain & Contract Foundation
+### P2-E1 Domain & Contract Foundation — VERIFIED FOUNDATION
 - Offer identity/value objects
 - OfferObservation
 - AffiliateAccountContext
 - eligibility/ranking/selection contracts
 - Program1->Program2 DTO v1
 
-### P2-E2 Offer Intelligence Engine
+### P2-E2 Offer Intelligence Engine — VERIFIED FRAMEWORK / BUSINESS MODEL V1 GATED
 - eligibility engine
-- configurable scoring policy
+- configurable scoring policy framework
 - preferred/backup selection
 - deterministic explanation/evidence
+- HOLD: production Offer Scoring Model v1 formula
 
-### P2-E3 Persistence
+### P2-E3 Persistence — SQLITE VERIFIED / POSTGRESQL NEXT
 - repository ports
 - in-memory adapter
 - SQLAlchemy SQLite adapter
 - Alembic migration
-- restart/idempotency/concurrency
-- PostgreSQL compatibility
+- restart/idempotency
+- PostgreSQL compatibility — NEXT
+- additional concurrent selection/link acquisition — NEXT
 
-### P2-E4 Worker/API Protocol
-- worker capabilities
-- job/result DTOs
-- outbox/ACK semantics
-- schema-change/session-required classification
+### P2-E4 Worker/API Protocol — FOUNDATION VERIFIED
+- worker command/result DTOs
+- deterministic fake worker
+- local atomic filesystem outbox
+- account/product/platform context validation
+- API observation/rank/selection contracts
+- real schema-change/session-required browser classification — controlled-browser gate
 
-### P2-E5 Export/Link Pipeline
-- artifact registry
-- parser interface
-- golden fixtures
-- link validation/freshness
+### P2-E5 Export/Link Pipeline — CONTRACT FOUNDATION VERIFIED
+- AffiliateLink contract
+- OfferExportArtifact contract
+- selected-link validation
+- parser interface/profile evidence — NEXT
+- golden real export fixtures — NEEDS_REAL_DATA
 
-### P2-E6 Real Browser Evidence
+### P2-E6 Real Browser Evidence — NEEDS_REAL_DATA
 - controlled Shopee evidence collection
 - Offer identity validation
 - account-context validation
 - schema/selector profiles
 
 ## Program 3 Epics
-### P3-E1 Publishing Domain
+### P3-E1 Publishing Domain — VERIFIED FOUNDATION
 - PublishPlan
-- VideoIdentity
 - PublishingLedger
 - duplicate-policy engine
 - Program2->Program3 DTO v1
+- conservative reconciliation contract
 
-### P3-E2 Scene Runtime Core
-- Scene/Process/Action models
+### P3-E2 Scene Runtime Core — VERIFIED DETERMINISTIC LAB FOUNDATION
 - SceneSignature
 - recognizer
 - transition validator
-- recovery engine
-- checkpoint model
+- bounded recovery engine
+- headless action executor
+- checkpoint behavior
+- real Scene signatures — NEEDS_DEVICE_LAB
 
-### P3-E3 Device Host Core
-- device registry
-- device lease/ownership
-- worker supervisor
-- resource admission
-- health/state model
+### P3-E3 Device Host Core — VERIFIED DOMAIN FOUNDATION / HOST RUNTIME NEXT
+- device identity/status model
+- device lease/ownership admission
+- ADB unauthorized human gate
+- resource pressure/admission model
+- worker supervisor/process runtime — NEXT
+- durable Device Registry repository — NEXT
 
-### P3-E4 Worker/API Protocol
-- job/event DTOs
-- idempotency
-- checkpoint/event delivery
+### P3-E4 Worker/API Protocol — FOUNDATION VERIFIED / EXTENSION NEXT
+- publishing worker event/outcome DTOs
+- PublishPlan duplicate evaluation API
+- publishing status API
 - ambiguous outcome model
+- durable worker event/checkpoint delivery — NEXT
 
-### P3-E5 Fake Android E2E
-- fake device adapter
-- fake UI automation adapter
+### P3-E5 Fake Android E2E — VERIFIED ACTION-LOOP FOUNDATION / FULL WORKFLOW NEXT
+- replaceable Android adapter ports
+- scripted fake Android adapter
 - fake scene snapshots
-- full publish workflow simulation
-- POST_OUTCOME_UNKNOWN reconciliation
+- Observe -> Recognize -> Validate -> Act -> Verify -> Checkpoint tested
+- POST_OUTCOME_UNKNOWN reconciliation engine tested
+- full multi-scene publish workflow simulation — NEXT
 
-### P3-E6 Physical Device Lab
+### P3-E6 Physical Device Lab — NEEDS_DEVICE_LAB
 - ADB adapter spike
 - uiautomator2 adapter spike
 - real Scene inventory
 - selector evidence
 - Safe Anchor/recovery
 
-### P3-E7 Scale/Observability
-- screen-stream adapter benchmark
-- resource budgets
-- 10/20/50/100-device benchmark
-- endurance/recovery evidence
+### P3-E7 Scale/Observability — FOUNDATION RESOURCE POLICY / BENCHMARK GATED
+- resource admission policy foundation
+- screen-stream adapter benchmark — NEEDS_DEVICE_LAB
+- 10/20/50/100-device benchmark — NEEDS_DEVICE_LAB
+- endurance/recovery evidence — NEEDS_DEVICE_LAB
 
-## Initial READY Queue
+## Verified Vertical Slices
 ### Program 2
-P2-VS1 — Contract-driven Offer selection with fakes
-P2-VS2 — SQLite durable Offer observations/selections
-P2-VS3 — Worker protocol/outbox fake
+- P2-VS1 — Contract-driven Offer selection with fakes — DONE / VERIFIED
+- P2-VS2 — SQLite durable Offer observations/selections — DONE / VERIFIED
+- P2-VS3 — Worker protocol/outbox fake — DONE / VERIFIED
+- P2-VS4A — Affiliate Link/export contracts + selection-link validation — DONE / VERIFIED
 
 ### Program 3
-P3-VS1 — PublishPlan + duplicate gate + PublishingLedger with fake worker
-P3-VS2 — Scene engine fixture-driven workflow
-P3-VS3 — Device ownership/lease with fake devices
+- P3-VS1 — PublishPlan + duplicate gate + PublishingLedger — DONE / VERIFIED
+- P3-VS2 — Scene engine fixture-driven workflow — DONE / VERIFIED
+- P3-VS3 — Device ownership/lease + resource admission with fake devices — DONE / VERIFIED
+- P3-VS4A — scripted Android action loop + ambiguous-outcome reconciliation — DONE / VERIFIED
+
+## Current READY / IN-DEV Queue
+### Program 2
+- P2-VS4B — parser port + synthetic fixture harness, then real golden fixtures when available
+- P2-VS2B — PostgreSQL repository compatibility and concurrency contract
+- P2-VS5 — controlled real-browser evidence spike
+
+### Program 3
+- P3-VS3B — durable Device Registry + Worker Supervisor contracts
+- P3-VS4B — full scripted multi-scene publish workflow and event/checkpoint delivery
+- P3-VS6 — controlled physical-device ADB/uiautomator2 spike
+- P3-VS7 — capacity/endurance benchmark only after device-lab foundation
 
 ## Dependency Rules
 - P2 and P3 domain/engines depend inward only.
@@ -125,6 +148,11 @@ Every slice requires:
 6. no unresolved CRITICAL/HIGH issue;
 7. Problem/Lesson/CAPA update for meaningful defects;
 8. CI evidence.
+
+## Current Evidence
+- Program 2/3 verification report: `PROGRAM2_PROGRAM3_VERIFICATION_REPORT_2026-08-31.md`.
+- Problem/Lesson/CAPA record: `PROGRAM2_PROGRAM3_PROBLEM_LESSON_CAPA_2026-08-31.md`.
+- GitHub Actions CI #155 passed Core, SQLite/Alembic and Stress gates for verified code head `4f33f3b74a5e11880922b928a7da0e383147fdb8`.
 
 ## Parallel Development Rule
 Program 2 and Program 3 may proceed in parallel because contracts are versioned and fakes stand in for unfinished upstream/downstream components. A breaking handoff-contract change requires document/ADR update and compatibility tests before code changes merge.
