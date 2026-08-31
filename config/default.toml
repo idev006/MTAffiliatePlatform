@@ -19,6 +19,19 @@ rating_weight = 1.0
 review_weight = 1.0
 price_fit_weight = 1.0
 
+[program2]
+backup_offer_count = 2
+
+[program2.scoring]
+commission_weight = 1.0
+rating_weight = 1.0
+review_weight = 1.0
+demand_weight = 1.0
+
+[program3]
+duplicate_policy_version = "duplicate-v1"
+block_ambiguous_outcomes = true
+
 [worker]
 heartbeat_seconds = 30
 batch_size = 50
