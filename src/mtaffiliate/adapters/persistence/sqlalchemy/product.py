@@ -6,8 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
-from mtaffiliate.adapters.persistence.inmemory.product import ObservationConflictError
 from mtaffiliate.domain.product.models import ProductObservation
+from mtaffiliate.ports.repositories.product import ObservationConflictError
 
 from .models import ProductObservationRow
 
