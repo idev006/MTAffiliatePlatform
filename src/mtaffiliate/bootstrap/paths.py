@@ -28,7 +28,7 @@ class PathManager:
         log_dir: str = "logs",
         outbox_dir: str = "runtime/outbox",
         artifact_dir: str = "runtime/artifacts",
-    ) -> "PathManager":
+    ) -> PathManager:
         root = project_root.resolve()
         return cls(
             project_root=root,
