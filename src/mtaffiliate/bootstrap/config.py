@@ -75,7 +75,6 @@ class Program2Config(BaseModel):
 
 class Program3Config(BaseModel):
     duplicate_policy_version: str = Field(default="duplicate-v1", min_length=1)
-    block_ambiguous_outcomes: bool = True
 
 
 class WorkerConfig(BaseModel):
