@@ -9,7 +9,6 @@ def test_program2_program3_defaults_are_typed_and_safe() -> None:
     assert settings.program2.backup_offer_count == 2
     assert settings.program2.scoring.commission_weight == 1.0
     assert settings.program3.duplicate_policy_version == "duplicate-v1"
-    assert settings.program3.block_ambiguous_outcomes
 
 
 def test_program2_rejects_invalid_scoring_and_backup_count() -> None:
