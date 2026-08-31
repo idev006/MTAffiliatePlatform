@@ -40,11 +40,13 @@ No team waits for full Program 2 completion before Program 3 foundation work beg
 - API observation/rank/selection contracts
 - real schema-change/session-required browser classification — controlled-browser gate
 
-### P2-E5 Export/Link Pipeline — CONTRACT FOUNDATION VERIFIED
+### P2-E5 Export/Link Pipeline — SYNTHETIC LAB VERIFIED / REAL FORMAT GATED
 - AffiliateLink contract
 - OfferExportArtifact contract
 - selected-link validation
-- parser interface/profile evidence — NEXT
+- parser port/profile boundary
+- synthetic JSON parser laboratory + malformed/cross-account tests
+- artifact-integrity/idempotent ingest hardening — NEXT
 - golden real export fixtures — NEEDS_REAL_DATA
 
 ### P2-E6 Real Browser Evidence — NEEDS_REAL_DATA
@@ -85,13 +87,15 @@ No team waits for full Program 2 completion before Program 3 foundation work beg
 - ambiguous outcome model
 - durable worker event/checkpoint delivery — NEXT
 
-### P3-E5 Fake Android E2E — VERIFIED ACTION-LOOP FOUNDATION / FULL WORKFLOW NEXT
+### P3-E5 Fake Android E2E — FULL SCRIPTED LAB VERIFIED / RESILIENCE NEXT
 - replaceable Android adapter ports
 - scripted fake Android adapter
 - fake scene snapshots
 - Observe -> Recognize -> Validate -> Act -> Verify -> Checkpoint tested
 - POST_OUTCOME_UNKNOWN reconciliation engine tested
-- full multi-scene publish workflow simulation — NEXT
+- full multi-scene VIDEO_SOURCE -> PUBLISH_SUCCESS simulation
+- stop-at-first-unverified-transition behavior
+- replay/restart/failure matrix expansion — NEXT
 
 ### P3-E6 Physical Device Lab — NEEDS_DEVICE_LAB
 - ADB adapter spike
@@ -112,24 +116,33 @@ No team waits for full Program 2 completion before Program 3 foundation work beg
 - P2-VS2 — SQLite durable Offer observations/selections — DONE / VERIFIED
 - P2-VS3 — Worker protocol/outbox fake — DONE / VERIFIED
 - P2-VS4A — Affiliate Link/export contracts + selection-link validation — DONE / VERIFIED
+- P2-VS4B — parser port + synthetic fixture/parser laboratory — DONE / VERIFIED
 
 ### Program 3
 - P3-VS1 — PublishPlan + duplicate gate + PublishingLedger — DONE / VERIFIED
 - P3-VS2 — Scene engine fixture-driven workflow — DONE / VERIFIED
 - P3-VS3 — Device ownership/lease + resource admission with fake devices — DONE / VERIFIED
 - P3-VS4A — scripted Android action loop + ambiguous-outcome reconciliation — DONE / VERIFIED
+- P3-VS4B — full scripted multi-scene publish workflow — DONE / VERIFIED
 
 ## Current READY / IN-DEV Queue
+Follow `CODEX_NEXT_WORK_QUEUE.md` for the operational priority order.
+
 ### Program 2
-- P2-VS4B — parser port + synthetic fixture harness, then real golden fixtures when available
+- P2-VS4C — export artifact checksum/idempotent ingest/staleness hardening
 - P2-VS2B — PostgreSQL repository compatibility and concurrency contract
-- P2-VS5 — controlled real-browser evidence spike
+- P2-VS5 — controlled real-browser evidence spike — NEEDS_REAL_DATA
 
 ### Program 3
 - P3-VS3B — durable Device Registry + Worker Supervisor contracts
-- P3-VS4B — full scripted multi-scene publish workflow and event/checkpoint delivery
-- P3-VS6 — controlled physical-device ADB/uiautomator2 spike
+- P3-VS4C — scripted replay/restart/failure-injection matrix + durable event/checkpoint delivery
+- P3-VS6 — controlled physical-device ADB/uiautomator2 spike — NEEDS_DEVICE_LAB
 - P3-VS7 — capacity/endurance benchmark only after device-lab foundation
+
+### Shared Core / Cross-Program
+- integrate Program 2/3 execution with Shared Job Engine lifecycle/lease/event authority;
+- strengthen automated architecture dependency checks;
+- version ruleset/config snapshots across running jobs.
 
 ## Dependency Rules
 - P2 and P3 domain/engines depend inward only.
@@ -152,7 +165,8 @@ Every slice requires:
 ## Current Evidence
 - Program 2/3 verification report: `PROGRAM2_PROGRAM3_VERIFICATION_REPORT_2026-08-31.md`.
 - Problem/Lesson/CAPA record: `PROGRAM2_PROGRAM3_PROBLEM_LESSON_CAPA_2026-08-31.md`.
-- GitHub Actions CI #155 passed Core, SQLite/Alembic and Stress gates for verified code head `4f33f3b74a5e11880922b928a7da0e383147fdb8`.
+- CI #155 verified the earlier Program 2/3 foundation head.
+- CI #168 passed for code head `f2b00b24fcb5c6573ae9bf77c851e7924d3b024f`, including the synthetic export parser and full scripted Program 3 workflow after Ruff findings from CI #165 were corrected without weakening rules.
 
 ## Parallel Development Rule
 Program 2 and Program 3 may proceed in parallel because contracts are versioned and fakes stand in for unfinished upstream/downstream components. A breaking handoff-contract change requires document/ADR update and compatibility tests before code changes merge.
