@@ -5,8 +5,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from mtaffiliate.adapters.persistence.sqlalchemy.base import Base
 from mtaffiliate.adapters.persistence.sqlalchemy import models as _models  # noqa: F401
+from mtaffiliate.adapters.persistence.sqlalchemy.base import Base
 
 config = context.config
 if config.config_file_name is not None:
