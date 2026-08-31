@@ -45,6 +45,11 @@ Outer layers may depend on inner layers. Inner layers must not import PySide6, F
 MTAffiliatePlatform/
 ├─ pyproject.toml
 ├─ README.md
+├─ config/
+│  ├─ default.toml
+│  ├─ portable.toml
+│  ├─ farm.toml
+│  └─ local.toml.example
 ├─ docs/
 │  └─ affiliate-platform/
 ├─ src/
@@ -94,6 +99,7 @@ MTAffiliatePlatform/
 │     ├─ bootstrap/
 │     │  ├─ container.py
 │     │  ├─ config.py
+│     │  ├─ paths.py
 │     │  └─ runtime.py
 │     └─ common/
 │        ├─ ids.py
@@ -101,6 +107,11 @@ MTAffiliatePlatform/
 │        ├─ errors.py
 │        └─ result.py
 ├─ migrations/
+├─ data/
+├─ logs/
+├─ cache/
+├─ outbox/
+├─ artifacts/
 ├─ tests/
 │  ├─ unit/
 │  ├─ component/
@@ -118,6 +129,8 @@ MTAffiliatePlatform/
 ```
 
 This is the baseline structure. Minor naming changes are allowed only if the dependency rules remain intact.
+
+Runtime-owned paths must be resolved through the project PathManager/RuntimePaths service rather than assumed directly from this physical tree. Governing policy: `PATH_AND_CONFIGURATION_POLICY.md`.
 
 ## 4. Engine Definition
 
@@ -230,7 +243,25 @@ Examples:
 
 Tests use Fakes/InMemory adapters implementing the same ports.
 
-## 8. UI Boundary
+## 8. Path and Configuration Boundary
+
+Filesystem layout and configuration are infrastructure/bootstrap concerns.
+
+Mandatory rules:
+- use `pathlib.Path`;
+- resolve managed filesystem locations through injectable `PathManager`/`RuntimePaths`;
+- never rely on the current working directory for correctness;
+- prefer relative/logical paths under explicit managed roots;
+- do not hard-code developer-specific absolute paths;
+- TOML is the baseline human-editable settings format;
+- typed settings are validated at startup;
+- secrets are separated from ordinary committed TOML;
+- mutable operational/business values are configuration/rules rather than scattered constants;
+- engines receive only typed config/policy objects they need, not a global mutable settings singleton.
+
+Governing policy: `PATH_AND_CONFIGURATION_POLICY.md`.
+
+## 9. UI Boundary
 
 The desktop UI may:
 - send application commands;
@@ -249,7 +280,7 @@ The desktop UI must not:
 
 Closing the UI must not invalidate durable business state.
 
-## 9. Headless Requirement
+## 10. Headless Requirement
 
 Before GUI implementation, all critical business workflows must be executable through at least one headless interface, normally application tests and/or CLI/API.
 
@@ -262,7 +293,7 @@ Minimum headless scenarios:
 6. simulate Scene workflow with fake Android adapter;
 7. record/reconcile publishing result.
 
-## 10. Dependency Enforcement
+## 11. Dependency Enforcement
 
 CI must eventually enforce architectural boundaries using one or more of:
 - import-linter;
@@ -277,18 +308,31 @@ Mandatory rules:
 - `interfaces` call application use cases;
 - UI never imports concrete persistence repositories directly.
 
-## 11. Composition Root
+Additional static/conformance checks should flag:
+- obvious absolute path literals in source;
+- direct use of `os.getcwd()`/working-directory assumptions for canonical paths;
+- operational timeout/retry/device limits duplicated outside typed settings/rules;
+- direct reading of TOML from domain/engine modules.
+
+## 12. Composition Root
 
 Concrete dependency wiring belongs only in bootstrap/composition-root modules.
 
 Example deployment compositions:
 - Portable: SQLite + local API + local Device Host + optional PySide6 shell;
 - Farm: PostgreSQL + central API + remote workers/device hosts;
-- Test: InMemory repositories + FakeClock + FakeDevice + FakeBrowser.
+- Test: InMemory repositories + FakeClock + FakeDevice + FakeBrowser + Temp PathManager.
 
 The domain/application code is unchanged across these compositions.
 
-## 12. Testability Acceptance Criteria
+Composition root also owns:
+- configuration profile selection;
+- PathManager root selection;
+- secret-provider binding;
+- concrete repository/adapter selection;
+- startup validation.
+
+## 13. Testability Acceptance Criteria
 
 A module is not accepted as architecture-conforming if it cannot be tested without launching unrelated infrastructure.
 
@@ -296,6 +340,8 @@ Critical domain behavior must be testable with:
 - deterministic inputs;
 - controlled clock/randomness;
 - in-memory/fake ports;
+- temporary filesystem roots;
+- test TOML/settings profiles;
 - no network;
 - no browser;
 - no Android phone;
@@ -303,10 +349,12 @@ Critical domain behavior must be testable with:
 
 Integration tests then verify concrete adapters separately.
 
-## 13. Implementation Rule
+## 14. Implementation Rule
 
 For every new feature, developers must build in this order where applicable:
 
 `Domain rule/state -> Engine/Application use case -> Port -> Fake/Test -> Concrete Adapter -> API/CLI -> UI shell`
 
 UI-first implementation is prohibited for business-critical behavior unless explicitly approved by ADR.
+
+Path/config rules are part of the same Definition of Ready: new code may not introduce hidden machine-specific paths or tunable hard-coded values.
