@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -20,7 +20,7 @@ def make_observation(index: int) -> ProductObservation:
         platform="shopee",
         shop_id=f"shop-{index // 1000}",
         item_id=f"item-{index}",
-        collected_at=datetime(2026, 8, 31, tzinfo=timezone.utc),
+        collected_at=datetime(2026, 8, 31, tzinfo=UTC),
         product_name=f"Product {index}",
         price_current=Decimal(index % 10_000),
         sold_signal=index % 2_000,
