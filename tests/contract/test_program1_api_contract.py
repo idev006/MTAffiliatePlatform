@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 
@@ -12,7 +12,7 @@ def observation(observation_id: str = "o1", item_id: str = "i1") -> dict[str, ob
         "platform": "shopee",
         "shop_id": "s1",
         "item_id": item_id,
-        "collected_at": datetime(2026, 8, 31, tzinfo=timezone.utc).isoformat(),
+        "collected_at": datetime(2026, 8, 31, tzinfo=UTC).isoformat(),
         "product_name": "Product",
         "price_current": "100.00",
         "sold_signal": 100,
