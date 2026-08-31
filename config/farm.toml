@@ -4,3 +4,4 @@ environment = "farm"
 [database]
 # Supply the actual connection through environment/secret management.
 url = ""
+auto_migrate = false
