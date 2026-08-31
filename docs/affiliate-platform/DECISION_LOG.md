@@ -175,6 +175,26 @@ Program 1 is authorized for foundation implementation and fake-driven MVP thin s
 
 Governing record: `PROGRAM1_IMPLEMENTATION_READINESS.md`.
 
+## ADR-041 — Closed-Loop Development, Verification and Learning Cycle
+**Status: Accepted — 2026-08-31**
+
+Every implementation slice follows the project Development Cycle from documented need/design through Definition of Ready, implementation, layered verification, adversarial testing, review, integration and operational feedback. Meaningful defects and near misses feed a mandatory Root Cause Analysis / Corrective and Preventive Action / Lesson Learned loop. A lesson is adopted only when it changes a durable artifact such as a document, ADR, test, CI rule, configuration schema, code guardrail or runbook.
+
+Quality gates must not be weakened solely to obtain a passing build. A legitimate gate failure is treated as evidence and corrected at the appropriate design/code/test/process layer.
+
+Governing records: `DEVELOPMENT_CYCLE_STANDARD.md` and `PROBLEM_LESSON_AND_CAPA_LOG.md`.
+
+## ADR-042 — Durable ACK State Shares an Atomic Transaction Boundary
+**Status: Accepted — 2026-08-31**
+
+When the platform sends an ACK whose meaning depends on durable acceptance, the business data and the idempotency/receipt state required to reproduce that ACK after restart must be committed atomically where feasible. Program 1 therefore persists an ingestion batch claim/receipt and its accepted ProductObservations in the same SQL transaction.
+
+A process crash must not produce the state “business facts committed but no durable knowledge of the ACK identity” for the same logical ingestion operation. Duplicate/retry semantics must be reproducible after process restart.
+
+This decision generalizes to Shared Job, publishing ledger and other irreversible/durable workflows where acknowledgement correctness depends on durable state.
+
+Governing records: `DATABASE_CONCURRENCY_AND_PORTABILITY_SPEC.md`, `APPLICATION_AND_ENGINE_CONTRACTS.md`, and `DEVELOPMENT_CYCLE_STANDARD.md`.
+
 ## Pending Validation / Implementation Gates
 - Product Scoring Model v1 exact formula.
 - Affiliate Offer Scoring Model v1 exact formula.
