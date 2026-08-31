@@ -12,7 +12,12 @@ from mtaffiliate.domain.affiliate_offer.artifacts import OfferExportArtifact
 NOW = datetime(2026, 8, 31, tzinfo=UTC)
 
 
-def artifact(raw: bytes, *, account: str = "account-1", format_name: str = "synthetic-json-v1") -> OfferExportArtifact:
+def artifact(
+    raw: bytes,
+    *,
+    account: str = "account-1",
+    format_name: str = "synthetic-json-v1",
+) -> OfferExportArtifact:
     return OfferExportArtifact(
         artifact_id="artifact-1",
         affiliate_account_id=account,
@@ -47,12 +52,15 @@ def test_synthetic_parser_proves_parser_port_and_fixture_shape() -> None:
     assert links[0].offer_id == "offer-1"
 
 
-@pytest.mark.parametrize(
-    "raw",
-    [b"not-json", b'{"not":"a-list"}'],
-)
-def test_synthetic_parser_rejects_malformed_artifacts(raw: bytes) -> None:
+def test_synthetic_parser_rejects_invalid_json() -> None:
+    raw = b"not-json"
     with pytest.raises(ValueError):
+        SyntheticJsonOfferExportParser().parse(artifact(raw), raw)
+
+
+def test_synthetic_parser_rejects_non_list_root() -> None:
+    raw = b'{"not":"a-list"}'
+    with pytest.raises(TypeError):
         SyntheticJsonOfferExportParser().parse(artifact(raw), raw)
 
 
