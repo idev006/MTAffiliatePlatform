@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
+from dataclasses import dataclass
 from threading import RLock
 
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
