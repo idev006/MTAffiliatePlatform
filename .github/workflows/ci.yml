@@ -35,11 +35,13 @@ jobs:
           --cov=mtaffiliate.application.program2
           --cov=mtaffiliate.application.program3
           --cov=mtaffiliate.application.program3_worker
+          --cov=mtaffiliate.application.program3_workflow
           --cov=mtaffiliate.bootstrap.config
           --cov=mtaffiliate.bootstrap.paths
           --cov=mtaffiliate.adapters.persistence.inmemory
           --cov=mtaffiliate.adapters.workers
           --cov=mtaffiliate.adapters.android
+          --cov=mtaffiliate.adapters.affiliate_export
           --cov=mtaffiliate.interfaces.api
           --cov-branch
           --cov-report=term-missing
