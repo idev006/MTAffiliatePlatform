@@ -37,9 +37,28 @@ class SQLAlchemyProductRepository:
     def _same(existing: ProductObservationRow, incoming: ProductObservation) -> bool:
         return SQLAlchemyProductRepository._to_domain(existing) == incoming
 
+    @staticmethod
+    def _row(observation: ProductObservation) -> ProductObservationRow:
+        return ProductObservationRow(
+            observation_id=observation.observation_id,
+            platform=observation.platform,
+            shop_id=observation.shop_id,
+            item_id=observation.item_id,
+            collected_at=observation.collected_at,
+            product_name=observation.product_name,
+            product_url=observation.product_url,
+            price_current=observation.price_current,
+            sold_signal=observation.sold_signal,
+            rating=observation.rating,
+            review_count=observation.review_count,
+            source_worker_id=observation.source_worker_id,
+            source_query=observation.source_query,
+            extractor_version=observation.extractor_version,
+        )
+
     def add_observations(self, observations: list[ProductObservation]) -> int:
         accepted = 0
-        with self._session_factory() as session:
+        with self._session_factory() as session, session.begin():
             for observation in observations:
                 existing = session.scalar(
                     select(ProductObservationRow).where(
@@ -50,31 +69,21 @@ class SQLAlchemyProductRepository:
                     if not self._same(existing, observation):
                         raise ObservationConflictError(observation.observation_id)
                     continue
-                session.add(
-                    ProductObservationRow(
-                        observation_id=observation.observation_id,
-                        platform=observation.platform,
-                        shop_id=observation.shop_id,
-                        item_id=observation.item_id,
-                        collected_at=observation.collected_at,
-                        product_name=observation.product_name,
-                        product_url=observation.product_url,
-                        price_current=observation.price_current,
-                        sold_signal=observation.sold_signal,
-                        rating=observation.rating,
-                        review_count=observation.review_count,
-                        source_worker_id=observation.source_worker_id,
-                        source_query=observation.source_query,
-                        extractor_version=observation.extractor_version,
-                    )
-                )
+
                 try:
-                    session.flush()
-                except IntegrityError as exc:
-                    session.rollback()
-                    raise ObservationConflictError(observation.observation_id) from exc
+                    with session.begin_nested():
+                        session.add(self._row(observation))
+                        session.flush()
+                except IntegrityError:
+                    existing = session.scalar(
+                        select(ProductObservationRow).where(
+                            ProductObservationRow.observation_id == observation.observation_id
+                        )
+                    )
+                    if existing is None or not self._same(existing, observation):
+                        raise ObservationConflictError(observation.observation_id) from None
+                    continue
                 accepted += 1
-            session.commit()
         return accepted
 
     def latest_observations(self) -> list[ProductObservation]:
