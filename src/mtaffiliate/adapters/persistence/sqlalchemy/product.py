@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import UTC
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
@@ -16,12 +18,15 @@ class SQLAlchemyProductRepository:
 
     @staticmethod
     def _to_domain(row: ProductObservationRow) -> ProductObservation:
+        collected_at = row.collected_at
+        if collected_at.tzinfo is None:
+            collected_at = collected_at.replace(tzinfo=UTC)
         return ProductObservation(
             observation_id=row.observation_id,
             platform=row.platform,
             shop_id=row.shop_id,
             item_id=row.item_id,
-            collected_at=row.collected_at,
+            collected_at=collected_at,
             product_name=row.product_name,
             product_url=row.product_url,
             price_current=row.price_current,
