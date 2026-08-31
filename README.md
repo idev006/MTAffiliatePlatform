@@ -10,11 +10,25 @@ This repository is the authoritative project repository (SSOT) for the three-ste
 
 ## Current Handoff Status
 
-**FOUNDATION IMPLEMENTATION READY / FEATURE-GATED HANDOFF**
+**FOUNDATION / LABORATORY DEVELOPMENT READY — REAL PLATFORM FEATURES REMAIN EVIDENCE-GATED**
 
-The project documentation is sufficient for the development team to start foundation code and isolated vertical slices without inventing architecture.
+The project documentation and headless foundations are sufficient for Codex Work Desktop or a development team to continue vertical-slice development without inventing architecture.
 
 Shopee-specific behaviors that still require real-world validation remain explicit production gates and must not be guessed into hard-coded policy.
+
+## Codex Work Desktop — Start Here
+
+Codex/coding agents must begin with:
+
+1. `AGENTS.md`
+2. `docs/affiliate-platform/CODEX_WORK_DESKTOP_HANDOFF.md`
+3. `docs/affiliate-platform/CODEX_NEXT_WORK_QUEUE.md`
+4. `docs/affiliate-platform/DEVELOPMENT_HANDOFF_MASTER.md`
+5. the relevant Program/Step design, Kanban card and verification report.
+
+The Codex handoff includes local bootstrap commands, architecture boundaries, evidence gates, CI rules, Definition of Done and end-of-session reporting format.
+
+**Important:** inspect the CI state of the current HEAD before unrelated feature work. A latest commit is not automatically a verified baseline.
 
 ## Engineering Principles
 
@@ -67,20 +81,20 @@ Input
   -> Recover / Escalate when abnormal
 ```
 
-## Developer Start Here
+## Full Developer Reading Order
 
-Read in this order:
+After the Codex entrypoint documents, read:
 
-1. `docs/affiliate-platform/DEVELOPMENT_HANDOFF_MASTER.md`
-2. `docs/affiliate-platform/PROJECT_CHARTER.md`
-3. `docs/affiliate-platform/WORKFLOW.md`
-4. `docs/affiliate-platform/ARCHITECTURE.md`
-5. `docs/affiliate-platform/SYSTEM_PHYSIOLOGY_MODEL.md`
-6. `docs/affiliate-platform/COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`
-7. `docs/affiliate-platform/SYSTEM_DIAGRAMS.md`
-8. `docs/affiliate-platform/INTEGRATION_DIAGRAMS.md`
-9. `docs/affiliate-platform/SEQUENCE_DIAGRAMS.md`
-10. `docs/affiliate-platform/ENGINEERING_GOVERNANCE.md`
+1. `docs/affiliate-platform/PROJECT_CHARTER.md`
+2. `docs/affiliate-platform/WORKFLOW.md`
+3. `docs/affiliate-platform/ARCHITECTURE.md`
+4. `docs/affiliate-platform/SYSTEM_PHYSIOLOGY_MODEL.md`
+5. `docs/affiliate-platform/COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`
+6. `docs/affiliate-platform/SYSTEM_DIAGRAMS.md`
+7. `docs/affiliate-platform/INTEGRATION_DIAGRAMS.md`
+8. `docs/affiliate-platform/SEQUENCE_DIAGRAMS.md`
+9. `docs/affiliate-platform/ENGINEERING_GOVERNANCE.md`
+10. `docs/affiliate-platform/DECISION_LOG.md`
 11. `docs/affiliate-platform/PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`
 12. `docs/affiliate-platform/APPLICATION_AND_ENGINE_CONTRACTS.md`
 13. `docs/affiliate-platform/DATA_MODEL.md`
@@ -93,24 +107,43 @@ Read in this order:
 
 Latest senior review record: `docs/affiliate-platform/ARCHITECTURE_REVIEW_2026-08-31_SYSTEM_PHYSIOLOGY.md`.
 
-## Foundation Implementation Boundary
+## Current Development Boundary
 
-Authorized implementation areas include:
-- Python `src/` project skeleton and architecture checks;
-- common typed IDs/result/errors/correlation primitives;
+Authorized/effective development areas include:
+- Python `src/` architecture and dependency checks;
+- typed domain/application contracts;
 - configuration foundation;
-- SQLAlchemy/Repository/UnitOfWork + Alembic;
-- SQLite/PostgreSQL compatibility harness;
-- Shared Job Engine;
-- FastAPI application factory/common contracts;
-- worker registration/heartbeat/lease/result reference flow;
+- SQLAlchemy repositories + Alembic;
+- SQLite Tier-1 portable persistence and PostgreSQL compatibility work;
+- Shared Job Engine integration;
+- FastAPI application/common contracts;
+- worker registration/heartbeat/lease/result/outbox flows;
 - reusable fake/in-memory adapters;
-- Step 1 fake-driven thin slice;
-- Step 2 fake-driven thin slice;
-- Content Identity exact-hash core;
-- Publish Plan validation;
-- Scene Engine simulation with scripted UI fixtures;
-- common component health event vocabulary and fault-simulation fixtures.
+- Program 1 Product Intelligence foundation;
+- Program 2 Offer Intelligence, worker/outbox and synthetic export laboratory;
+- Program 3 PublishPlan/duplicate ledger, Scene/Device Host foundations and scripted Android laboratory;
+- controlled failure/recovery fixtures and resilience tests.
+
+Real Shopee/browser/Android facts remain evidence-gated as documented in the Program readiness files and `CODEX_NEXT_WORK_QUEUE.md`.
+
+## Local Development
+
+Python target: 3.12+
+
+Windows PowerShell:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+ruff check src tests migrations
+pytest -m "not stress and not integration"
+pytest -m integration tests/integration/sqlite --timeout=60
+pytest -m stress --timeout=60
+```
+
+CI definitions and authoritative quality gates are in `.github/workflows/ci.yml`.
 
 ## Optional UI
 
