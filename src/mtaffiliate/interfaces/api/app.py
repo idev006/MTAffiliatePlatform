@@ -3,10 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from mtaffiliate.adapters.persistence.inmemory.product import (
-    InMemoryProductRepository,
-    ObservationConflictError,
-)
+from mtaffiliate.adapters.persistence.inmemory.product import InMemoryProductRepository
 from mtaffiliate.application.program1 import IngestionBatchConflictError, Program1Service
 from mtaffiliate.bootstrap.config import Settings
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
@@ -14,6 +11,7 @@ from mtaffiliate.engines.product_intelligence_engine.service import (
     ProductIntelligenceEngine,
     ScoringPolicy,
 )
+from mtaffiliate.ports.repositories.product import ObservationConflictError
 
 
 class ObservationBatch(BaseModel):
@@ -21,8 +19,7 @@ class ObservationBatch(BaseModel):
     observations: list[ProductObservation]
 
 
-def build_program1(settings: Settings) -> Program1Service:
-    repository = InMemoryProductRepository()
+def build_inmemory_program1(settings: Settings) -> Program1Service:
     scoring = settings.program1.scoring
     engine = ProductIntelligenceEngine(
         ScoringPolicy(
@@ -33,16 +30,20 @@ def build_program1(settings: Settings) -> Program1Service:
         )
     )
     return Program1Service(
-        repository,
+        InMemoryProductRepository(),
         engine,
         shortlist_limit=settings.program1.shortlist_limit,
         minimum_score=settings.program1.minimum_score,
     )
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    *,
+    program1: Program1Service | None = None,
+) -> FastAPI:
     cfg = settings or Settings()
-    program1 = build_program1(cfg)
+    service = program1 or build_inmemory_program1(cfg)
     app = FastAPI(title="MTAffiliatePlatform", version="0.1.0")
 
     @app.get("/health")
@@ -52,7 +53,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/v1/program1/observations")
     def ingest(batch: ObservationBatch) -> dict[str, int | str]:
         try:
-            result = program1.ingest_batch(batch.batch_id, batch.observations)
+            result = service.ingest_batch(batch.batch_id, batch.observations)
         except (IngestionBatchConflictError, ObservationConflictError) as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {
@@ -63,6 +64,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/v1/program1/shortlist", response_model=list[ShortlistEntry])
     def shortlist() -> list[ShortlistEntry]:
-        return program1.build_shortlist()
+        return service.build_shortlist()
 
     return app
