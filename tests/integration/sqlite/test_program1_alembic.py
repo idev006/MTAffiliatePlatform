@@ -23,14 +23,15 @@ def test_empty_sqlite_database_migrates_to_head_and_downgrades(tmp_path) -> None
 
     command.upgrade(config, "head")
     engine = create_engine(url)
-    inspector = inspect(engine)
-    assert "product_observations" in inspector.get_table_names()
-    assert "alembic_version" in inspector.get_table_names()
+    tables = set(inspect(engine).get_table_names())
+    assert {"product_observations", "ingestion_batches", "alembic_version"} <= tables
     engine.dispose()
 
     command.downgrade(config, "base")
     engine = create_engine(url)
-    assert "product_observations" not in inspect(engine).get_table_names()
+    tables = set(inspect(engine).get_table_names())
+    assert "product_observations" not in tables
+    assert "ingestion_batches" not in tables
     engine.dispose()
 
 
