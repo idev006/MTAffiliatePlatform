@@ -24,7 +24,8 @@ jobs:
           --cov=mtaffiliate.domain.product
           --cov=mtaffiliate.engines.product_intelligence_engine
           --cov=mtaffiliate.application.program1
-          --cov=mtaffiliate.bootstrap
+          --cov=mtaffiliate.bootstrap.config
+          --cov=mtaffiliate.bootstrap.paths
           --cov=mtaffiliate.adapters.persistence.inmemory
           --cov=mtaffiliate.interfaces.api
           --cov-branch
@@ -41,8 +42,15 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e '.[dev]'
-      - name: SQLite repository and Alembic integration
-        run: pytest -m integration tests/integration/sqlite --timeout=60
+      - name: SQLite repository, bootstrap and Alembic integration with branch coverage
+        run: >-
+          pytest -m integration tests/integration/sqlite --timeout=60
+          --cov=mtaffiliate.adapters.persistence.sqlalchemy
+          --cov=mtaffiliate.bootstrap.migrations
+          --cov=mtaffiliate.bootstrap.program1
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=95
 
   backoffice-stress:
     runs-on: ubuntu-latest
