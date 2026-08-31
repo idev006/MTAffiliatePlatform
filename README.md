@@ -26,6 +26,8 @@ Shopee-specific behaviors that still require real-world validation remain explic
 - Single Source of Truth (SSOT).
 - Component-based and pluggable adapters.
 - Inward dependency direction.
+- System Physiology model: Sense / Decide / Act / Verify / Recover.
+- Every component has explicit ownership, health detection and recovery.
 - Portable-first, scale-ready deployment.
 - Agile Kanban + vertical slices.
 - Correctness, recoverability, traceability and testability before raw throughput.
@@ -51,6 +53,20 @@ DB / Browser / Android / Media / Notifications
 
 Core business behavior must be testable without graphical UI, live browser or physical Android device.
 
+Every important flow is reviewed through:
+
+```text
+Input
+  -> Sense / Observe
+  -> Validate / Interpret
+  -> Decide / Plan
+  -> Act / Execute
+  -> Verify
+  -> Record Durable Output
+  -> Feedback / Learn
+  -> Recover / Escalate when abnormal
+```
+
 ## Developer Start Here
 
 Read in this order:
@@ -59,19 +75,23 @@ Read in this order:
 2. `docs/affiliate-platform/PROJECT_CHARTER.md`
 3. `docs/affiliate-platform/WORKFLOW.md`
 4. `docs/affiliate-platform/ARCHITECTURE.md`
-5. `docs/affiliate-platform/SYSTEM_DIAGRAMS.md`
-6. `docs/affiliate-platform/INTEGRATION_DIAGRAMS.md`
-7. `docs/affiliate-platform/SEQUENCE_DIAGRAMS.md`
-8. `docs/affiliate-platform/ENGINEERING_GOVERNANCE.md`
-9. `docs/affiliate-platform/PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`
-10. `docs/affiliate-platform/APPLICATION_AND_ENGINE_CONTRACTS.md`
-11. `docs/affiliate-platform/DATA_MODEL.md`
-12. `docs/affiliate-platform/TEST_STRATEGY_AND_QUALITY_GATES.md`
-13. `docs/affiliate-platform/IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`
-14. `docs/affiliate-platform/TECHNOLOGY_STACK.md`
-15. `docs/affiliate-platform/specs/README.md`
+5. `docs/affiliate-platform/SYSTEM_PHYSIOLOGY_MODEL.md`
+6. `docs/affiliate-platform/COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`
+7. `docs/affiliate-platform/SYSTEM_DIAGRAMS.md`
+8. `docs/affiliate-platform/INTEGRATION_DIAGRAMS.md`
+9. `docs/affiliate-platform/SEQUENCE_DIAGRAMS.md`
+10. `docs/affiliate-platform/ENGINEERING_GOVERNANCE.md`
+11. `docs/affiliate-platform/PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`
+12. `docs/affiliate-platform/APPLICATION_AND_ENGINE_CONTRACTS.md`
+13. `docs/affiliate-platform/DATA_MODEL.md`
+14. `docs/affiliate-platform/TEST_STRATEGY_AND_QUALITY_GATES.md`
+15. `docs/affiliate-platform/IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`
+16. `docs/affiliate-platform/TECHNOLOGY_STACK.md`
+17. `docs/affiliate-platform/specs/README.md`
 
-`WORKFLOW.md` is the canonical business pipeline. `SYSTEM_DIAGRAMS.md` contains context/component/use-case/swimlane/activity/state/deployment views. `INTEGRATION_DIAGRAMS.md` defines logical, step-to-step, runtime, protocol, SSOT, failure-boundary and test-integration views. `SEQUENCE_DIAGRAMS.md` is the normative runtime-collaboration pack for critical multi-component flows, including Step 1, Step 2, Step 3, ACK/outbox, leases, recovery, publish ambiguity, device-host orchestration, engine/API boundaries and ruleset versioning.
+`WORKFLOW.md` is the canonical business pipeline. `SYSTEM_PHYSIOLOGY_MODEL.md` defines system-wide sensing, control, verification, health, resource-homeostasis and recovery rules. `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md` defines ownership and Input/Process/Output/Health/Failure/Recovery boundaries. `SYSTEM_DIAGRAMS.md` contains context/component/use-case/swimlane/activity/state/deployment views. `INTEGRATION_DIAGRAMS.md` defines logical, step-to-step, runtime, protocol, SSOT, failure-boundary and test-integration views. `SEQUENCE_DIAGRAMS.md` is the normative runtime-collaboration pack for critical multi-component flows.
+
+Latest senior review record: `docs/affiliate-platform/ARCHITECTURE_REVIEW_2026-08-31_SYSTEM_PHYSIOLOGY.md`.
 
 ## Foundation Implementation Boundary
 
@@ -89,7 +109,8 @@ Authorized implementation areas include:
 - Step 2 fake-driven thin slice;
 - Content Identity exact-hash core;
 - Publish Plan validation;
-- Scene Engine simulation with scripted UI fixtures.
+- Scene Engine simulation with scripted UI fixtures;
+- common component health event vocabulary and fault-simulation fixtures.
 
 ## Optional UI
 
