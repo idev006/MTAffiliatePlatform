@@ -42,7 +42,7 @@ def workflow() -> SceneWorkflow:
         terminal_scenes={SCENES[-1]},
         transitions=[
             SceneTransition(from_scene=source, to_scene=target, action_id=action)
-            for source, target, action in zip(SCENES, SCENES[1:], ACTIONS, strict=True)
+            for source, target, action in zip(SCENES[:-1], SCENES[1:], ACTIONS, strict=True)
         ],
     )
 
@@ -60,7 +60,7 @@ def runner(adapter: ScriptedAndroidAdapter) -> Program3WorkflowRunner:
 
 def evidence_for_full_success() -> list[SceneEvidence]:
     evidence: list[SceneEvidence] = []
-    for source, target in zip(SCENES, SCENES[1:], strict=True):
+    for source, target in zip(SCENES[:-1], SCENES[1:], strict=True):
         evidence.append(SceneEvidence(texts={source}))
         evidence.append(SceneEvidence(texts={target}))
     return evidence
