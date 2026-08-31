@@ -1,13 +1,21 @@
 from __future__ import annotations
 
-from mtaffiliate.domain.publishing.models import DuplicateDecision, PublishPlan, PublishingLedgerEntry
+from typing import ClassVar
+
+from mtaffiliate.domain.publishing.models import (
+    DuplicateDecision,
+    PublishingLedgerEntry,
+    PublishPlan,
+)
 
 
 class PublishingGuardEngine:
     """Pure Program 3 guard logic independent of Android/UI/persistence tools."""
 
-    terminal_duplicate_statuses = {"PUBLISHED", "CONFIRMED"}
-    ambiguous_statuses = {"POST_OUTCOME_UNKNOWN", "NEEDS_HUMAN"}
+    terminal_duplicate_statuses: ClassVar[frozenset[str]] = frozenset({"PUBLISHED", "CONFIRMED"})
+    ambiguous_statuses: ClassVar[frozenset[str]] = frozenset(
+        {"POST_OUTCOME_UNKNOWN", "NEEDS_HUMAN"}
+    )
 
     def evaluate_duplicate(
         self,
@@ -23,5 +31,8 @@ class PublishingGuardEngine:
         if any(entry.status in self.terminal_duplicate_statuses for entry in same_platform_video):
             return DuplicateDecision(allowed=False, reason="VIDEO_ALREADY_PUBLISHED_TO_PLATFORM")
         if any(entry.status in self.ambiguous_statuses for entry in same_platform_video):
-            return DuplicateDecision(allowed=False, reason="PUBLISH_OUTCOME_REQUIRES_RECONCILIATION")
+            return DuplicateDecision(
+                allowed=False,
+                reason="PUBLISH_OUTCOME_REQUIRES_RECONCILIATION",
+            )
         return DuplicateDecision(allowed=True, reason="NO_BLOCKING_PUBLISH_HISTORY")
