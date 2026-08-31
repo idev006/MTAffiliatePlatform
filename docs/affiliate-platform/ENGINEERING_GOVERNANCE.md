@@ -27,6 +27,9 @@ Objective, inputs/outputs, success/failure and non-goals are explicit.
 ### G2 Process
 Happy path, handoffs, retries, recovery, manual intervention, concurrency and backpressure are explicit.
 
+The process must be explainable through the control loop:
+`Input -> Sense -> Validate -> Decide -> Act -> Verify -> Record -> Feedback/Recover`.
+
 ### G3 Architecture
 Ownership and boundaries are explicit; SSOT authority is unique; adapters replaceable; scale does not require redesign.
 
@@ -34,7 +37,13 @@ Additional mandatory rules:
 - business logic is engine/application owned, not UI/adapter owned;
 - dependency direction is inward;
 - composition root owns concrete wiring;
-- UI remains optional for core execution.
+- UI remains optional for core execution;
+- every significant component has one authority owner;
+- a component cannot be considered complete if health detection or recovery ownership is undefined.
+
+Governing detail:
+- `SYSTEM_PHYSIOLOGY_MODEL.md`
+- `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`
 
 ### G4 Data
 Identity/provenance, unknown/null semantics, immutable history/current state, dedupe/idempotency and retention are explicit.
@@ -46,6 +55,15 @@ Commands/queries/results must use stable DTO/contracts rather than exposing UI w
 
 ### G6 Reliability
 Restart, checkpoint, ACK, ambiguous-state, failure isolation and endurance expectations are defined.
+
+Before Implementation Ready, reviewers must know:
+- how the component reports health;
+- how abnormal state is detected;
+- whether failure is retryable/non-retryable/ambiguous;
+- smallest failure-containment zone;
+- checkpoint/resume/reconciliation behavior;
+- quarantine/failover/human-escalation path;
+- how overload is handled without destabilizing unrelated work.
 
 ### G7 Configuration
 Configuration ownership, overrides and auditable effective configuration are explicit.
@@ -67,7 +85,8 @@ Before Implementation Ready:
 - required fake/in-memory adapters are known;
 - integration/compatibility environment needs are known;
 - physical devices/browser sessions are not required to test business logic that can be simulated;
-- critical state transitions and invariants have a test plan.
+- critical state transitions and invariants have a test plan;
+- sensing/health/fault signals can be simulated for resilience tests.
 
 Governing detail: `TEST_STRATEGY_AND_QUALITY_GATES.md`.
 
@@ -80,6 +99,8 @@ Every coding card/slice must satisfy `IMPLEMENTATION_READINESS_AND_DEFINITION_OF
 
 A team may begin foundation code only for areas whose boundaries/contracts are ready. Pending real-world validation must remain isolated behind ports/configuration and cannot be guessed into production policy.
 
+Every new component must also complete the component anatomy defined in `SYSTEM_PHYSIOLOGY_MODEL.md`: purpose, authority, input, process, output, communication, state, health, failure, recovery, resource budget and test path.
+
 ## Severity
 - CRITICAL — implementation prohibited.
 - HIGH — blocks IMPLEMENTATION_READY.
@@ -87,7 +108,7 @@ A team may begin foundation code only for areas whose boundaries/contracts are r
 - LOW — may defer if documented.
 
 ## Quality Priority
-`Correctness > Recoverability > Traceability > Testability > Maintainability > Throughput > Raw Speed`
+`Correctness > Recoverability > Traceability > Testability > Maintainability > Stable Throughput > Raw Speed`
 
 ## Architecture Drift Triggers
 
@@ -99,7 +120,11 @@ The following require review before merge:
 - new lifecycle owner duplicates existing SSOT;
 - retry is added without idempotency/reconciliation analysis;
 - long DB transaction spans remote/browser/device work;
-- physical-infrastructure-only implementation makes otherwise deterministic logic untestable.
+- physical-infrastructure-only implementation makes otherwise deterministic logic untestable;
+- a new component has no documented health signal or recovery/escalation path;
+- overload behavior relies on unbounded queue growth;
+- a silent/empty observation is interpreted as success without a validation rule;
+- an irreversible action is treated as successful merely because it was issued.
 
 ## Change Control
 When a material design defect/change is found:
@@ -108,12 +133,15 @@ When a material design defect/change is found:
 3. record ADR when material;
 4. update contracts/data/state models;
 5. update tests/test plan;
-6. review gates;
-7. resume implementation;
-8. verify conformance.
+6. review health/failure/recovery implications;
+7. review gates;
+8. resume implementation;
+9. verify conformance.
 
 ## Governing Companion Documents
 - `PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`
+- `SYSTEM_PHYSIOLOGY_MODEL.md`
+- `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`
 - `TEST_STRATEGY_AND_QUALITY_GATES.md`
 - `UI_SHELL_AND_PRESENTATION_ARCHITECTURE.md`
 - `IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`
