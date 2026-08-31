@@ -7,6 +7,11 @@ from threading import RLock
 
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
 from mtaffiliate.engines.product_intelligence_engine.service import ProductIntelligenceEngine
+from mtaffiliate.ports.repositories.ingestion import (
+    IngestionBatchConflictError,
+    IngestionBatchReceipt,
+    IngestionBatchStore,
+)
 from mtaffiliate.ports.repositories.product import ProductRepository
 
 
@@ -16,8 +21,23 @@ class IngestResult:
     received_count: int
 
 
-class IngestionBatchConflictError(ValueError):
-    """Raised when a batch_id is reused with a different payload."""
+class _EphemeralBatchStore:
+    """Default test/development store. Production composition should inject durable storage."""
+
+    def __init__(self) -> None:
+        self._items: dict[str, IngestionBatchReceipt] = {}
+        self._lock = RLock()
+
+    def get(self, batch_id: str) -> IngestionBatchReceipt | None:
+        with self._lock:
+            return self._items.get(batch_id)
+
+    def put(self, batch_id: str, receipt: IngestionBatchReceipt) -> None:
+        with self._lock:
+            existing = self._items.get(batch_id)
+            if existing is not None and existing != receipt:
+                raise IngestionBatchConflictError(f"batch_id collision: {batch_id}")
+            self._items.setdefault(batch_id, receipt)
 
 
 class Program1Service:
@@ -28,12 +48,13 @@ class Program1Service:
         *,
         shortlist_limit: int,
         minimum_score: float,
+        batch_store: IngestionBatchStore | None = None,
     ) -> None:
         self.repository = repository
         self.intelligence = intelligence
         self.shortlist_limit = shortlist_limit
         self.minimum_score = minimum_score
-        self._batches: dict[str, tuple[str, IngestResult]] = {}
+        self.batch_store = batch_store or _EphemeralBatchStore()
         self._batch_lock = RLock()
 
     @staticmethod
@@ -55,15 +76,24 @@ class Program1Service:
             raise ValueError("batch_id must be non-empty")
         fingerprint = self._batch_fingerprint(observations)
         with self._batch_lock:
-            previous = self._batches.get(batch_id)
+            previous = self.batch_store.get(batch_id)
             if previous is not None:
-                previous_fingerprint, previous_result = previous
-                if previous_fingerprint != fingerprint:
+                if previous.fingerprint != fingerprint:
                     raise IngestionBatchConflictError(f"batch_id collision: {batch_id}")
-                return previous_result
+                return IngestResult(
+                    accepted_count=previous.accepted_count,
+                    received_count=previous.received_count,
+                )
 
             result = self.ingest(observations)
-            self._batches[batch_id] = (fingerprint, result)
+            self.batch_store.put(
+                batch_id,
+                IngestionBatchReceipt(
+                    fingerprint=fingerprint,
+                    accepted_count=result.accepted_count,
+                    received_count=result.received_count,
+                ),
+            )
             return result
 
     def build_shortlist(self) -> list[ShortlistEntry]:
