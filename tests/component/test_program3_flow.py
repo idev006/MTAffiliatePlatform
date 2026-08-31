@@ -1,18 +1,15 @@
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 
-from mtaffiliate.adapters.persistence.inmemory.publishing import (
-    InMemoryPublishingLedgerRepository,
-)
+from mtaffiliate.adapters.persistence.inmemory.publishing import InMemoryPublishingLedgerRepository
 from mtaffiliate.application.program3 import Program3Service
 from mtaffiliate.domain.device.models import DeviceRecord
 from mtaffiliate.domain.publishing.models import ApprovedOfferRef, PublishPlan
 from mtaffiliate.domain.scene.models import SceneEvidence, SceneSignature
 from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
-from mtaffiliate.engines.publishing_guard_engine.service import (
-    PublishingGuardEngine,
-)
+from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
 from mtaffiliate.engines.scene_engine.service import SceneEngine
-
 
 NOW = datetime(2026, 8, 31, tzinfo=UTC)
 
