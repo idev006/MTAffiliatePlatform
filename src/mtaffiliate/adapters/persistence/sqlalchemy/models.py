@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -35,3 +35,50 @@ class IngestionBatchRow(Base):
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     accepted_count: Mapped[int] = mapped_column(Integer, nullable=False)
     received_count: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class AffiliateOfferObservationRow(Base):
+    __tablename__ = "affiliate_offer_observations"
+
+    observation_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    offer_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    product_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    platform: Mapped[str] = mapped_column(String(32), nullable=False)
+    shop_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    item_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    affiliate_account_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    seller_name: Mapped[str | None] = mapped_column(String(1024))
+    product_name: Mapped[str] = mapped_column(String(1024), nullable=False)
+    price_current: Mapped[Decimal | None] = mapped_column(Numeric(20, 4))
+    commission_rate: Mapped[float | None] = mapped_column(Float)
+    extra_commission_rate: Mapped[float | None] = mapped_column(Float)
+    rating: Mapped[float | None] = mapped_column(Float)
+    review_count: Mapped[int | None] = mapped_column(Integer)
+    sold_signal: Mapped[int | None] = mapped_column(Integer)
+    available: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+
+class AffiliateOfferSelectionRow(Base):
+    __tablename__ = "affiliate_offer_selections"
+
+    selection_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    preferred_offer_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    backup_offer_ids: Mapped[str] = mapped_column(String(4096), nullable=False)
+    affiliate_account_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    selected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(128), nullable=False)
+
+
+class PublishingLedgerRow(Base):
+    __tablename__ = "publishing_ledger"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    publish_job_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    platform: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    target_account_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    video_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    video_sha256: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(64), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
