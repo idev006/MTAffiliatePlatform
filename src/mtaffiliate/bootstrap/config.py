@@ -6,7 +6,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .paths import PathManager
 
@@ -24,16 +24,28 @@ class PathsConfig(BaseModel):
 
 
 class Program1ScoringConfig(BaseModel):
-    demand_weight: float = 1.0
-    rating_weight: float = 1.0
-    review_weight: float = 1.0
-    price_fit_weight: float = 1.0
+    demand_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    rating_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    review_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    price_fit_weight: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def validate_weight_sum(self) -> "Program1ScoringConfig":
+        if (
+            self.demand_weight
+            + self.rating_weight
+            + self.review_weight
+            + self.price_fit_weight
+            <= 0
+        ):
+            raise ValueError("at least one Program 1 scoring weight must be positive")
+        return self
 
 
 class Program1Config(BaseModel):
     platform: str = "shopee"
     shortlist_limit: int = Field(default=20, ge=1)
-    minimum_score: float = 0.0
+    minimum_score: float = Field(default=0.0, ge=0, le=100, allow_inf_nan=False)
     scoring: Program1ScoringConfig = Program1ScoringConfig()
 
 
