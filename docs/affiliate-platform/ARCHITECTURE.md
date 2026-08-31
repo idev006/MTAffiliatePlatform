@@ -19,6 +19,28 @@ The platform is organized as **three business domains plus one shared control pl
           Discovery Workers     Affiliate Workers      Publishing Workers
 ```
 
+## System Physiology Architecture Lens
+
+In addition to domain/component architecture, the platform is reviewed as a coordinated system using:
+
+`Input -> Sense -> Validate -> Decide -> Act -> Verify -> Record -> Feedback -> Recover`.
+
+Every implementation-significant component must have:
+- one clear purpose and authority owner;
+- explicit input/process/output contracts;
+- communication and durable-state boundaries;
+- health/detection signals;
+- known failure modes;
+- bounded recovery/escalation;
+- resource/admission considerations where relevant;
+- a fake/test-double verification path.
+
+The governing documents are:
+- `SYSTEM_PHYSIOLOGY_MODEL.md`;
+- `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md`.
+
+A component is not Implementation Ready merely because its happy path is known. Detection, containment and recovery are part of its architecture.
+
 ## Domain A — Product Intelligence
 Responsibilities:
 - ingest product observations
@@ -144,10 +166,29 @@ Each worker reports:
 Typical statuses:
 `ONLINE_IDLE`, `BUSY`, `DEGRADED`, `OFFLINE`, `NEEDS_ATTENTION`.
 
+Common component health vocabulary is:
+`HEALTHY`, `DEGRADED`, `PRESSURED`, `UNHEALTHY`, `QUARANTINED`, `OFFLINE`, `UNKNOWN`.
+
+Process liveness and execution eligibility are different. A process may be online but quarantined from new work.
+
 ## Orchestration Boundaries
 - Back Office Orchestrator: global job/business orchestration.
 - Device Host Manager: local Android device discovery, worker lifecycle and resource ownership.
 - Worker Runtime: scene/process/action execution for one active Android device.
+
+## Resource / Homeostasis Boundary
+Device Hosts and central orchestration must prevent overload rather than merely react after failure.
+
+Managed resources include:
+- CPU/RAM;
+- disk/log/outbox capacity;
+- USB/device stability;
+- stream slots/bandwidth;
+- DB writer pressure;
+- API/backlog pressure;
+- browser/session capacity.
+
+Admission policy favors controlled degradation and draining active work before overload collapse.
 
 ## Reliability Requirements
 
@@ -161,6 +202,10 @@ Typical statuses:
 8. Audit event for each important transition.
 9. Short database transactions; never hold SQL transactions while waiting on external UI/network work.
 10. Controlled degradation and admission control under resource pressure.
+11. Every important external action has a verification step appropriate to its risk.
+12. False silence/zero-result conditions must not be interpreted as success without validation.
+13. Failure is contained at the smallest feasible boundary: adapter -> worker -> device -> host -> control plane.
+14. Ambiguous irreversible outcomes use reconciliation/NEEDS_HUMAN, never blind duplicate action.
 
 ## Security / Compliance Boundary
 Architecture must not require bypassing platform authentication, access controls, anti-bot controls, or rate limiting. Adapters are replaceable so permitted workflows can change without rewriting business logic.
