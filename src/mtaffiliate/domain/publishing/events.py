@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import typing
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
-PublishOutcome = Literal[
+PublishOutcome = typing.Literal[
     "NOT_SUBMITTED",
     "POST_SUBMITTED",
     "POST_CONFIRMED",
@@ -39,5 +38,5 @@ class ReconciliationEvidence(BaseModel):
 
 
 class ReconciliationDecision(BaseModel):
-    resolved_status: Literal["CONFIRMED", "NOT_PUBLISHED", "NEEDS_HUMAN"]
+    resolved_status: typing.Literal["CONFIRMED", "NOT_PUBLISHED", "NEEDS_HUMAN"]
     reason: str = Field(min_length=1)
