@@ -1,7 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from decimal import Decimal
-from pathlib import Path
 from threading import Barrier
 
 import pytest
