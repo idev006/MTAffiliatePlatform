@@ -6,10 +6,11 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class PathManager:
-    """Resolve project/runtime-owned paths from explicit roots.
+    """Resolve project/runtime-owned paths from explicit relative roots.
 
     Domain/application code should pass logical/relative references. Absolute
-    paths are produced only here at the infrastructure boundary.
+    paths are produced only here at the infrastructure boundary. Managed paths
+    are not allowed to escape the project root.
     """
 
     project_root: Path
@@ -40,7 +41,13 @@ class PathManager:
     @staticmethod
     def _resolve_under(root: Path, value: str | Path) -> Path:
         candidate = Path(value)
-        resolved = candidate.resolve() if candidate.is_absolute() else (root / candidate).resolve()
+        if candidate.is_absolute():
+            raise ValueError("managed paths must be relative")
+        resolved = (root / candidate).resolve()
+        try:
+            resolved.relative_to(root)
+        except ValueError as exc:
+            raise ValueError("managed path escapes project root") from exc
         return resolved
 
     def ensure_runtime_dirs(self) -> None:
