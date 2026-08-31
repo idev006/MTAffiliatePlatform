@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
+from mtaffiliate.domain.product.models import ProductObservation
+
 
 class IngestionBatchConflictError(ValueError):
     """Raised when a batch_id is reused with a different payload."""
@@ -15,7 +17,12 @@ class IngestionBatchReceipt:
     received_count: int
 
 
-class IngestionBatchStore(Protocol):
-    def get(self, batch_id: str) -> IngestionBatchReceipt | None: ...
+class IngestionBatchIngestor(Protocol):
+    """Atomically persist one logical batch and its durable receipt."""
 
-    def put(self, batch_id: str, receipt: IngestionBatchReceipt) -> None: ...
+    def ingest_batch(
+        self,
+        batch_id: str,
+        fingerprint: str,
+        observations: list[ProductObservation],
+    ) -> IngestionBatchReceipt: ...
