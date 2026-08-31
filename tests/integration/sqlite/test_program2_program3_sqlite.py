@@ -1,5 +1,7 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from mtaffiliate.adapters.persistence.sqlalchemy.affiliate_offer import (
     SQLAlchemyAffiliateOfferRepository,
 )
@@ -20,6 +22,8 @@ from mtaffiliate.engines.affiliate_offer_engine.service import (
     OfferScoringPolicy,
 )
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
+
+pytestmark = pytest.mark.integration
 
 
 def offer() -> AffiliateOfferObservation:
