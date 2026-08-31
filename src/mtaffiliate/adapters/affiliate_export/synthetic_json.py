@@ -23,7 +23,7 @@ class SyntheticJsonOfferExportParser:
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise ValueError("invalid export artifact content") from exc
         if not isinstance(payload, list):
-            raise ValueError("export artifact root must be a list")
+            raise TypeError("export artifact root must be a list")
         links = [AffiliateLink.model_validate(item) for item in payload]
         if any(link.affiliate_account_id != artifact.affiliate_account_id for link in links):
             raise ValueError("export artifact contains cross-account link data")
