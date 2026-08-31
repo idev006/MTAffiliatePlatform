@@ -3,3 +3,4 @@ environment = "portable"
 
 [database]
 url = "sqlite:///data/app.db"
+auto_migrate = true
