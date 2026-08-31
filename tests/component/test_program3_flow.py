@@ -8,7 +8,9 @@ from mtaffiliate.domain.device.models import DeviceRecord
 from mtaffiliate.domain.publishing.models import ApprovedOfferRef, PublishPlan
 from mtaffiliate.domain.scene.models import SceneEvidence, SceneSignature
 from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
-from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
+from mtaffiliate.engines.publishing_guard_engine.service import (
+    PublishingGuardEngine,
+)
 from mtaffiliate.engines.scene_engine.service import SceneEngine
 
 
