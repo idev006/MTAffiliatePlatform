@@ -103,6 +103,37 @@ Decision:
 
 Governing record: `REPOSITORY_MIGRATION_2026-08-31.md`.
 
+## ADR-032 — Engine-First / Headless-First Core
+**Status: Accepted — 2026-08-31**
+
+Business rules, state machines, ranking, duplicate policy, publishing guards and Scene/recovery logic live in domain engines/application services that run without graphical UI.
+
+Development order where applicable:
+`Domain -> Engine/Application -> Port -> Fake/Test -> Concrete Adapter -> API/CLI -> UI`.
+
+Governing record: `PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`.
+
+## ADR-033 — UI Is Optional Presentation Shell
+**Status: Accepted — 2026-08-31**
+
+PySide6 remains the baseline desktop UI technology when a desktop interface is useful, but the UI is not required for core execution and owns no canonical business logic/state. CLI/API/test harnesses must be able to exercise the same application use cases.
+
+Governing record: `UI_SHELL_AND_PRESENTATION_ARCHITECTURE.md`.
+
+## ADR-034 — Testability Is an Architecture Gate
+**Status: Accepted — 2026-08-31**
+
+Critical business behavior must be testable without network/browser/Android/UI using deterministic inputs and fake/in-memory ports. Unit/component/contract/integration/resilience/compatibility tests are separate layers. Physical-device tests validate adapters and real-world behavior, not every business rule.
+
+Governing record: `TEST_STRATEGY_AND_QUALITY_GATES.md`.
+
+## ADR-035 — Inward Dependency Rule / Composition Root
+**Status: Accepted — 2026-08-31**
+
+Domain/engines cannot depend on FastAPI, PySide6, SQLAlchemy, browser APIs or Android tools. Infrastructure implements ports and is wired in a composition root. Architecture dependency checks must be added to CI during foundation implementation.
+
+Governing record: `PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`.
+
 ## Pending Validation / Implementation Gates
 - Product Scoring Model v1 exact formula.
 - Affiliate Offer Scoring Model v1 exact formula.
@@ -115,3 +146,5 @@ Governing record: `REPOSITORY_MIGRATION_2026-08-31.md`.
 - video fingerprint algorithm/threshold validation.
 - device-host/screen-stream capacity benchmark.
 - numeric pacing/retry defaults from endurance testing.
+
+The pending items block production completion of affected features, but do not block foundation code that is isolated behind the accepted ports/contracts and test doubles.
