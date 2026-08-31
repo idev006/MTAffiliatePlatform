@@ -1,4 +1,4 @@
-"""program1 product observations
+"""program1 durable persistence baseline
 
 Revision ID: 0001_program1
 Revises:
@@ -39,8 +39,17 @@ def upgrade() -> None:
     op.create_index("ix_product_observations_item_id", "product_observations", ["item_id"])
     op.create_index("ix_product_observations_collected_at", "product_observations", ["collected_at"])
 
+    op.create_table(
+        "ingestion_batches",
+        sa.Column("batch_id", sa.String(length=128), primary_key=True),
+        sa.Column("fingerprint", sa.String(length=64), nullable=False),
+        sa.Column("accepted_count", sa.Integer(), nullable=False),
+        sa.Column("received_count", sa.Integer(), nullable=False),
+    )
+
 
 def downgrade() -> None:
+    op.drop_table("ingestion_batches")
     op.drop_index("ix_product_observations_collected_at", table_name="product_observations")
     op.drop_index("ix_product_observations_item_id", table_name="product_observations")
     op.drop_index("ix_product_observations_shop_id", table_name="product_observations")
