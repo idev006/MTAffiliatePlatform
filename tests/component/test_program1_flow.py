@@ -24,7 +24,7 @@ def test_ingest_to_shortlist_thin_slice() -> None:
         item_id="i1",
         collected_at=datetime.now(UTC),
         product_name="Fixture product",
-        price_current=Decimal("299"),
+        price_current=Decimal(299),
         sold_signal=100,
         rating=4.8,
         review_count=50,
