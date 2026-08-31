@@ -9,8 +9,8 @@ from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
 from mtaffiliate.engines.product_intelligence_engine.service import ProductIntelligenceEngine
 from mtaffiliate.ports.repositories.ingestion import (
     IngestionBatchConflictError,
+    IngestionBatchIngestor,
     IngestionBatchReceipt,
-    IngestionBatchStore,
 )
 from mtaffiliate.ports.repositories.product import ProductRepository
 
@@ -21,23 +21,35 @@ class IngestResult:
     received_count: int
 
 
-class _EphemeralBatchStore:
-    """Default test/development store. Production composition should inject durable storage."""
+class _EphemeralBatchIngestor:
+    """Atomic within one process; production composition injects a durable ingestor."""
 
-    def __init__(self) -> None:
+    def __init__(self, repository: ProductRepository) -> None:
+        self._repository = repository
         self._items: dict[str, IngestionBatchReceipt] = {}
         self._lock = RLock()
 
-    def get(self, batch_id: str) -> IngestionBatchReceipt | None:
-        with self._lock:
-            return self._items.get(batch_id)
-
-    def put(self, batch_id: str, receipt: IngestionBatchReceipt) -> None:
+    def ingest_batch(
+        self,
+        batch_id: str,
+        fingerprint: str,
+        observations: list[ProductObservation],
+    ) -> IngestionBatchReceipt:
         with self._lock:
             existing = self._items.get(batch_id)
-            if existing is not None and existing != receipt:
-                raise IngestionBatchConflictError(f"batch_id collision: {batch_id}")
-            self._items.setdefault(batch_id, receipt)
+            if existing is not None:
+                if existing.fingerprint != fingerprint:
+                    raise IngestionBatchConflictError(f"batch_id collision: {batch_id}")
+                return existing
+
+            accepted = self._repository.add_observations(observations)
+            receipt = IngestionBatchReceipt(
+                fingerprint=fingerprint,
+                accepted_count=accepted,
+                received_count=len(observations),
+            )
+            self._items[batch_id] = receipt
+            return receipt
 
 
 class Program1Service:
@@ -48,14 +60,13 @@ class Program1Service:
         *,
         shortlist_limit: int,
         minimum_score: float,
-        batch_store: IngestionBatchStore | None = None,
+        batch_ingestor: IngestionBatchIngestor | None = None,
     ) -> None:
         self.repository = repository
         self.intelligence = intelligence
         self.shortlist_limit = shortlist_limit
         self.minimum_score = minimum_score
-        self.batch_store = batch_store or _EphemeralBatchStore()
-        self._batch_lock = RLock()
+        self.batch_ingestor = batch_ingestor or _EphemeralBatchIngestor(repository)
 
     @staticmethod
     def _batch_fingerprint(observations: list[ProductObservation]) -> str:
@@ -74,27 +85,15 @@ class Program1Service:
     ) -> IngestResult:
         if not batch_id.strip():
             raise ValueError("batch_id must be non-empty")
-        fingerprint = self._batch_fingerprint(observations)
-        with self._batch_lock:
-            previous = self.batch_store.get(batch_id)
-            if previous is not None:
-                if previous.fingerprint != fingerprint:
-                    raise IngestionBatchConflictError(f"batch_id collision: {batch_id}")
-                return IngestResult(
-                    accepted_count=previous.accepted_count,
-                    received_count=previous.received_count,
-                )
-
-            result = self.ingest(observations)
-            self.batch_store.put(
-                batch_id,
-                IngestionBatchReceipt(
-                    fingerprint=fingerprint,
-                    accepted_count=result.accepted_count,
-                    received_count=result.received_count,
-                ),
-            )
-            return result
+        receipt = self.batch_ingestor.ingest_batch(
+            batch_id,
+            self._batch_fingerprint(observations),
+            observations,
+        )
+        return IngestResult(
+            accepted_count=receipt.accepted_count,
+            received_count=receipt.received_count,
+        )
 
     def build_shortlist(self) -> list[ShortlistEntry]:
         latest = self.repository.latest_observations()
