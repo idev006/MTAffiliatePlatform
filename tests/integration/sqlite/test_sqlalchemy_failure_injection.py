@@ -6,7 +6,10 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from mtaffiliate.adapters.persistence.sqlalchemy.ingestion import SQLAlchemyProgram1BatchIngestor
-from mtaffiliate.adapters.persistence.sqlalchemy.models import IngestionBatchRow, ProductObservationRow
+from mtaffiliate.adapters.persistence.sqlalchemy.models import (
+    IngestionBatchRow,
+    ProductObservationRow,
+)
 from mtaffiliate.adapters.persistence.sqlalchemy.product import SQLAlchemyProductRepository
 from mtaffiliate.domain.product.models import ProductObservation
 from mtaffiliate.ports.repositories.ingestion import IngestionBatchConflictError
@@ -50,9 +53,9 @@ def row_from(item: ProductObservation) -> ProductObservationRow:
 
 
 class FakeSession:
-    def __init__(self, *, gets=None, scalars=None, flush_errors=None) -> None:
+    def __init__(self, *, gets=None, scalar_values=None, flush_errors=None) -> None:
         self.gets = list(gets or [])
-        self.scalars = list(scalars or [])
+        self.scalar_values = list(scalar_values or [])
         self.flush_errors = list(flush_errors or [])
         self.added = []
 
@@ -72,10 +75,7 @@ class FakeSession:
         return self.gets.pop(0) if self.gets else None
 
     def scalar(self, *_args):
-        return self.scalars.pop(0) if self.scalars else None
-
-    def scalars(self, *_args):
-        raise AssertionError("not used")
+        return self.scalar_values.pop(0) if self.scalar_values else None
 
     def add(self, item) -> None:
         self.added.append(item)
@@ -87,85 +87,104 @@ class FakeSession:
                 raise error
 
 
-class FakeFactory:
-    def __init__(self, session: FakeSession) -> None:
-        self.session = session
+class SequenceFactory:
+    def __init__(self, *sessions: FakeSession) -> None:
+        self.sessions = list(sessions)
 
     def __call__(self) -> FakeSession:
-        return self.session
+        return self.sessions.pop(0)
 
 
 def integrity_error() -> IntegrityError:
     return IntegrityError("insert", {}, Exception("unique race"))
 
 
-def test_batch_claim_unique_race_returns_existing_same_receipt() -> None:
+def test_batch_claim_unique_race_retries_and_returns_existing_receipt() -> None:
     existing = IngestionBatchRow(
         batch_id="batch-1",
         fingerprint="abc",
         accepted_count=3,
         received_count=3,
     )
-    session = FakeSession(gets=[None, existing], flush_errors=[integrity_error()])
-    ingestor = SQLAlchemyProgram1BatchIngestor(FakeFactory(session))
+    first = FakeSession(gets=[None], flush_errors=[integrity_error()])
+    second = FakeSession(gets=[existing])
+    ingestor = SQLAlchemyProgram1BatchIngestor(SequenceFactory(first, second))
+
     receipt = ingestor.ingest_batch("batch-1", "abc", [])
+
     assert receipt.accepted_count == 3
     assert receipt.received_count == 3
 
 
-def test_batch_claim_unique_race_with_changed_payload_is_conflict() -> None:
+def test_batch_claim_unique_race_then_changed_payload_is_conflict() -> None:
     existing = IngestionBatchRow(
         batch_id="batch-1",
         fingerprint="other",
         accepted_count=1,
         received_count=1,
     )
-    session = FakeSession(gets=[None, existing], flush_errors=[integrity_error()])
-    ingestor = SQLAlchemyProgram1BatchIngestor(FakeFactory(session))
+    first = FakeSession(gets=[None], flush_errors=[integrity_error()])
+    second = FakeSession(gets=[existing])
+    ingestor = SQLAlchemyProgram1BatchIngestor(SequenceFactory(first, second))
+
     with pytest.raises(IngestionBatchConflictError):
         ingestor.ingest_batch("batch-1", "abc", [])
 
 
-def test_observation_unique_race_inside_batch_is_idempotent() -> None:
+def test_observation_unique_race_retries_whole_batch_idempotently() -> None:
     item = observation()
-    existing = row_from(item)
-    session = FakeSession(
+    first = FakeSession(
         gets=[None],
-        scalars=[None, existing],
+        scalar_values=[None],
         flush_errors=[None, integrity_error()],
     )
-    ingestor = SQLAlchemyProgram1BatchIngestor(FakeFactory(session))
+    second = FakeSession(
+        gets=[None],
+        scalar_values=[row_from(item)],
+        flush_errors=[None],
+    )
+    ingestor = SQLAlchemyProgram1BatchIngestor(SequenceFactory(first, second))
+
     receipt = ingestor.ingest_batch("batch-1", "abc", [item])
+
     assert receipt.accepted_count == 0
     assert receipt.received_count == 1
 
 
-def test_observation_unique_race_inside_batch_detects_collision() -> None:
+def test_observation_unique_race_retries_and_detects_collision() -> None:
     incoming = observation("item-A")
-    existing = row_from(observation("item-B"))
-    session = FakeSession(
+    first = FakeSession(
         gets=[None],
-        scalars=[None, existing],
+        scalar_values=[None],
         flush_errors=[None, integrity_error()],
     )
-    ingestor = SQLAlchemyProgram1BatchIngestor(FakeFactory(session))
+    second = FakeSession(
+        gets=[None],
+        scalar_values=[row_from(observation("item-B"))],
+        flush_errors=[None],
+    )
+    ingestor = SQLAlchemyProgram1BatchIngestor(SequenceFactory(first, second))
+
     with pytest.raises(ObservationConflictError):
         ingestor.ingest_batch("batch-1", "abc", [incoming])
 
 
 def test_product_repository_unique_race_is_idempotent_for_same_fact() -> None:
     item = observation()
-    session = FakeSession(scalars=[None, row_from(item)], flush_errors=[integrity_error()])
-    repo = SQLAlchemyProductRepository(FakeFactory(session))
+    session = FakeSession(
+        scalar_values=[None, row_from(item)],
+        flush_errors=[integrity_error()],
+    )
+    repo = SQLAlchemyProductRepository(lambda: session)
     assert repo.add_observations([item]) == 0
 
 
 def test_product_repository_unique_race_detects_collision() -> None:
     incoming = observation("item-A")
     session = FakeSession(
-        scalars=[None, row_from(observation("item-B"))],
+        scalar_values=[None, row_from(observation("item-B"))],
         flush_errors=[integrity_error()],
     )
-    repo = SQLAlchemyProductRepository(FakeFactory(session))
+    repo = SQLAlchemyProductRepository(lambda: session)
     with pytest.raises(ObservationConflictError):
         repo.add_observations([incoming])
