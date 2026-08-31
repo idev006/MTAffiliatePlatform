@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from itertools import pairwise
+
 from mtaffiliate.adapters.android.scripted import ScriptedAndroidAdapter
 from mtaffiliate.application.program3_worker import Program3WorkerExecutor
 from mtaffiliate.application.program3_workflow import Program3WorkflowRunner
@@ -7,7 +9,6 @@ from mtaffiliate.domain.scene.models import SceneEvidence, SceneSignature
 from mtaffiliate.domain.scene.workflow import SceneTransition, SceneWorkflow
 from mtaffiliate.engines.scene_engine.service import SceneEngine
 from mtaffiliate.engines.scene_engine.workflow import SceneWorkflowEngine
-
 
 SCENES = [
     "VIDEO_SOURCE",
@@ -29,10 +30,7 @@ ACTIONS = [
 
 
 def signatures() -> list[SceneSignature]:
-    return [
-        SceneSignature(scene_id=scene, required_texts={scene})
-        for scene in SCENES
-    ]
+    return [SceneSignature(scene_id=scene, required_texts={scene}) for scene in SCENES]
 
 
 def workflow() -> SceneWorkflow:
@@ -42,7 +40,7 @@ def workflow() -> SceneWorkflow:
         terminal_scenes={SCENES[-1]},
         transitions=[
             SceneTransition(from_scene=source, to_scene=target, action_id=action)
-            for source, target, action in zip(SCENES[:-1], SCENES[1:], ACTIONS, strict=True)
+            for (source, target), action in zip(pairwise(SCENES), ACTIONS, strict=True)
         ],
     )
 
@@ -60,7 +58,7 @@ def runner(adapter: ScriptedAndroidAdapter) -> Program3WorkflowRunner:
 
 def evidence_for_full_success() -> list[SceneEvidence]:
     evidence: list[SceneEvidence] = []
-    for source, target in zip(SCENES[:-1], SCENES[1:], strict=True):
+    for source, target in pairwise(SCENES):
         evidence.append(SceneEvidence(texts={source}))
         evidence.append(SceneEvidence(texts={target}))
     return evidence
