@@ -166,11 +166,20 @@ TOML is the baseline human-editable configuration format. Typed settings, determ
 
 Governing record: `PATH_AND_CONFIGURATION_POLICY.md`.
 
+## ADR-040 — Step 1 Is Operationally Named Program 1
+**Status: Accepted — 2026-08-31**
+
+The former `Step 1 — Product Discovery / Product Intelligence` is operationally named **โปรแกรมที่ 1 (Program 1)** from this baseline onward. Historical documents using `Step 1` refer to the same bounded capability unless explicitly superseded.
+
+Program 1 is authorized for foundation implementation and fake-driven MVP thin slices under the governing Document-Driven / Project Must Follow Documents / Agile Kanban policies. Production completion remains gated by real Shopee evidence, scoring-model validation, identity validation and endurance/performance validation.
+
+Governing record: `PROGRAM1_IMPLEMENTATION_READINESS.md`.
+
 ## Pending Validation / Implementation Gates
 - Product Scoring Model v1 exact formula.
 - Affiliate Offer Scoring Model v1 exact formula.
 - Product/Offer identity validation against real Shopee data.
-- Step1→Step2 and Step2→Step3 final handoff schemas.
+- Program 1→Program 2 and Program 2→Program 3 final handoff schemas.
 - observation normalization contract.
 - real Shopee Android Scene inventory/signatures/selectors.
 - Safe Anchor / transition / recovery validation.
