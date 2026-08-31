@@ -60,17 +60,18 @@ Read in this order:
 3. `docs/affiliate-platform/WORKFLOW.md`
 4. `docs/affiliate-platform/ARCHITECTURE.md`
 5. `docs/affiliate-platform/SYSTEM_DIAGRAMS.md`
-6. `docs/affiliate-platform/SEQUENCE_DIAGRAMS.md`
-7. `docs/affiliate-platform/ENGINEERING_GOVERNANCE.md`
-8. `docs/affiliate-platform/PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`
-9. `docs/affiliate-platform/APPLICATION_AND_ENGINE_CONTRACTS.md`
-10. `docs/affiliate-platform/DATA_MODEL.md`
-11. `docs/affiliate-platform/TEST_STRATEGY_AND_QUALITY_GATES.md`
-12. `docs/affiliate-platform/IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`
-13. `docs/affiliate-platform/TECHNOLOGY_STACK.md`
-14. `docs/affiliate-platform/specs/README.md`
+6. `docs/affiliate-platform/INTEGRATION_DIAGRAMS.md`
+7. `docs/affiliate-platform/SEQUENCE_DIAGRAMS.md`
+8. `docs/affiliate-platform/ENGINEERING_GOVERNANCE.md`
+9. `docs/affiliate-platform/PROJECT_STRUCTURE_AND_ENGINE_ARCHITECTURE.md`
+10. `docs/affiliate-platform/APPLICATION_AND_ENGINE_CONTRACTS.md`
+11. `docs/affiliate-platform/DATA_MODEL.md`
+12. `docs/affiliate-platform/TEST_STRATEGY_AND_QUALITY_GATES.md`
+13. `docs/affiliate-platform/IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`
+14. `docs/affiliate-platform/TECHNOLOGY_STACK.md`
+15. `docs/affiliate-platform/specs/README.md`
 
-`SYSTEM_DIAGRAMS.md` contains context/component/use-case/swimlane/activity/state/deployment diagrams. `SEQUENCE_DIAGRAMS.md` is the normative runtime-collaboration pack for critical multi-component flows, including Step 1, Step 2, Step 3, ACK/outbox, leases, recovery, publish ambiguity, device-host orchestration, engine/API boundaries and ruleset versioning.
+`WORKFLOW.md` is the canonical business pipeline. `SYSTEM_DIAGRAMS.md` contains context/component/use-case/swimlane/activity/state/deployment views. `INTEGRATION_DIAGRAMS.md` defines logical, step-to-step, runtime, protocol, SSOT, failure-boundary and test-integration views. `SEQUENCE_DIAGRAMS.md` is the normative runtime-collaboration pack for critical multi-component flows, including Step 1, Step 2, Step 3, ACK/outbox, leases, recovery, publish ambiguity, device-host orchestration, engine/API boundaries and ruleset versioning.
 
 ## Foundation Implementation Boundary
 
