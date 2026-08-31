@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  backoffice-core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,5 +18,28 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Ruff
         run: ruff check src tests
-      - name: Pytest
-        run: pytest
+      - name: Core and contract tests with branch coverage
+        run: >-
+          pytest -m 'not stress'
+          --cov=mtaffiliate.domain.product
+          --cov=mtaffiliate.engines.product_intelligence_engine
+          --cov=mtaffiliate.application.program1
+          --cov=mtaffiliate.bootstrap
+          --cov=mtaffiliate.adapters.persistence.inmemory
+          --cov=mtaffiliate.interfaces.api
+          --cov-branch
+          --cov-report=term-missing
+          --cov-fail-under=95
+
+  backoffice-stress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Stress suite
+        run: pytest -m stress --timeout=60
