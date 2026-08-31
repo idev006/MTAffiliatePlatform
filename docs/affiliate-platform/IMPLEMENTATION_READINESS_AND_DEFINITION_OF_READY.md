@@ -49,6 +49,26 @@ A development slice may enter coding only when all applicable items are satisfie
 - constraints/concurrency/versioning requirements are known;
 - migration impact is known.
 
+### Paths / Filesystem
+- managed runtime paths are identified;
+- path ownership/root is defined;
+- relative/logical storage is used where practical;
+- PathManager/RuntimePaths is the resolution boundary;
+- no developer-specific absolute path assumption exists;
+- test path uses a temporary/injected root;
+- packaging/source-run behavior is considered if affected.
+
+### Configuration
+- mutable values are classified as config/rules/invariant;
+- tunable values are not hidden source constants;
+- TOML location/profile is known where applicable;
+- precedence/override semantics are explicit;
+- settings are typed/validated;
+- secret handling is separated from committed TOML;
+- running-job policy version behavior is defined where config affects semantics.
+
+Governing detail: `PATH_AND_CONFIGURATION_POLICY.md`.
+
 ### External Adapter
 - required capability is defined semantically;
 - vendor/tool-specific details remain adapter-local;
@@ -60,7 +80,8 @@ A development slice may enter coding only when all applicable items are satisfie
 - negative/error cases are enumerated;
 - required fake/fixture exists or is part of the slice;
 - integration environment needs are explicit;
-- resilience/concurrency cases are identified.
+- resilience/concurrency cases are identified;
+- filesystem/config tests use temporary roots/profiles where applicable.
 
 ### Observability
 - important structured events/log fields are known;
@@ -91,7 +112,10 @@ A development slice is Done only when:
 - documentation and ADRs are updated for material changes;
 - no known CRITICAL/HIGH defect remains;
 - code review confirms UI/adapter boundaries are respected;
-- rollback/recovery behavior is known where deployment/data changes occur.
+- rollback/recovery behavior is known where deployment/data changes occur;
+- no developer-specific absolute paths were introduced;
+- configurable operational/business values are centralized and typed;
+- TOML/profile changes include validation/test coverage when applicable.
 
 ## 5. Foundation Implementation Backlog — Recommended Order
 
@@ -101,11 +125,15 @@ Deliver:
 - package boundaries;
 - pyproject tooling;
 - test directories;
-- bootstrap/composition root.
+- bootstrap/composition root;
+- baseline `config/` directory and TOML profiles;
+- PathManager/RuntimePaths contract.
 
 Acceptance:
 - empty engines/application/ports/adapters import correctly;
-- architecture dependency test exists.
+- architecture dependency test exists;
+- temp-root path test exists;
+- source execution does not depend on current working directory.
 
 ### FND-002 Shared result/error/identity primitives
 Deliver:
@@ -118,18 +146,22 @@ Deliver:
 Acceptance:
 - deterministic unit tests.
 
-### FND-003 Configuration system
+### FND-003 Configuration and Path System
 Deliver:
-- Pydantic settings;
-- portable/farm profiles;
+- Pydantic typed settings;
+- TOML loader;
+- default/portable/farm/test profiles;
+- deterministic precedence;
+- PathManager/RuntimePaths implementation;
 - secret references separated from ordinary config;
-- effective configuration reporting.
+- effective configuration reporting with secret redaction;
+- packaged/source-run path tests.
 
 ### FND-004 Persistence abstraction
 Deliver:
 - SQLAlchemy base/infrastructure;
 - UnitOfWork/Repository contracts;
-- SQLite adapter;
+- SQLite adapter using PathManager-resolved DB location;
 - PostgreSQL adapter test harness;
 - Alembic baseline.
 
@@ -139,7 +171,8 @@ Deliver:
 - lease/idempotency/version rules;
 - in-memory repository;
 - SQL repositories;
-- tests including crash/ACK/retry scenarios.
+- tests including crash/ACK/retry scenarios;
+- timing/retry policy injected via typed configuration rather than scattered constants.
 
 ### FND-006 API foundation
 Deliver:
@@ -155,7 +188,8 @@ Deliver:
 - capability advertisement;
 - heartbeat;
 - lease/renew/result/ACK;
-- local outbox reference behavior.
+- local outbox reference behavior;
+- outbox path/limits from PathManager + typed settings.
 
 ### FND-008 Step 1 thin slice
 Input observation -> normalize -> persist -> score -> shortlist.
@@ -203,6 +237,8 @@ Outputs:
 State/invariants:
 Ports/adapters:
 Persistence/transaction:
+Paths/filesystem:
+Configuration/TOML:
 Idempotency/concurrency:
 Errors/recovery:
 Observability:
@@ -225,14 +261,20 @@ The following block readiness unless explicitly approved:
 - one mutable status field representing multiple independent lifecycles;
 - physical-device-only tests for logic that can be simulated;
 - hidden constants for business policy that should be configuration/rules;
-- coding against assumed Shopee UI details not yet observed/validated.
+- coding against assumed Shopee UI details not yet observed/validated;
+- developer/machine-specific absolute paths in source;
+- canonical path behavior dependent on current working directory;
+- direct filesystem path construction scattered across domain/application code;
+- domain/engine modules loading TOML/environment directly;
+- secrets committed in ordinary configuration files.
 
 ## 8. Current Platform Readiness Assessment
 
 Ready to begin foundation implementation:
 - project skeleton;
 - domain/application/port structure;
-- configuration foundation;
+- PathManager/RuntimePaths foundation;
+- TOML typed configuration foundation;
 - SQLAlchemy/Alembic foundation;
 - Shared Job Engine;
 - API/common contracts;
