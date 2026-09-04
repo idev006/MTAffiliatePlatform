@@ -168,7 +168,8 @@ def test_happy_path_is_durable_and_confirmed_without_ui() -> None:
     assert pre.state is PreSubmitDecisionState.ALLOW_SUBMIT
 
     submitted = service.record_post_submitted(
-        decision=pre,
+        decision_id=pre.decision_id,
+        lease_token="lease-token",
         submitted_at=NOW + timedelta(minutes=1, seconds=1),
         idempotency_key="submit-attempt-1",
         evidence_refs=("tap-submit-1",),
@@ -288,7 +289,8 @@ def test_pre_submit_fails_closed_for_scene_account_staleness_and_prior_submissio
         evaluated_at=NOW + timedelta(minutes=1),
     )
     service.record_post_submitted(
-        decision=good,
+        decision_id=good.decision_id,
+        lease_token="lease-token",
         submitted_at=NOW + timedelta(minutes=1, seconds=1),
         idempotency_key="submit-1",
     )
@@ -318,19 +320,22 @@ def test_post_submitted_is_idempotent_and_conflicting_attempt_is_rejected() -> N
         evaluated_at=NOW + timedelta(minutes=1),
     )
     first = service.record_post_submitted(
-        decision=pre,
+        decision_id=pre.decision_id,
+        lease_token="lease-token",
         submitted_at=NOW + timedelta(minutes=1, seconds=1),
         idempotency_key="submit-1",
     )
     replay = service.record_post_submitted(
-        decision=pre,
+        decision_id=pre.decision_id,
+        lease_token="lease-token",
         submitted_at=NOW + timedelta(minutes=5),
         idempotency_key="submit-1",
     )
     assert replay == first
     with pytest.raises(ValueError, match="different submission"):
         service.record_post_submitted(
-            decision=pre,
+            decision_id=pre.decision_id,
+        lease_token="lease-token",
             submitted_at=NOW + timedelta(minutes=6),
             idempotency_key="submit-2",
         )
@@ -349,7 +354,8 @@ def test_reconciliation_never_blindly_retries_unknown_outcome() -> None:
         evaluated_at=NOW + timedelta(minutes=1),
     )
     submitted = service.record_post_submitted(
-        decision=pre,
+        decision_id=pre.decision_id,
+        lease_token="lease-token",
         submitted_at=NOW + timedelta(minutes=1, seconds=1),
         idempotency_key="submit-1",
     )
