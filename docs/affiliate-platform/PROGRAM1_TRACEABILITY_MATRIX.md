@@ -52,6 +52,8 @@ Business Objective
 | Durable data | `DATA_MODEL.md` |
 | Program 1 -> 2 boundary | `PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md` |
 | Current handoff/status | `PROGRAM1_CURRENT_STATE.md` |
+| Collection router/profile registry | `PROGRAM1_COLLECTION_ROUTER_AND_PROFILE_REGISTRY.md` |
+| Live evidence promotion | `CONTROLLED_PRODUCTION_EVIDENCE_VALIDATION_STANDARD.md` + `PRODUCTION_EVIDENCE_PROMOTION_MATRIX.md` |
 | Platform decisions | `DECISION_LOG.md` |
 | Evidence | `docs/affiliate-platform/evidence/*` |
 
