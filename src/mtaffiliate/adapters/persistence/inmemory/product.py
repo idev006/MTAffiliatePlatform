@@ -42,3 +42,18 @@ class InMemoryProductRepository:
                 ):
                     latest[observation.canonical_key] = observation
             return list(latest.values())
+
+    def observation_history(
+        self,
+        product_key: tuple[str, str, str],
+    ) -> list[ProductObservation]:
+        with self._lock:
+            items = [
+                observation
+                for observation in self._observations
+                if observation.canonical_key == product_key
+            ]
+        return sorted(
+            items,
+            key=lambda item: (item.collected_at, item.observation_id),
+        )
