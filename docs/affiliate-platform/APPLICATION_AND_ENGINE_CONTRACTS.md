@@ -120,7 +120,9 @@ Input:
 ### CompleteJob / FailJob / NeedsHuman
 Transitions are validated by Job Engine, not repository adapter.
 
-## 7. Product Intelligence Contracts
+## 7. Program 1 — Affiliate Opportunity Intelligence Contracts
+
+Governing strategy: `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`.
 
 ### IngestProductObservationBatch
 Input:
@@ -134,7 +136,44 @@ Output:
 - rejected items/reasons
 - durable ACK identity
 
+### DeriveOpportunityFeatures
+Input:
+- campaign_id;
+- affiliate/business hypothesis reference;
+- product_ids or eligible set reference;
+- normalized observation/history reference;
+- feature_policy_version;
+- feature/reference timestamp.
+
+Output per product:
+- versioned feature values;
+- feature evidence/provenance references;
+- data sufficiency/unknown state;
+- uncertainty/freshness metadata.
+
+Features may cover demand, momentum/timing, buyer-intent context, price/value, seller confidence, competition/saturation, contentability, risk and approved cross-program economic context where contracts allow.
+
+### EvaluateOpportunity
+Input:
+- campaign_id;
+- product_ids or eligible set reference;
+- opportunity_policy_version;
+- feature snapshot/reference timestamp;
+- audience/account/campaign context where applicable.
+
+Output per product:
+- qualification state;
+- recommended action such as TEST_NOW / WATCH / SCALE / HOLD / DEPRIORITIZE / STOP / NEEDS_EVIDENCE where supported by the active policy;
+- Opportunity Thesis / explanation;
+- risks/uncertainties;
+- evidence freshness;
+- optional component scores;
+- total score only when an approved scoring model exists;
+- policy/model version.
+
 ### ScoreProducts
+This remains a compatible specialized contract for approved scoring models.
+
 Input:
 - campaign_id
 - product_ids or eligible set reference
@@ -147,16 +186,18 @@ Output per product:
 - explanation/reasons
 - model version
 
+A production score must not be invented merely to satisfy this contract. Until validated, qualification/features/opportunity thesis may drive shortlist decisions.
+
 ### BuildShortlist
 Input:
-- campaign_id
-- scored product references
-- shortlist ruleset/version
+- campaign_id;
+- evaluated/scored product references;
+- shortlist ruleset/version.
 
 Output:
-- shortlist decisions with reasons.
+- shortlist/action-candidate decisions with reasons, evidence freshness and decision provenance.
 
-The engine must produce deterministic output for the same normalized facts + model version.
+The engine must produce deterministic output for the same normalized facts/features/context + policy/model version.
 
 ## 8. Affiliate Offer Contracts
 
