@@ -99,7 +99,7 @@ class ObservationBatch(BaseModel):
 
 
 class OfferObservationBatch(BaseModel):
-    batch_id: str = Field(min_length=1)
+    batch_id: str = Field(default="legacy-unbound-batch-v1", min_length=1)
     observations: list[AffiliateOfferObservation]
     job_id: str | None = Field(default=None, min_length=1)
     worker_id: str | None = Field(default=None, min_length=1)
