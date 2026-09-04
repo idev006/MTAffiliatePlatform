@@ -291,6 +291,37 @@ async def extension_command(page, message: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+async def drive_background_until(
+    page,
+    predicate,
+    *,
+    timeout: float,
+    label: str,
+    interval: float = 0.25,
+) -> list[dict[str, Any]]:
+    """Drive the same bounded background cycle exposed to chrome.alarms.
+
+    Startup reconciliation is still proven independently before this helper is used.
+    Explicit cycle driving removes CI dependence on Chromium alarm scheduling latency
+    while exercising the real extension background runtime, tabs, injection, storage,
+    transport, ACK and Shared Job lifecycle.
+    """
+    deadline = time.monotonic() + timeout
+    transcript: list[dict[str, Any]] = []
+    while time.monotonic() < deadline:
+        if predicate():
+            return transcript
+        result = await extension_command(page, {"type": "PROGRAM1_RUN_BACKGROUND_CYCLE"})
+        transcript.append(result)
+        if not result.get("ok") and not result.get("skipped"):
+            raise RuntimeError(f"{label} background cycle failed: {result}")
+        await asyncio.sleep(interval)
+    status = await extension_command(page, {"type": "PROGRAM1_GET_PROCESS_STATUS"})
+    raise TimeoutError(
+        f"timed out waiting for {label}; status={json.dumps(status, default=str)}"
+    )
+
+
 async def open_control_page(context: BrowserContext, extension_id: str):
     page = await context.new_page()
     await page.goto(f"{EXTENSION_SCHEME}{extension_id}/dist/sidepanel.html", wait_until="domcontentloaded")
@@ -402,7 +433,8 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
             if not status_after.get("run_state", {}).get("desired"):
                 raise AssertionError(f"desired run state lost after restart: {status_after}")
 
-            await wait_until(
+            restart_transcript = await drive_background_until(
+                control2,
                 lambda: backend.snapshot()["job_state"] == "COMPLETED",
                 timeout=25,
                 label="job completion after restart",
@@ -410,6 +442,7 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
             await asyncio.sleep(0.5)
             final_status = await extension_command(control2, {"type": "PROGRAM1_GET_PROCESS_STATUS"})
             snapshot = backend.snapshot()
+            report["restart_cycle_transcript"] = restart_transcript
 
             if len(snapshot["observation_batches"]) != 2:
                 raise AssertionError(f"expected exactly 2 observation batches, got {len(snapshot['observation_batches'])}")
@@ -438,6 +471,12 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
             report["backend_final"] = snapshot
             report["passed"] = True
             await context2.close()
+    except Exception as error:
+        report["passed"] = False
+        report["error"] = repr(error)
+        report["backend_failure_snapshot"] = backend.snapshot()
+        print(json.dumps(report, ensure_ascii=False, indent=2, default=str), flush=True)
+        raise
     finally:
         backend.stop()
 
