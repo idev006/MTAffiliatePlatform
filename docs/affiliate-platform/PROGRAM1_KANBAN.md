@@ -55,12 +55,12 @@ No fixed "final architecture" is assumed. Architecture evolves through versioned
 - [x] P1-F Opportunity Decision / Thesis / TEST_NOW-NEEDS_EVIDENCE behavior
 - [x] P1-G typed QualifiedOpportunityHandoff into Program 2
 - [x] Program 1 conformance gate
-- [x] Program 1 browser extension build/test suite (82/82)
+- [x] Program 1 browser extension build/test suite (current CI-authoritative suite)
 - [x] deterministic platform closed-loop contract through Programs 1 -> 2 -> 3
 
 ### ENGINEERING / PRODUCT FOLLOW-UP
 
-- [ ] P1-C continue hardening worker delivery quarantine/ambiguous ACK observability
+- [x] P1-C worker delivery reliability: failure classification, durable poison quarantine, ACK ambiguity fail-closed, quarantine telemetry
 - [ ] P1-D continue splitting/promoting collection profiles as live evidence accumulates
 - [ ] P1-H full Chromium-hosted deterministic browser fixture E2E beyond extension unit/component suites
 - [ ] P1-M Outcome Attribution Input when downstream analytics is available
