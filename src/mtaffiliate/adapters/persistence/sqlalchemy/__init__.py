@@ -4,6 +4,7 @@ from .job import SQLAlchemyJobRepository
 from .product import SQLAlchemyProductRepository
 from .program1_opportunity import SQLAlchemyProgram1OpportunityRepository
 from .program1_strategy import SQLAlchemyProgram1StrategyRepository
+from .program2_artifact import SQLAlchemyProgram2ArtifactRepository
 from .program2_decision import SQLAlchemyProgram2DecisionRepository
 from .program2_work import SQLAlchemyProgram2WorkRepository
 from .worker_registry import SQLAlchemyWorkerRegistryRepository
@@ -14,6 +15,7 @@ __all__ = [
     "SQLAlchemyProgram1BatchIngestor",
     "SQLAlchemyProgram1OpportunityRepository",
     "SQLAlchemyProgram1StrategyRepository",
+    "SQLAlchemyProgram2ArtifactRepository",
     "SQLAlchemyProgram2DecisionRepository",
     "SQLAlchemyProgram2WorkRepository",
     "SQLAlchemyWorkerRegistryRepository",
