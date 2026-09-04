@@ -88,3 +88,32 @@ def test_planner_rejects_unplanned_signal_to_prevent_collect_because_available()
             signals=[signal("demand"), signal("rating")],
             discovery_plan=plan("demand"),
         )
+
+
+def test_planner_rejects_campaign_mismatch() -> None:
+    mismatched = plan("demand").model_copy(update={"campaign_id": "campaign-other"})
+    with pytest.raises(ValueError, match="campaign must match"):
+        Program1StrategyPlanner().build(
+            hypothesis=hypothesis(),
+            signals=[signal("demand")],
+            discovery_plan=mismatched,
+        )
+
+
+def test_planner_rejects_plan_for_other_hypothesis() -> None:
+    mismatched = plan("demand").model_copy(update={"hypothesis_id": "hyp-other"})
+    with pytest.raises(ValueError, match="must reference the supplied hypothesis"):
+        Program1StrategyPlanner().build(
+            hypothesis=hypothesis(),
+            signals=[signal("demand")],
+            discovery_plan=mismatched,
+        )
+
+
+def test_planner_rejects_duplicate_signal_ids() -> None:
+    with pytest.raises(ValueError, match="duplicate signal_id"):
+        Program1StrategyPlanner().build(
+            hypothesis=hypothesis(),
+            signals=[signal("demand"), signal("demand")],
+            discovery_plan=plan("demand"),
+        )
