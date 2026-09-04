@@ -11,7 +11,6 @@ from mtaffiliate.engines.shared_job_engine.service import (
     StaleLeaseError,
 )
 
-
 NOW = datetime(2026, 9, 4, 12, 0, tzinfo=UTC)
 LEASE = timedelta(minutes=5)
 
