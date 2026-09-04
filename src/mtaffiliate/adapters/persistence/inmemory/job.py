@@ -25,7 +25,7 @@ class InMemoryJobRepository:
             job_id = self._by_idempotency.get(idempotency_key)
             return self._jobs.get(job_id) if job_id is not None else None
 
-    def add(self, job: JobRecord) -> None:
+    def add_with_event(self, job: JobRecord, event: JobEvent) -> None:
         with self._lock:
             if job.job_id in self._jobs:
                 raise JobRepositoryConflictError(f"job already exists: {job.job_id}")
@@ -34,10 +34,19 @@ class InMemoryJobRepository:
                 raise JobRepositoryConflictError(
                     f"idempotency key already exists: {job.idempotency_key}"
                 )
+            if event.job_id != job.job_id or event.job_version != job.job_version:
+                raise ValueError("job event must match added job identity/version")
             self._jobs[job.job_id] = job
             self._by_idempotency[job.idempotency_key] = job.job_id
+            self._events.setdefault(job.job_id, []).append(event)
 
-    def replace(self, job: JobRecord, *, expected_version: int) -> None:
+    def replace_with_event(
+        self,
+        job: JobRecord,
+        event: JobEvent,
+        *,
+        expected_version: int,
+    ) -> None:
         with self._lock:
             current = self._jobs.get(job.job_id)
             if current is None:
@@ -47,15 +56,14 @@ class InMemoryJobRepository:
                     f"stale job version: expected {expected_version}, "
                     f"actual {current.job_version}"
                 )
+            if event.job_id != job.job_id or event.job_version != job.job_version:
+                raise ValueError("job event must match replacement job identity/version")
             self._jobs[job.job_id] = job
+            self._events.setdefault(job.job_id, []).append(event)
 
     def list_jobs(self) -> list[JobRecord]:
         with self._lock:
             return list(self._jobs.values())
-
-    def append_event(self, event: JobEvent) -> None:
-        with self._lock:
-            self._events.setdefault(event.job_id, []).append(event)
 
     def list_events(self, job_id: str) -> list[JobEvent]:
         with self._lock:
