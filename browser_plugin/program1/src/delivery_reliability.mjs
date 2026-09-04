@@ -38,7 +38,10 @@ export async function drainObservationOutbox({
   let sentCount = 0;
   let quarantinedCount = 0;
   let acceptedObservationCount = 0;
-  let failure = null;
+  const sentMessageIds = [];
+  const quarantinedMessageIds = [];
+  let lastFailure = null;
+  let blockingFailure = null;
 
   for (const message of messages) {
     attemptedCount += 1;
@@ -47,28 +50,34 @@ export async function drainObservationOutbox({
       validateAck(message.payload, ack);
       await remove(message.message_id);
       sentCount += 1;
+      sentMessageIds.push(message.message_id);
       acceptedObservationCount += ack.accepted_count;
     } catch (error) {
       const classified = classifyDeliveryFailure(error);
-      failure = { ...classified, message_id: message.message_id };
+      lastFailure = { ...classified, message_id: message.message_id };
       if (classified.action === "QUARANTINE_CONTINUE") {
         await quarantine(message.message_id, {
           category: classified.category,
           error: classified.message,
         });
         quarantinedCount += 1;
+        quarantinedMessageIds.push(message.message_id);
         continue;
       }
+      blockingFailure = lastFailure;
       break;
     }
   }
 
   return {
-    ok: failure === null,
+    ok: blockingFailure === null,
     attempted_count: attemptedCount,
     sent_count: sentCount,
+    sent_message_ids: sentMessageIds,
     quarantined_count: quarantinedCount,
+    quarantined_message_ids: quarantinedMessageIds,
     accepted_observation_count: acceptedObservationCount,
-    failure,
+    last_failure: lastFailure,
+    blocking_failure: blockingFailure,
   };
 }
