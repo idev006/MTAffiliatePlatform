@@ -157,8 +157,46 @@ Append-oriented observed facts:
 
 Unknown fields must remain unknown, not coerced to zero.
 
+### product_opportunity_features
+Versioned derived feature snapshots; never raw browser-worker truth:
+- opportunity_feature_id
+- product_id
+- campaign/audience/account context reference where applicable
+- feature_policy_id/version
+- feature/reference timestamp
+- demand features
+- momentum/timing features
+- buyer-intent/context features
+- price/value features
+- seller-confidence features
+- competition/saturation features
+- contentability features
+- risk/uncertainty features
+- approved cross-program economic feature references where applicable
+- evidence/source observation references
+- data-sufficiency/unknown state
+- calculated_at
+
+Feature fields may evolve through versioned schemas. Unknown values remain unknown.
+
+### product_opportunity_decisions
+Explainable Program 1 business decisions:
+- opportunity_decision_id
+- product_id
+- campaign/audience/account context reference where applicable
+- feature snapshot/reference
+- policy/model version
+- qualification state
+- recommended action
+- opportunity thesis / explanation
+- risks/uncertainties
+- evidence freshness
+- total/component score references nullable
+- decided_at
+- superseded_by nullable
+
 ### product_scores
-Versioned scoring output:
+Optional versioned scoring output for approved scoring models:
 - product_score_id
 - product_id
 - scoring_model_id/version
@@ -172,7 +210,8 @@ Versioned scoring output:
 - shortlist_entry_id
 - campaign_id
 - product_id
-- score reference
+- opportunity_decision reference
+- score reference nullable
 - decision_state
 - approved/rejected by/source
 - decision reason
@@ -474,7 +513,7 @@ Still not frozen:
 - final Shopee Product external identity semantics;
 - final Offer external identity/link semantics;
 - exact Step 1->2 and Step 2->3 DTO schemas;
-- exact scoring feature fields/formula;
+- exact opportunity feature schema and scoring formula/weights;
 - perceptual fingerprint algorithm/threshold;
 - final Scene/selector schema after real app capture;
 - final duplicate database constraint form across SQLite/PostgreSQL.
