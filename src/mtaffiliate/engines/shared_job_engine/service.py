@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from mtaffiliate.domain.job.models import JobCheckpoint, JobEvent, JobRecord, JobState
-from mtaffiliate.ports.repositories.job import JobRepository
+from mtaffiliate.ports.repositories.job import JobRepository, JobRepositoryConflictError
 
 
 class InvalidJobTransitionError(RuntimeError):
@@ -70,16 +70,31 @@ class SharedJobEngine:
             created_at=created_at,
             updated_at=created_at,
         )
-        self.repository.add_with_event(
-            job,
-            JobEvent(
-                event_type="JOB_CREATED",
-                job_id=job.job_id,
-                job_version=job.job_version,
-                emitted_at=created_at,
-            ),
+        event = JobEvent(
+            event_type="JOB_CREATED",
+            job_id=job.job_id,
+            job_version=job.job_version,
+            emitted_at=created_at,
         )
-        return job
+        try:
+            self.repository.add_with_event(job, event)
+            return job
+        except JobRepositoryConflictError:
+            raced = self.repository.get_by_idempotency_key(idempotency_key)
+            if raced is None:
+                raise
+            same_semantics = (
+                raced.job_type == job_type
+                and raced.domain == domain
+                and raced.payload_ref == payload_ref
+                and raced.priority == priority
+                and raced.capability_requirements == capability_requirements
+            )
+            if not same_semantics:
+                raise IdempotencyConflictError(
+                    f"idempotency key reused with different job semantics: {idempotency_key}"
+                )
+            return raced
 
     def queue_job(self, job_id: str, *, at: datetime) -> JobRecord:
         job = self._require(job_id)
@@ -255,6 +270,32 @@ class SharedJobEngine:
             lease_until=None,
         )
 
+    def fail_job(
+        self,
+        job_id: str,
+        *,
+        failure_code: str,
+        detail: str | None,
+        at: datetime,
+    ) -> JobRecord:
+        job = self._require(job_id)
+        self._require_state(
+            job,
+            {JobState.LEASED, JobState.IN_PROGRESS, JobState.VERIFYING},
+        )
+        return self._replace(
+            job,
+            at=at,
+            event_type="JOB_FAILED",
+            event_detail=failure_code,
+            state=JobState.FAILED,
+            assigned_worker_id=None,
+            lease_token=None,
+            lease_until=None,
+            failure_code=failure_code,
+            failure_detail=detail,
+        )
+
     def mark_needs_human(
         self,
         job_id: str,
@@ -366,13 +407,11 @@ class SharedJobEngine:
         event_detail: str | None = None,
         **changes: object,
     ) -> JobRecord:
-        updated = job.model_copy(
-            update={
-                **changes,
-                "job_version": job.job_version + 1,
-                "updated_at": at,
-            }
-        )
+        payload = job.model_dump()
+        payload.update(changes)
+        payload["job_version"] = job.job_version + 1
+        payload["updated_at"] = at
+        updated = JobRecord.model_validate(payload)
         self.repository.replace_with_event(
             updated,
             JobEvent(
