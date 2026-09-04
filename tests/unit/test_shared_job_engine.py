@@ -219,6 +219,37 @@ def test_stale_worker_or_token_cannot_mutate_job() -> None:
         )
 
 
+def test_worker_cannot_hold_two_active_leases() -> None:
+    shared, _repo = engine()
+    queued_job(shared, job_id="job-1", idempotency_key="idem-1")
+    shared.create_job(
+        job_id="job-2",
+        job_type="DISCOVER_PRODUCTS",
+        domain="program1",
+        payload_ref="discovery-plan:plan-2",
+        idempotency_key="idem-2",
+        created_at=NOW,
+    )
+    shared.queue_job("job-2", at=NOW)
+
+    shared.lease_job(
+        "job-1",
+        worker_id="worker-1",
+        worker_capabilities={"collector:identity"},
+        at=NOW,
+        lease_for=LEASE,
+    )
+
+    with pytest.raises(InvalidJobTransitionError, match="already owns active job lease"):
+        shared.lease_job(
+            "job-2",
+            worker_id="worker-1",
+            worker_capabilities={"collector:identity"},
+            at=NOW + timedelta(seconds=1),
+            lease_for=LEASE,
+        )
+
+
 def test_worker_must_satisfy_job_capabilities() -> None:
     shared, _repo = engine()
     queued_job(shared)
