@@ -10,7 +10,10 @@ from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.application.worker_registry import WorkerRegistryService
-from mtaffiliate.domain.worker_registry.models import WorkerRegistration, WorkerType
+from mtaffiliate.domain.worker_registry.models import (
+    WorkerRegistration,
+    WorkerType,
+)
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 from mtaffiliate.interfaces.api.shared_jobs import build_shared_job_router
 
