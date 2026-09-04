@@ -76,6 +76,17 @@ class JobEventsRow(Base):
     detail: Mapped[str | None] = mapped_column(String(4096))
 
 
+class Program1StrategyWorkRow(Base):
+    """Durable approved strategy-to-work package for Program 1 discovery jobs."""
+
+    __tablename__ = "program1_strategy_work"
+
+    reference: Mapped[str] = mapped_column(String(1024), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    package_json: Mapped[str] = mapped_column(String(32768), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class ProductObservationRow(Base):
     __tablename__ = "product_observations"
     __table_args__ = (UniqueConstraint("observation_id", name="uq_product_observation_id"),)
