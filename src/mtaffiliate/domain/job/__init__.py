@@ -1,3 +1,3 @@
-from .models import JobCheckpoint, JobRecord, JobState
+from .models import JobCheckpoint, JobEvent, JobRecord, JobState
 
-__all__ = ["JobCheckpoint", "JobRecord", "JobState"]
+__all__ = ["JobCheckpoint", "JobEvent", "JobRecord", "JobState"]
