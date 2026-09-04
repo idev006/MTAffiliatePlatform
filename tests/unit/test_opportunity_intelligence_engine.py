@@ -26,7 +26,7 @@ def obs(
     sold: int | None = 100,
     rating: float | None = 4.5,
     reviews: int | None = 100,
-    price: Decimal | None = Decimal("999"),
+    price: Decimal | None = Decimal(999),
 ) -> ProductObservation:
     return ProductObservation(
         observation_id=observation_id,
