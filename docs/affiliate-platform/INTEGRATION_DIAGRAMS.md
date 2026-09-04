@@ -8,6 +8,8 @@ Governing rule: Project must follow the document.
 
 This document defines how the major components of MTAffiliatePlatform integrate at logical, runtime, protocol and data-flow levels.
 
+For Program 1-specific integration, use `PROGRAM1_SYSTEM_ARCHITECTURE.md` and `PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md` as the detailed governing design.
+
 It complements:
 - `WORKFLOW.md` — canonical business workflow/pipeline;
 - `SYSTEM_DIAGRAMS.md` — context/component/deployment/state views;
