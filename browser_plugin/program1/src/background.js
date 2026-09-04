@@ -1,6 +1,13 @@
 import { createBackgroundExecutionController } from "./background_execution.mjs";
 import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";
-import { enqueue, readOutbox, removeByMessageId } from "./outbox.js";
+import { drainObservationOutbox } from "./delivery_reliability.mjs";
+import {
+  enqueue,
+  quarantineByMessageId,
+  readOutbox,
+  readQuarantine,
+  removeByMessageId,
+} from "./outbox.js";
 
 const SETTINGS_KEY = "program1_worker_settings_v1";
 const INSTALLATION_KEY = "program1_installation_id_v1";
@@ -119,32 +126,20 @@ function validateObservationBatchAck(payload, ack) {
 }
 
 async function drainOutboxOnce() {
-  let attemptedCount = 0;
-  let sentCount = 0;
-  let acceptedObservationCount = 0;
-  let error = null;
-
-  for (const message of await readOutbox()) {
-    attemptedCount += 1;
-    try {
-      const ack = await postJson("/api/v1/program1/observations", message.payload);
-      validateObservationBatchAck(message.payload, ack);
-      await removeByMessageId(message.message_id);
-      sentCount += 1;
-      acceptedObservationCount += ack.accepted_count;
-    } catch (_error) {
-      error = _error instanceof Error ? _error.message : String(_error);
-      break;
-    }
-  }
-
+  const result = await drainObservationOutbox({
+    messages: await readOutbox(),
+    deliver: (message) => postJson("/api/v1/program1/observations", message.payload),
+    validateAck: validateObservationBatchAck,
+    remove: removeByMessageId,
+    quarantine: quarantineByMessageId,
+  });
+  const [remaining, quarantine] = await Promise.all([readOutbox(), readQuarantine()]);
   return {
-    ok: error === null,
-    attempted_count: attemptedCount,
-    sent_count: sentCount,
-    accepted_observation_count: acceptedObservationCount,
-    remaining_count: (await readOutbox()).length,
-    error,
+    ...result,
+    remaining_count: remaining.length,
+    quarantine_count: quarantine.length,
+    error: result.failure?.message || null,
+    error_category: result.failure?.category || null,
   };
 }
 
@@ -392,8 +387,8 @@ async function heartbeatNow() {
     const registration = await registerWorker();
     if (!registration.ok) return registration;
   }
-  const remaining = (await readOutbox()).length;
-  const healthState = remaining > 0 ? "DEGRADED" : "ONLINE_IDLE";
+  const [remaining, quarantine] = await Promise.all([readOutbox(), readQuarantine()]);
+  const healthState = remaining.length > 0 || quarantine.length > 0 ? "DEGRADED" : "ONLINE_IDLE";
   try {
     const path = `/api/v1/workers/${encodeURIComponent(settings.worker_id)}/heartbeat`;
     const record = await postJson(path, {
@@ -452,9 +447,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   if (message.type === "PROGRAM1_GET_PROCESS_STATUS") {
     return respondAsync(async () => {
-      const [settings, outbox, runState, activeJob] = await Promise.all([
+      const [settings, outbox, quarantine, runState, activeJob] = await Promise.all([
         getSettings(),
         readOutbox(),
+        readQuarantine(),
         getRunState(),
         jobLifecycle.activeState(),
       ]);
@@ -463,6 +459,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         backend_configured: Boolean(settings.backend_url),
         worker_configured: Boolean(settings.worker_id),
         outbox_remaining_count: outbox.length,
+        outbox_quarantine_count: quarantine.length,
         state: runState.desired ? "RECOVERABLE" : settings.backend_url ? "IDLE" : "CONFIG_REQUIRED",
         registry: { ...registryState },
         run_state: runState,
