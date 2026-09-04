@@ -29,6 +29,17 @@ class JobCheckpoint(BaseModel):
     job_version: int = Field(ge=1)
 
 
+class JobEvent(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    event_type: str = Field(min_length=1)
+    job_id: str = Field(min_length=1)
+    job_version: int = Field(ge=1)
+    emitted_at: datetime
+    worker_id: str | None = None
+    detail: str | None = None
+
+
 class JobRecord(BaseModel):
     model_config = ConfigDict(frozen=True)
 
