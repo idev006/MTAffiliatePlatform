@@ -2,9 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from mtaffiliate.adapters.persistence.inmemory.job import (
-    InMemoryJobRepository,
-)
+from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.domain.job.models import JobState
 from mtaffiliate.engines.shared_job_engine.service import (
     IdempotencyConflictError,
