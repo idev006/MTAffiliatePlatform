@@ -34,6 +34,7 @@ class SQLAlchemyProductRepository:
             rating=row.rating,
             review_count=row.review_count,
             source_worker_id=row.source_worker_id,
+            source_job_id=row.source_job_id,
             source_query=row.source_query,
             extractor_version=row.extractor_version,
         )
@@ -57,6 +58,7 @@ class SQLAlchemyProductRepository:
             rating=observation.rating,
             review_count=observation.review_count,
             source_worker_id=observation.source_worker_id,
+            source_job_id=observation.source_job_id,
             source_query=observation.source_query,
             extractor_version=observation.extractor_version,
         )
