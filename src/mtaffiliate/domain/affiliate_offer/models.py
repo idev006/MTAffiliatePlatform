@@ -172,6 +172,15 @@ class OfferSelectionDecision(BaseModel):
     risks: tuple[str, ...] = ()
 
 
+class LinkArtifactValidationState(StrEnum):
+    PENDING = "PENDING"
+    LAB_VALIDATED = "LAB_VALIDATED"
+    EVIDENCE_VALIDATED = "EVIDENCE_VALIDATED"
+    INVALID = "INVALID"
+    OUTCOME_UNKNOWN = "OUTCOME_UNKNOWN"
+    NEEDS_HUMAN = "NEEDS_HUMAN"
+
+
 class AffiliateLinkArtifact(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -183,7 +192,7 @@ class AffiliateLinkArtifact(BaseModel):
     link_url: str = Field(min_length=1)
     created_at: datetime
     validated_at: datetime | None = None
-    validation_state: str = Field(min_length=1)
+    validation_state: LinkArtifactValidationState
     evidence_refs: tuple[str, ...] = ()
 
 
