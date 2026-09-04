@@ -47,7 +47,12 @@ def upgrade() -> None:
     op.create_table(
         "job_events",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("job_id", sa.String(length=128), nullable=False),
+        sa.Column(
+            "job_id",
+            sa.String(length=128),
+            sa.ForeignKey("jobs.job_id"),
+            nullable=False,
+        ),
         sa.Column("event_type", sa.String(length=128), nullable=False),
         sa.Column("job_version", sa.Integer(), nullable=False),
         sa.Column("emitted_at", sa.DateTime(timezone=True), nullable=False),
