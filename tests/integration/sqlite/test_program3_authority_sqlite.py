@@ -13,7 +13,6 @@ from mtaffiliate.adapters.persistence.sqlalchemy.program3_execution import (
 )
 from mtaffiliate.domain.publishing.models import (
     ApprovedOfferRef,
-    PreSubmitDecisionState,
     Program3PlanPackage,
     PublishPlan,
     ReconciliationDecision,
