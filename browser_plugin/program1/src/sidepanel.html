@@ -5,19 +5,94 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Program 1 Worker</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 16px; }
+    body { color: #1f2933; font-family: system-ui, sans-serif; margin: 16px; min-width: 320px; }
+    h2 { margin: 0 0 12px; }
+    label { color: #52606d; display: block; font-size: 12px; margin-top: 10px; }
     input, button { width: 100%; box-sizing: border-box; margin: 6px 0; padding: 8px; }
-    #status { white-space: pre-wrap; font-size: 12px; }
+    input[type="checkbox"] { width: auto; margin: 0 6px 0 0; }
+    input[type="range"] { padding: 0; }
+    button { cursor: pointer; }
+    .range-value { color: #1f2933; font-size: 12px; font-weight: 700; }
+    .hint { color: #627d98; font-size: 11px; margin-top: 2px; }
+    .dual-range { height: 24px; margin: 4px 0 0; position: relative; }
+    .dual-range__track, .dual-range__fill { border-radius: 2px; height: 4px; position: absolute; top: 10px; }
+    .dual-range__track { background: #d9e2ec; left: 0; right: 0; }
+    .dual-range__fill { background: #0b69a3; }
+    .dual-range input[type="range"] {
+      -webkit-appearance: none; appearance: none; background: transparent; height: 24px;
+      left: 0; margin: 0; padding: 0; pointer-events: none; position: absolute; top: 0; width: 100%;
+    }
+    .dual-range input[type="range"]::-webkit-slider-runnable-track {
+      -webkit-appearance: none; appearance: none; background: transparent; height: 24px;
+    }
+    .dual-range input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; background: #0b69a3; border: 2px solid #fff;
+      border-radius: 50%; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); cursor: grab; height: 14px;
+      margin-top: 5px; pointer-events: auto; width: 14px;
+    }
+    .range-readout { color: #52606d; font-size: 12px; margin-top: 2px; }
+    .range-readout__value { color: #1f2933; font-weight: 700; }
+    .process { border: 1px solid #cbd2d9; border-radius: 6px; margin: 12px 0; overflow: hidden; }
+    .process__header { align-items: center; background: #f5f7fa; display: flex; justify-content: space-between; padding: 8px 10px; }
+    .process__title { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .state { border-radius: 999px; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; }
+    .state--ready, .state--delivered { background: #147d64; }
+    .state--working, .state--queued { background: #0b69a3; }
+    .state--blocked, .state--error { background: #ba2525; }
+    .state--idle { background: #627d98; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; }
+    .metric { border-top: 1px solid #e4e7eb; padding: 8px 10px; }
+    .metric__label { color: #627d98; display: block; font-size: 11px; }
+    .metric__value { display: block; font-size: 18px; font-weight: 700; margin-top: 2px; }
+    #step { border-top: 1px solid #e4e7eb; font-size: 12px; padding: 8px 10px; }
+    #registryStatus { border-top: 1px solid #e4e7eb; color: #52606d; font-size: 12px; padding: 8px 10px; }
+    #lastError { color: #ba2525; font-size: 12px; padding: 0 10px 8px; }
+    #status { background: #f5f7fa; border-radius: 6px; white-space: pre-wrap; font-size: 12px; margin-top: 10px; padding: 8px; }
   </style>
 </head>
 <body>
   <h2>Program 1 Worker</h2>
+  <div class="process">
+    <div class="process__header">
+      <span class="process__title">Process</span>
+      <span id="state" class="state state--idle">LOADING</span>
+    </div>
+    <div class="metrics">
+      <div class="metric"><span class="metric__label">Captured Obs</span><span id="capturedCount" class="metric__value">0</span></div>
+      <div class="metric"><span class="metric__label">Accepted Obs</span><span id="acceptedCount" class="metric__value">0</span></div>
+      <div class="metric"><span class="metric__label">Queued Obs</span><span id="queuedCount" class="metric__value">0</span></div>
+      <div class="metric"><span class="metric__label">Delivered Batches</span><span id="sentCount" class="metric__value">0</span></div>
+      <div class="metric"><span class="metric__label">Outbox</span><span id="outboxCount" class="metric__value">0</span></div>
+      <div class="metric"><span class="metric__label">Cycle</span><span id="cycleCount" class="metric__value">0</span></div>
+      <div class="metric"><span class="metric__label">Session Accepted</span><span id="sessionAcceptedCount" class="metric__value">0</span></div>
+      <div class="metric"><span class="metric__label">Rate Obs/Hr</span><span id="ratePerHour" class="metric__value">0</span></div>
+    </div>
+    <div id="registryStatus">Registry: not registered</div>
+    <div id="lastEvent">Last event: waiting</div>
+    <div id="step">Checking worker settings</div>
+    <div id="lastError"></div>
+  </div>
   <label>Backend URL</label>
   <input id="backendUrl" placeholder="Configure backend URL" />
   <label>Worker ID</label>
   <input id="workerId" placeholder="worker-01" />
+  <label>Target Page URL</label>
+    <input id="targetUrl" placeholder="https://shopee.co.th/search?keyword=..." />
+  <label class="check-row"><input id="advanceAfterDelivery" type="checkbox" checked />Advance target page after delivery</label>
+  <label for="delayMinSeconds">Auto-cycle delay — random range (seconds)</label>
+  <div class="dual-range">
+    <div class="dual-range__track"></div>
+    <div class="dual-range__fill" id="delayRangeFill"></div>
+    <input id="delayMinSeconds" class="dual-range__min" type="range" min="0" max="600" step="5" value="30" aria-label="Minimum delay (seconds)" title="Minimum delay (seconds)" />
+    <input id="delayMaxSeconds" class="dual-range__max" type="range" min="0" max="600" step="5" value="120" aria-label="Maximum delay (seconds)" title="Maximum delay (seconds)" />
+  </div>
+  <div class="range-readout">Random from <span id="delayRangeLabel" class="range-readout__value">30</span> to <span class="range-readout__value" id="delayMaxReadout">120</span> s</div>
+  <div id="delayPreview" class="hint">Next cycle delay: random 30-120 s</div>
   <button id="save">Save Settings</button>
-  <button id="capture">Capture Fixture Page</button>
+  <button id="openTarget">Open Target Page</button>
+  <button id="capture">Capture Current Page</button>
+  <button id="startAuto">Start Auto Run</button>
+  <button id="stopAuto" disabled>Stop Auto Run</button>
   <button id="flush">Flush Outbox</button>
   <div id="status"></div>
   <script type="module" src="sidepanel.js"></script>

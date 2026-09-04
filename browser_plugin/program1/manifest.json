@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
   "name": "MTAffiliate Program 1 Discovery Worker",
-  "version": "0.1.1",
+  "version": "0.1.13",
   "description": "Product Discovery Worker for MTAffiliatePlatform Program 1",
-  "permissions": ["storage", "activeTab", "scripting", "sidePanel"],
-  "optional_host_permissions": ["http://*/*", "https://*/*"],
+  "permissions": ["storage", "activeTab", "scripting", "sidePanel", "tabs", "alarms"],
+  "optional_host_permissions": ["https://shopee.co.th/*", "http://127.0.0.1/*", "http://localhost/*"],
   "background": {"service_worker": "src/background.js", "type": "module"},
   "side_panel": {"default_path": "src/sidepanel.html"},
-  "action": {"default_title": "Program 1 Worker"}
+  "action": {
+    "default_title": "Program 1 Worker"
+  }
 }
