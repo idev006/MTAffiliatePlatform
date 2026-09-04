@@ -3,10 +3,7 @@ from __future__ import annotations
 from threading import RLock
 
 from mtaffiliate.domain.job.models import JobEvent, JobRecord
-
-
-class JobRepositoryConflictError(RuntimeError):
-    pass
+from mtaffiliate.ports.repositories.job import JobRepositoryConflictError
 
 
 class InMemoryJobRepository:
