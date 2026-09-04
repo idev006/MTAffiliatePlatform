@@ -1,7 +1,7 @@
 # Program 1 — Current State and Strategy-Aligned Handoff
 
-Status: ACTIVE PROGRAM HANDOFF
-Date: 2026-09-04
+Status: ENGINEERING MATURITY BASELINE / CONTROLLED EVIDENCE PHASE
+Date: 2026-09-05
 Program: Affiliate Opportunity Intelligence
 
 ## 1. Governing Order
@@ -41,24 +41,36 @@ Its purpose is to improve affiliate resource allocation by turning market eviden
 
 ## 3. Current Implemented Foundation
 
-Current foundation includes:
+Current verified foundation includes:
 - ProductObservation domain/application/persistence foundation;
-- durable/idempotent observation ingestion;
+- durable/idempotent observation ingestion with atomic ACK semantics;
 - SQLite/Alembic foundation;
 - Program 1 API runtime profile;
 - worker registry + heartbeat;
-- Manifest V3 Program 1 browser worker;
-- local outbox and ACK validation;
-- current-page/fixture collectors;
-- conservative candidate Shopee identity parsing;
-- search/category/shop/PDP laboratory evidence;
-- pagination-aware auto-run laboratory;
+- Manifest V3 Program 1 browser worker **0.1.26**;
+- durable local outbox + permanent-payload quarantine + conservative failure classification;
+- Shared Job lease/renew/checkpoint/reconcile/verify/complete lifecycle owned by background runtime + Back Office;
+- Collection Router + versioned fixture/search/category/shop/PDP profiles;
+- profile evidence-stage gate and ambiguity fail-closed behavior;
 - explicit anti-bot/verification classification;
-- Vue 3 Side Panel operator UI;
-- deterministic parser/unit tests;
-- deterministic two-page fixture auto-run E2E tooling.
+- Vue 3 Side Panel as optional operator shell, not lifecycle authority;
+- deterministic parser/router/background/unit/component tests;
+- real Playwright Chromium MV3 restart/reconcile CI using a persistent browser profile;
+- deterministic Program 1 -> Program 2 -> Program 3 contract E2E.
 
-These capabilities are implementation evidence; they do not by themselves constitute a production Shopee collection contract.
+The Chromium E2E has proven:
+```text
+Page 1 -> authoritative ACK -> checkpoint
+ -> browser context closes
+ -> persistent profile reopens
+ -> onStartup register + reconcile/renew
+ -> durable active job/run state recovered
+ -> stale tab safely recreated
+ -> Page 2 -> ACK -> checkpoint -> verify -> complete
+ -> active job cleared / outbox empty / no duplicate batch
+```
+
+These capabilities are engineering evidence; they do not by themselves constitute a production Shopee collection contract.
 
 ## 4. Evidence Status
 
@@ -122,46 +134,29 @@ Browser worker collects/executes bounded work. It does not own commercial policy
 
 ## 7. Immediate Documentation-Driven Engineering Priorities
 
-### P0 — Verify/Freeze Strategy-Aligned Baseline
-- keep documents and extension version metadata consistent;
-- verify current HEAD CI after documentation changes;
-- establish automated version/SSOT conformance checks;
-- update Program 1 implementation/Kanban evidence after code changes, not before.
+### P1 — Controlled Search Profile Evidence (P1-I)
+Use the hardened evidence-capture tooling and ADR-047 process to obtain fresh independent authorized browser evidence for the Search surface.
 
-### P1 — Worker Lifecycle Consolidation
-Implement the already-documented shared job/lease/pause/resume model for Program 1 so long-running work is owned by Back Office + background worker rather than Side Panel lifecycle.
+Do not promote from cached/public retrieval, one capture, or a verification-gated session.
 
-### P1 — Collector Modularity
-Refactor monolithic collection behavior toward a profile router and versioned per-surface collection profiles after the relevant evidence gates are met.
+Required next evidence:
+- at least two independent fresh captures;
+- identity/name boundary repeatability;
+- candidate price/sold/rating/review semantics only when directly supported;
+- negative/blocked evidence;
+- sanitized fixture + manifest + parser tests;
+- promotion review under the evidence standard.
 
-### P1 — Reliability Hardening
-Review:
-- ACK semantics for duplicate/idempotent replay;
-- poison-message/head-of-line blocking;
-- retryable vs permanent vs ambiguous delivery failures;
-- quarantine/reconciliation semantics;
-- MV3 service-worker restart state;
-- structured transport errors.
+### P1 — Evidence-driven profile refinement
+Keep Search/Category/Shop/PDP at `LAB_VALIDATED` until each satisfies its own promotion gate.
 
-### P1 — Opportunity Intelligence Foundation
-Implement domain/application scaffolding for:
-- versioned opportunity features;
-- data sufficiency/unknown state;
-- Opportunity Thesis;
-- recommended action;
-- decision provenance.
+### P2 — Outcome Attribution
+Begin P1-M only when Program 2/3 downstream result data can be traced back to Program 1 candidate decisions.
 
-Do not invent production scoring weights.
+### P2 — Learned Opportunity Policy
+P1-N remains deferred until outcome history is sufficient to validate learning rather than encode assumptions.
 
-### P2 — Evidence Expansion
-After normal Shopee access returns:
-- second independent search captures;
-- repeat evidence for price/sold and other proposed fields;
-- category/shop/PDP repeated captures;
-- profile promotion only after evidence review.
-
-### P2 — Deterministic Browser E2E CI
-Run the fixture-based extension workflow in CI or an equivalent deterministic browser harness without touching live Shopee.
+Engineering lifecycle, delivery reliability, collection modularity and real-browser restart/reconcile are no longer open foundation gaps.
 
 ## 8. Known Documentation Drift Closed
 
