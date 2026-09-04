@@ -386,8 +386,12 @@ test("register worker posts discovery payload and marks worker registered", asyn
   assert.equal(calls[0].body.installation_id, "message-1");
   assert.equal(calls[0].body.version, "0.1.9-test");
   assert.deepEqual(calls[0].body.capabilities, [
-    "collector:shopee-current-page-lab-v2",
+    "collector:profile-router-v1",
     "collector:fixture-profile-v1",
+    "collector:shopee-search-lab-v1",
+    "collector:shopee-category-lab-v1",
+    "collector:shopee-shop-lab-v1",
+    "collector:shopee-pdp-lab-v1",
     "mode:capture-current-page",
   ]);
 
