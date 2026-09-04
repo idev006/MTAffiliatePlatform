@@ -95,3 +95,41 @@ def test_heartbeat_accepts_worker_reportable_states() -> None:
             health_state=WorkerHealthState.ONLINE_BUSY,
             seen_at=datetime(2026, 9, 4, tzinfo=UTC),
         )
+
+
+def test_execution_record_requires_known_online_idle_worker() -> None:
+    from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
+        InMemoryWorkerRegistryRepository,
+    )
+
+    repo = InMemoryWorkerRegistryRepository()
+    registry = WorkerRegistryService(repo, stale_after=timedelta(seconds=90))
+    now = datetime(2026, 9, 4, tzinfo=UTC)
+
+    with pytest.raises(KeyError):
+        registry.execution_record("missing", now=now)
+
+    registered = registry.register(registration(), seen_at=now)
+    assert registry.execution_record("worker-01", now=now) == registered
+
+    registry.record_heartbeat(
+        "worker-01",
+        health_state=WorkerHealthState.ONLINE_BUSY,
+        seen_at=now,
+    )
+    with pytest.raises(ValueError, match="not eligible for a new lease"):
+        registry.execution_record("worker-01", now=now)
+
+
+def test_execution_record_rejects_stale_worker() -> None:
+    from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
+        InMemoryWorkerRegistryRepository,
+    )
+
+    repo = InMemoryWorkerRegistryRepository()
+    registry = WorkerRegistryService(repo, stale_after=timedelta(seconds=1))
+    seen = datetime(2026, 9, 4, tzinfo=UTC)
+    registry.register(registration(), seen_at=seen)
+
+    with pytest.raises(ValueError, match="OFFLINE"):
+        registry.execution_record("worker-01", now=seen + timedelta(seconds=2))
