@@ -8,6 +8,7 @@ from .program1_strategy import SQLAlchemyProgram1StrategyRepository
 from .program2_artifact import SQLAlchemyProgram2ArtifactRepository
 from .program2_decision import SQLAlchemyProgram2DecisionRepository
 from .program2_work import SQLAlchemyProgram2WorkRepository
+from .program3_execution import SQLAlchemyProgram3ExecutionRepository
 from .worker_registry import SQLAlchemyWorkerRegistryRepository
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "SQLAlchemyProgram2ArtifactRepository",
     "SQLAlchemyProgram2DecisionRepository",
     "SQLAlchemyProgram2WorkRepository",
+    "SQLAlchemyProgram3ExecutionRepository",
     "SQLAlchemyWorkerRegistryRepository",
     "build_engine",
     "build_session_factory",
