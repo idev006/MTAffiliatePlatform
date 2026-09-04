@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
-from pydantic import ValidationError
 import pytest
+from pydantic import ValidationError
 
 from mtaffiliate.domain.job.models import JobRecord, JobState
 
