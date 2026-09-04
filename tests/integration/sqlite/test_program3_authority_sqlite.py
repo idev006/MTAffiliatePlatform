@@ -13,6 +13,8 @@ from mtaffiliate.adapters.persistence.sqlalchemy.program3_execution import (
 )
 from mtaffiliate.domain.publishing.models import (
     ApprovedOfferRef,
+    PreSubmitDecision,
+    PreSubmitDecisionState,
     Program3PlanPackage,
     PublishPlan,
     ReconciliationDecision,
@@ -64,6 +66,22 @@ def package(plan_ref: str = "plan-1") -> Program3PlanPackage:
     )
 
 
+
+def pre_submit() -> PreSubmitDecision:
+    return PreSubmitDecision(
+        decision_id="p3pre-1",
+        publish_job_id="program3-job-1",
+        plan_ref="plan-1",
+        worker_id="worker-1",
+        device_id="device-1",
+        target_account_id="publish-account-1",
+        evaluated_at=NOW + timedelta(seconds=30),
+        state=PreSubmitDecisionState.ALLOW_SUBMIT,
+        reasons=(),
+        evidence_refs=("scene-ready",),
+        policy_version="program3-authority-lab-v1",
+    )
+
 def submission() -> SubmissionRecord:
     return SubmissionRecord(
         submission_id="p3sub-1",
@@ -94,12 +112,14 @@ def reconciliation() -> ReconciliationDecision:
 def test_program3_execution_state_survives_restart(tmp_path: Path) -> None:
     engine, repo = compose(tmp_path)
     repo.put_plan(package())
+    repo.put_pre_submit(pre_submit())
     repo.put_submission(submission())
     repo.put_reconciliation(reconciliation())
     engine.dispose()
 
     restarted_engine, restarted = compose(tmp_path)
     assert restarted.get_plan("plan-1") == package()
+    assert restarted.get_pre_submit("p3pre-1") == pre_submit()
     assert restarted.get_submission("p3sub-1") == submission()
     assert restarted.get_submission_for_job("program3-job-1") == submission()
     assert restarted.latest_reconciliation("p3sub-1") == reconciliation()
@@ -113,6 +133,13 @@ def test_program3_sql_repository_is_idempotent_and_conflict_safe(tmp_path: Path)
     repo.put_plan(plan)
     with pytest.raises(Program3ExecutionConflictError):
         repo.put_plan(plan.model_copy(update={"evidence_refs": ("different",)}))
+
+    pre = pre_submit()
+    repo.put_pre_submit(pre)
+    repo.put_pre_submit(pre)
+    with pytest.raises(Program3ExecutionConflictError):
+        repo.put_pre_submit(pre.model_copy(update={"device_id": "different"}))
+    assert repo.get_pre_submit("missing") is None
 
     submitted = submission()
     repo.put_submission(submitted)
