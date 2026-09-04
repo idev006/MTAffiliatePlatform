@@ -4,7 +4,10 @@
 MTAffiliatePlatform — Affiliate Intelligence & Publishing Platform
 
 ## Mission
-Build a document-driven operating system for affiliate work that improves three decisions and one execution problem:
+Build a document-driven operating system for affiliate work that improves three decisions and one execution problem.
+
+**Affiliate success strategy leads implementation.** The platform starts from the decisions and hypotheses that improve affiliate outcomes, then derives required signals, evidence, data and engineering work. Collection volume, scraper convenience or available fields must not define the business strategy.
+
 
 1. Which products should be marketed?
 2. Which affiliate offers/links should be selected for each product?
@@ -16,11 +19,17 @@ The system must progressively improve expected affiliate revenue per unit of con
 
 ## In Scope
 
-### Domain A — Product Intelligence
-- Product discovery from approved/available data sources.
+### Domain A — Affiliate Opportunity Intelligence (Program 1)
+- Discover product/market opportunities from approved/available data sources.
+- Begin from affiliate/marketing business questions and hypotheses, then identify the evidence/signals required to improve those decisions.
 - Product identity using platform identifiers.
-- Normalization, deduplication, snapshots, scoring, filtering, ranking, shortlist generation.
-- Opportunity scoring using demand, price, sales signals, seller quality, competition, commission potential, content potential, and own historical performance where available.
+- Append-oriented observations, normalization, deduplication and historical snapshots.
+- Derive explainable opportunity features covering demand, momentum/timing, buyer intent, price/value, seller confidence, competition/saturation, contentability, risk and approved affiliate-economic context where available.
+- Qualification, explainable ranking and shortlist/action-candidate generation.
+- Preserve provenance for future learning from clicks, orders, commission and content effort.
+- Do not equate popularity or scraping volume with affiliate opportunity.
+
+Governing Program 1 business strategy: `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`.
 
 ### Domain B — Affiliate Offer Automation
 - Accept approved Product IDs from Domain A.
@@ -62,6 +71,9 @@ The system must progressively improve expected affiliate revenue per unit of con
 11. **API as Core.** Versioned business-level contracts govern component communication.
 12. **Component-based and pluggable.** Core business policy must not depend on one tool/vendor/selector/database engine.
 13. **Portable-first, scale-ready.** Default distribution is simple; scaling must not require domain redesign.
+14. **Strategy before collection.** Marketing/Affiliate hypotheses define decision signals; technical availability alone does not justify collecting or prioritizing a field.
+15. **Explainable opportunity before opaque score.** Early Program 1 phases favor evidence, features, deterministic qualification and human-reviewable reasoning over invented production weights.
+16. **Optimize scarce effort.** Program 1 exists to concentrate content/marketing resources on the most promising opportunities, not to maximize raw harvested products.
 
 ## Repository SSOT
 
