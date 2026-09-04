@@ -263,3 +263,24 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Verification evidence: PR #34 merged after all CI jobs passed.
 - Lesson learned: evidence tooling itself is a production-quality boundary; a label such as "sanitized" must be backed by deterministic sanitization and provenance controls.
 - Cross-program applicability: YES — Program 2 affiliate evidence and Program 3 Android Scene evidence must use the same standard.
+
+---
+
+## PL-2026-011 — Chromium restart E2E depended on alarm scheduling latency after successful recovery
+- Date: 2026-09-05
+- Program/Component: Program 1 / MV3 Background Runtime / Browser E2E
+- Severity: MEDIUM test-architecture finding
+- Detection source: new real Chromium GitHub Actions gate, run `33931122499`
+- Status: VERIFIED
+- Symptom: R1 proved persistent state and `onStartup` reconcile/renew after browser restart, but timed out waiting for the job to complete when post-restart progress depended only on Chromium alarm delivery timing.
+- Expected behavior: test workflow authority/recovery deterministically while still proving real Chromium startup reconciliation; scheduling latency should be tested as infrastructure behavior, not be the sole oracle for business/runtime correctness.
+- Actual behavior: the first harness coupled restart correctness and alarm wake latency into one timeout.
+- Impact: CI could report a false workflow failure even after canonical job/run state and lease recovery succeeded.
+- Root cause: the initial E2E attempted to use browser scheduler delivery as both the trigger mechanism and the correctness proof.
+- Corrective action: retain real browser close/reopen and require `onStartup` register + reconcile/renew first; after recovery, drive the same bounded `PROGRAM1_RUN_BACKGROUND_CYCLE` command used by alarm wakeups deterministically until completion.
+- Preventive action: distributed/runtime tests separate authoritative state-transition correctness from non-authoritative scheduler timing. Scheduler tests may verify wake delivery separately but cannot replace deterministic application/runtime invocation tests.
+- Diagnostic improvement: timeout paths now print extension process state plus complete mock Back Office request/job/checkpoint/batch lineage.
+- Regression test / monitoring: dedicated `program1-browser-e2e` CI job with persistent Playwright Chromium profile under Xvfb.
+- Verification evidence: CI run `33931305746` passed real Chromium restart/reconcile E2E and all existing core/SQLite/stress/extension/conformance jobs.
+- Lesson learned: event schedulers are delivery mechanisms, not business authorities; tests should prove durable state/reconciliation independently and then exercise the bounded command behind the scheduler.
+- Cross-program applicability: YES — browser alarms, scheduled worker wakes, device host timers and other orchestration triggers.
