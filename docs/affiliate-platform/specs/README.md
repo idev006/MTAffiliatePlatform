@@ -20,6 +20,7 @@ This directory contains implementation-facing domain/worker specifications. Gove
 ## Step 3 — Content Publishing / Android
 - `CONTENT_PUBLISHING_SPEC.md` — Content Identity, Publish Plan, duplicate gate, irreversible submit boundary, Publishing Ledger.
 - `ANDROID_SCENE_ENGINE_SPEC.md` — Scene/Process/Action model, recognition, selectors, transition/recovery, fake-driven Android automation testing.
+- Governing Program 3 developer pack starts at `../PROGRAM3_DEVELOPER_HANDOFF.md` and includes strategy/safety, architecture/UML, traceability, Kanban/cards, UX and automated-test architecture.
 
 ## Governing Companion Documents
 Before implementation, also read:
