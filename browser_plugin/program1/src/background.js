@@ -283,7 +283,17 @@ const backgroundExecution = createBackgroundExecutionController({
   injectCollector: (tabId) =>
     chrome.scripting.executeScript({
       target: { tabId },
-      files: ["src/content.js"],
+      files: [
+        "src/collectors/core.js",
+        "src/collectors/profiles/fixture.js",
+        "src/collectors/profiles/shopee_common.js",
+        "src/collectors/profiles/shopee_search_lab_v1.js",
+        "src/collectors/profiles/shopee_category_lab_v1.js",
+        "src/collectors/profiles/shopee_shop_lab_v1.js",
+        "src/collectors/profiles/shopee_pdp_lab_v1.js",
+        "src/collectors/router.js",
+        "src/content.js",
+      ],
     }),
   captureTab: sendTabCapture,
   deliverBatch: (payload) => queueObservationBatch(payload, { checkpoint: false }),
