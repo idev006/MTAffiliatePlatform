@@ -15,6 +15,7 @@ This directory contains implementation-facing domain/worker specifications. Gove
 
 ## Step 2 — Affiliate Offer
 - `AFFILIATE_OFFER_WORKER_SPEC.md` — distributed Offer Worker, account/session provenance, candidate collection, export workflow boundary.
+- Governing Program 2 developer pack starts at `../PROGRAM2_DEVELOPER_HANDOFF.md` and includes strategy, architecture/UML, traceability, Kanban/cards, UX and automated-test architecture.
 
 ## Step 3 — Content Publishing / Android
 - `CONTENT_PUBLISHING_SPEC.md` — Content Identity, Publish Plan, duplicate gate, irreversible submit boundary, Publishing Ledger.
