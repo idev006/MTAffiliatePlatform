@@ -177,7 +177,29 @@ Do not prioritize:
 - bigger UI surface;
 - production selector hard-freeze from one capture.
 
-## 10. Completion Criterion for the Next Maturity Stage
+## 10. P1-A Strategy-to-Work Slice Status — 2026-09-04
+
+Status: IMPLEMENTED / REPOSITORY CI EVIDENCE PENDING
+
+Implemented:
+- `AffiliateSuccessHypothesis`;
+- `SignalRequirement`;
+- `SignalValidationState`;
+- `DiscoveryPlan`;
+- `Program1StrategyPlanner`;
+- unit/component tests for traceability, uniqueness, cross-hypothesis/campaign mismatch, unknown/unused signals;
+- CI coverage scope updated to include the new Program 1 strategy domain/application modules.
+
+Important invariant now enforced in code:
+- a signal supplied to the planner but not required by the approved DiscoveryPlan is rejected, preventing "collect because technically available" behavior.
+
+Local isolated smoke verification: PASS.
+Full repository/authoritative GitHub Actions verification: pending; no workflow run was visible through the connected GitHub interface at the time of this handoff.
+
+Recommended next slice after green CI:
+- P1-B Program 1 Shared Job / lease / pause / resume lifecycle consolidation.
+
+## 11. Completion Criterion for the Next Maturity Stage
 
 Program 1 reaches its next maturity stage when:
 - strategy -> signal -> implementation traceability is enforced;
