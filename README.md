@@ -4,7 +4,7 @@ Unified Affiliate Intelligence + Automation Platform.
 
 This repository is the authoritative project repository (SSOT) for the three-step platform:
 
-1. Product Discovery / Product Intelligence
+1. Affiliate Opportunity Intelligence (Product / Market Discovery + Product Intelligence)
 2. Affiliate Offer Automation
 3. Content Publishing / Android Device Farm
 
@@ -103,7 +103,7 @@ After the Codex entrypoint documents, read:
 16. `docs/affiliate-platform/TECHNOLOGY_STACK.md`
 17. `docs/affiliate-platform/specs/README.md`
 
-`WORKFLOW.md` is the canonical business pipeline. `SYSTEM_PHYSIOLOGY_MODEL.md` defines system-wide sensing, control, verification, health, resource-homeostasis and recovery rules. `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md` defines ownership and Input/Process/Output/Health/Failure/Recovery boundaries. `SYSTEM_DIAGRAMS.md` contains context/component/use-case/swimlane/activity/state/deployment views. `INTEGRATION_DIAGRAMS.md` defines logical, step-to-step, runtime, protocol, SSOT, failure-boundary and test-integration views. `SEQUENCE_DIAGRAMS.md` is the normative runtime-collaboration pack for critical multi-component flows.
+`WORKFLOW.md` is the canonical business pipeline. Program 1 business strategy is governed by `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`, which requires Affiliate/Marketing Strategy to define the decision hypothesis/signals before engineering collection logic. `SYSTEM_PHYSIOLOGY_MODEL.md` defines system-wide sensing, control, verification, health, resource-homeostasis and recovery rules. `COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md` defines ownership and Input/Process/Output/Health/Failure/Recovery boundaries. `SYSTEM_DIAGRAMS.md` contains context/component/use-case/swimlane/activity/state/deployment views. `INTEGRATION_DIAGRAMS.md` defines logical, step-to-step, runtime, protocol, SSOT, failure-boundary and test-integration views. `SEQUENCE_DIAGRAMS.md` is the normative runtime-collaboration pack for critical multi-component flows.
 
 Latest senior review record: `docs/affiliate-platform/ARCHITECTURE_REVIEW_2026-08-31_SYSTEM_PHYSIOLOGY.md`.
 
@@ -119,7 +119,7 @@ Authorized/effective development areas include:
 - FastAPI application/common contracts;
 - worker registration/heartbeat/lease/result/outbox flows;
 - reusable fake/in-memory adapters;
-- Program 1 Product Intelligence foundation;
+- Program 1 Affiliate Opportunity Intelligence foundation, governed by `docs/affiliate-platform/PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`;
 - Program 2 Offer Intelligence, worker/outbox and synthetic export laboratory;
 - Program 3 PublishPlan/duplicate ledger, Scene/Device Host foundations and scripted Android laboratory;
 - controlled failure/recovery fixtures and resilience tests.
