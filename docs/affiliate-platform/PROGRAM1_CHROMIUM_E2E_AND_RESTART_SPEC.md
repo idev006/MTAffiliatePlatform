@@ -45,7 +45,8 @@ sequenceDiagram
   SW->>B: register + reconcile/renew active job
   SW->>S: recover active job/run state
   H->>SW: read status; assert same job and desired run
-  H->>SW: RUN_BACKGROUND_CYCLE
+  H->>SW: RUN_BACKGROUND_CYCLE (same bounded command used by alarm wake)
+  Note over H,SW: Startup reconcile/renew is proven before deterministic cycle driving; Chromium alarm latency is not the business correctness oracle.
   SW->>F: recreate stale/missing target tab for page 2
   H->>SW: RUN_BACKGROUND_CYCLE after load
   SW->>B: second observation batch
@@ -100,12 +101,13 @@ The mock must retain authoritative job state across Chromium context restart.
 7. each batch is ACKed before checkpoint;
 8. page 1 checkpoint exists before restart;
 9. second context performs reconcile/renew before continuing bounded work;
-10. final job state is COMPLETED;
-11. local active-job state is cleared only after authoritative completion;
-12. run state becomes terminal/not desired;
-13. outbox remaining count is zero;
-14. no duplicate batch/page observation is accepted;
-15. no graphical UI click is required.
+10. after startup reconciliation is proven, deterministic bounded cycle driving completes the same recovered job; alarm delivery timing is evaluated separately from workflow authority;
+11. final job state is COMPLETED;
+12. local active-job state is cleared only after authoritative completion;
+13. run state becomes terminal/not desired;
+14. outbox remaining count is zero;
+15. no duplicate batch/page observation is accepted;
+16. no graphical UI click is required.
 
 ## Failure assertions
 
