@@ -4,8 +4,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
+from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
+    InMemoryWorkerRegistryRepository,
+)
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
+from mtaffiliate.application.worker_registry import WorkerRegistryService
+from mtaffiliate.domain.worker_registry.models import WorkerRegistration, WorkerType
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 from mtaffiliate.interfaces.api.shared_jobs import build_shared_job_router
 
@@ -27,13 +32,29 @@ def client() -> TestClient:
     repo = InMemoryJobRepository()
     engine = SharedJobEngine(repo, token_factory=lambda: "lease-1")
     program1 = Program1DiscoveryJobService(Program1StrategyPlanner(), engine)
+    clock = TestClock()
+    registry = WorkerRegistryService(
+        InMemoryWorkerRegistryRepository(),
+        stale_after=timedelta(minutes=5),
+    )
+    registry.register(
+        WorkerRegistration(
+            worker_id="worker-1",
+            worker_type=WorkerType.DISCOVERY_BROWSER_WORKER,
+            installation_id="install-1",
+            version="0.1.22",
+            capabilities=["collector:search-lab"],
+        ),
+        seen_at=NOW,
+    )
     app = FastAPI()
     app.include_router(
         build_shared_job_router(
             program1_jobs=program1,
             jobs=engine,
+            registry=registry,
             lease_seconds=120,
-            clock=TestClock(),
+            clock=clock,
         )
     )
     return TestClient(app)
@@ -86,10 +107,7 @@ def test_full_api_lifecycle_without_ui() -> None:
 
     leased = c.post(
         "/api/v1/jobs/job-1/lease",
-        json={
-            "worker_id": "worker-1",
-            "capabilities": ["collector:search-lab"],
-        },
+        json={"worker_id": "worker-1"},
     )
     assert leased.status_code == 200
     assert leased.json()["state"] == "LEASED"
@@ -134,10 +152,7 @@ def test_pause_resume_requires_new_lease() -> None:
     assert c.post("/api/v1/program1/discovery-jobs", json=create_payload()).status_code == 200
     leased = c.post(
         "/api/v1/jobs/job-1/lease",
-        json={
-            "worker_id": "worker-1",
-            "capabilities": ["collector:search-lab"],
-        },
+        json={"worker_id": "worker-1"},
     ).json()
     token = leased["lease_token"]
     assert c.post(
@@ -171,10 +186,24 @@ def test_incompatible_worker_cannot_lease_job() -> None:
 
     response = c.post(
         "/api/v1/jobs/job-1/lease",
-        json={"worker_id": "worker-1", "capabilities": ["collector:fixture"]},
+        json={"worker_id": "worker-1"},
     )
-    assert response.status_code == 409
-    assert "lacks required capabilities" in response.json()["detail"]
+    assert response.status_code == 200
+
+    incompatible_payload = create_payload()
+    incompatible_payload["job_id"] = "job-2"
+    incompatible_payload["idempotency_key"] = "campaign-1:plan-2"
+    incompatible_payload["discovery_plan_ref"] = "program1-plan:plan-2:v1"
+    incompatible_payload["discovery_plan"]["plan_id"] = "plan-2"
+    incompatible_payload["discovery_plan"]["capability_requirements"] = [
+        "collector:shop-lab"
+    ]
+    assert c.post(
+        "/api/v1/program1/discovery-jobs", json=incompatible_payload
+    ).status_code == 200
+    denied = c.post("/api/v1/jobs/job-2/lease", json={"worker_id": "worker-1"})
+    assert denied.status_code == 409
+    assert "lacks required capabilities" in denied.json()["detail"]
 
 
 def test_undeclared_signal_is_rejected_before_job_creation() -> None:
@@ -193,3 +222,36 @@ def test_undeclared_signal_is_rejected_before_job_creation() -> None:
     response = c.post("/api/v1/program1/discovery-jobs", json=payload)
     assert response.status_code == 422
     assert c.get("/api/v1/jobs/job-1").status_code == 404
+
+
+def test_lease_next_uses_registry_capabilities_and_priority() -> None:
+    c = client()
+
+    low = create_payload()
+    low["job_id"] = "job-low"
+    low["idempotency_key"] = "idem-low"
+    low["discovery_plan_ref"] = "program1-plan:low:v1"
+    low["priority"] = 1
+    low["discovery_plan"]["plan_id"] = "plan-low"
+
+    high = create_payload()
+    high["job_id"] = "job-high"
+    high["idempotency_key"] = "idem-high"
+    high["discovery_plan_ref"] = "program1-plan:high:v1"
+    high["priority"] = 10
+    high["discovery_plan"]["plan_id"] = "plan-high"
+
+    assert c.post("/api/v1/program1/discovery-jobs", json=low).status_code == 200
+    assert c.post("/api/v1/program1/discovery-jobs", json=high).status_code == 200
+
+    leased = c.post("/api/v1/jobs/lease-next", json={"worker_id": "worker-1"})
+    assert leased.status_code == 200
+    assert leased.json()["job_id"] == "job-high"
+
+
+def test_unregistered_worker_cannot_lease() -> None:
+    c = client()
+    c.post("/api/v1/program1/discovery-jobs", json=create_payload())
+
+    response = c.post("/api/v1/jobs/job-1/lease", json={"worker_id": "unknown"})
+    assert response.status_code == 404
