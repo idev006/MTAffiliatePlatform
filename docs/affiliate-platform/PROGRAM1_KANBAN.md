@@ -61,7 +61,7 @@ No fixed "final architecture" is assumed. Architecture evolves through versioned
 ### ENGINEERING / PRODUCT FOLLOW-UP
 
 - [x] P1-C worker delivery reliability: failure classification, durable poison quarantine, ACK ambiguity fail-closed, quarantine telemetry
-- [ ] P1-D continue splitting/promoting collection profiles as live evidence accumulates
+- [ ] P1-D Collection Router + Versioned Profile Registry: modularize fixture/search/category/shop/PDP adapters; keep live promotion evidence-gated
 - [ ] P1-H full Chromium-hosted deterministic browser fixture E2E beyond extension unit/component suites
 - [ ] P1-M Outcome Attribution Input when downstream analytics is available
 - [ ] P1-N Learned Opportunity Policy after sufficient outcome evidence
