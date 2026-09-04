@@ -7,6 +7,23 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .base import Base
 
 
+class WorkersRow(Base):
+    """Shared Core worker registry current projection (DATA_MODEL `workers`)."""
+
+    __tablename__ = "workers"
+
+    worker_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    worker_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    installation_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    host_id: Mapped[str | None] = mapped_column(String(128))
+    version: Mapped[str] = mapped_column(String(64), nullable=False)
+    capabilities: Mapped[str] = mapped_column(String(4096), nullable=False)
+    health_state: Mapped[str] = mapped_column(String(32), nullable=False)
+    enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    version_no: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
 class ProductObservationRow(Base):
     __tablename__ = "product_observations"
     __table_args__ = (UniqueConstraint("observation_id", name="uq_product_observation_id"),)

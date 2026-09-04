@@ -24,7 +24,12 @@ def test_empty_sqlite_database_migrates_to_head_and_downgrades(tmp_path) -> None
     command.upgrade(config, "head")
     engine = create_engine(url)
     tables = set(inspect(engine).get_table_names())
-    assert {"product_observations", "ingestion_batches", "alembic_version"} <= tables
+    assert {
+        "product_observations",
+        "ingestion_batches",
+        "workers",
+        "alembic_version",
+    } <= tables
     engine.dispose()
 
     command.downgrade(config, "base")
@@ -32,6 +37,7 @@ def test_empty_sqlite_database_migrates_to_head_and_downgrades(tmp_path) -> None
     tables = set(inspect(engine).get_table_names())
     assert "product_observations" not in tables
     assert "ingestion_batches" not in tables
+    assert "workers" not in tables
     engine.dispose()
 
 
