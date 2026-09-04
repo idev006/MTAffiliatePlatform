@@ -246,6 +246,7 @@ export function createBackgroundExecutionController({
       const observations = (capture.observations || []).map((observation) => ({
         ...observation,
         source_worker_id: settings.worker_id,
+        source_job_id: active.job_id,
       }));
       const batchId = randomUUID();
       const delivery = await deliverBatch({
