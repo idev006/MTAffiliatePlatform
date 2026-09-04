@@ -10,7 +10,6 @@ from mtaffiliate.domain.program1.models import (
     SignalValidationState,
 )
 
-
 NOW = datetime(2026, 9, 4, tzinfo=UTC)
 
 
