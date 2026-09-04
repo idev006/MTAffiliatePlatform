@@ -75,3 +75,30 @@ class OpportunityThesis(BaseModel):
     target_buyer_context: str | None = None
     evidence_state: OpportunityEvidenceState
     evidence_refs: tuple[str, ...] = ()
+
+
+class OpportunityDecisionRecord(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    decision_id: str = Field(min_length=1)
+    campaign_id: str = Field(min_length=1)
+    hypothesis_id: str = Field(min_length=1)
+    source_job_id: str = Field(min_length=1)
+    evaluated_at: datetime
+    thesis: OpportunityThesis
+
+
+class QualifiedOpportunityHandoff(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    handoff_id: str = Field(min_length=1)
+    decision_id: str = Field(min_length=1)
+    campaign_id: str = Field(min_length=1)
+    hypothesis_id: str = Field(min_length=1)
+    source_job_id: str = Field(min_length=1)
+    product_key: tuple[str, str, str]
+    product_name: str = Field(min_length=1)
+    recommended_action: OpportunityAction
+    evidence_refs: tuple[str, ...]
+    feature_policy_version: str = Field(min_length=1)
+    qualification_policy_version: str = Field(min_length=1)
