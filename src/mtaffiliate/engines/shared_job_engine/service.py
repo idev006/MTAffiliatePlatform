@@ -147,6 +147,7 @@ class SharedJobEngine:
             raise ValueError("lease_for must be positive")
         job = self._require(job_id)
         self._require_state(job, {JobState.QUEUED})
+        self._assert_worker_has_no_active_lease(worker_id, at=at)
         missing = set(job.capability_requirements) - worker_capabilities
         if missing:
             raise InvalidJobTransitionError(
@@ -398,6 +399,26 @@ class SharedJobEngine:
             lease_token=None,
             lease_until=None,
         )
+
+    def _assert_worker_has_no_active_lease(
+        self,
+        worker_id: str,
+        *,
+        at: datetime,
+    ) -> None:
+        for candidate in self.repository.list_jobs():
+            if candidate.assigned_worker_id != worker_id:
+                continue
+            if candidate.state not in {
+                JobState.LEASED,
+                JobState.IN_PROGRESS,
+                JobState.VERIFYING,
+            }:
+                continue
+            if candidate.lease_until is not None and at < candidate.lease_until:
+                raise InvalidJobTransitionError(
+                    f"worker already owns active job lease: {candidate.job_id}"
+                )
 
     def _require(self, job_id: str) -> JobRecord:
         job = self.repository.get(job_id)
