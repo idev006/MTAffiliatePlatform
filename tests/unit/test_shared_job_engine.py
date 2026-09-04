@@ -109,7 +109,7 @@ def test_pause_releases_lease_and_resume_requires_reacquisition() -> None:
     assert paused.lease_token is None
     assert paused.assigned_worker_id is None
 
-    with pytest.raises(StaleLeaseError):
+    with pytest.raises(InvalidJobTransitionError, match="PAUSED"):
         shared.record_checkpoint(
             "job-1",
             worker_id="worker-1",
