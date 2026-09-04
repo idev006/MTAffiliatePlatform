@@ -18,6 +18,11 @@ REQUIRED_FILES = (
     "browser_plugin/program1/src/job_lifecycle.mjs",
     "browser_plugin/program1/src/background_execution.mjs",
     "tests/integration/sqlite/test_program1_world_class_simulation.py",
+    "src/mtaffiliate/domain/program1/opportunity.py",
+    "src/mtaffiliate/engines/opportunity_intelligence_engine/service.py",
+    "src/mtaffiliate/application/program1_opportunity.py",
+    "tests/component/test_program1_opportunity_flow.py",
+    "tests/integration/sqlite/test_program1_opportunity_sqlite.py",
 )
 
 REQUIRED_BACKGROUND_TOKENS = (
@@ -146,6 +151,62 @@ def main() -> int:
         "Side Panel must command the background runtime for auto execution",
         findings,
     )
+
+    opportunity_domain = read("src/mtaffiliate/domain/program1/opportunity.py")
+    for token in (
+        "OpportunityFeatureSnapshot",
+        "QualificationDecision",
+        "OpportunityThesis",
+        "QualifiedOpportunityHandoff",
+        "TEST_NOW",
+        "NEEDS_EVIDENCE",
+    ):
+        require(
+            token in opportunity_domain,
+            f"opportunity domain contract missing token: {token}",
+            findings,
+        )
+
+    opportunity_engine = read(
+        "src/mtaffiliate/engines/opportunity_intelligence_engine/service.py"
+    )
+    for token in (
+        "SUFFICIENT_FOR_LAB",
+        "not a production success model",
+        "unknown_features",
+        "QUALIFIED_FOR_TEST",
+    ):
+        require(
+            token in opportunity_engine,
+            f"opportunity engine evidence-first control missing token: {token}",
+            findings,
+        )
+
+    opportunity_app = read("src/mtaffiliate/application/program1_opportunity.py")
+    for token in (
+        "source_job_id",
+        "strategy work package is missing",
+        "qualified_handoffs",
+        "latest_by_product",
+    ):
+        require(
+            token in opportunity_app,
+            f"opportunity application traceability missing token: {token}",
+            findings,
+        )
+
+    api = read("src/mtaffiliate/interfaces/api/app.py")
+    for token in (
+        "job-bound observations require job_id, worker_id and lease_token",
+        "validate_active_execution",
+        "/api/v1/program1/opportunities/evaluate",
+        "qualified-handoffs",
+    ):
+        require(
+            token in api,
+            f"Program 1 provenance/opportunity API control missing token: {token}",
+            findings,
+        )
 
     if findings:
         for finding in findings:
