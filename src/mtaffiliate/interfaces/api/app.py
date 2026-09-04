@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from mtaffiliate.adapters.persistence.inmemory.affiliate_offer import (
     InMemoryAffiliateOfferRepository,
 )
+from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.product import InMemoryProductRepository
 from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
@@ -16,6 +17,8 @@ from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
     InMemoryWorkerRegistryRepository,
 )
 from mtaffiliate.application.program1 import IngestionBatchConflictError, Program1Service
+from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
+from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.application.program2 import Program2Service
 from mtaffiliate.application.program3 import Program3Service
 from mtaffiliate.application.worker_registry import (
@@ -50,6 +53,8 @@ from mtaffiliate.engines.product_intelligence_engine.service import (
     ScoringPolicy,
 )
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
+from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
+from mtaffiliate.interfaces.api.shared_jobs import build_shared_job_router
 from mtaffiliate.ports.repositories.product import ObservationConflictError
 from mtaffiliate.ports.repositories.worker_registry import (
     UnknownWorkerError,
@@ -137,6 +142,8 @@ def create_app(
     program2: Program2Service | None = None,
     program3: Program3Service | None = None,
     registry: WorkerRegistryService | None = None,
+    shared_jobs: SharedJobEngine | None = None,
+    program1_jobs: Program1DiscoveryJobService | None = None,
     enabled_programs: set[str] | None = None,
 ) -> FastAPI:
     enabled = enabled_programs or {"program1", "program2", "program3"}
@@ -148,6 +155,11 @@ def create_app(
     service2 = program2 or build_inmemory_program2(cfg) if "program2" in enabled else None
     service3 = program3 or build_inmemory_program3() if "program3" in enabled else None
     registry_service = registry or build_inmemory_worker_registry(cfg)
+    shared_job_engine = shared_jobs or SharedJobEngine(InMemoryJobRepository())
+    program1_job_service = program1_jobs or Program1DiscoveryJobService(
+        Program1StrategyPlanner(),
+        shared_job_engine,
+    )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
 
     @app.get("/")
@@ -197,6 +209,14 @@ def create_app(
         return summary
 
     if "program1" in enabled:
+        app.include_router(
+            build_shared_job_router(
+                program1_jobs=program1_job_service,
+                jobs=shared_job_engine,
+                lease_seconds=cfg.worker.lease_seconds,
+                clock=utc_now,
+            )
+        )
 
         @app.post("/api/v1/program1/observations")
         def ingest(batch: ObservationBatch) -> dict[str, int | str]:
