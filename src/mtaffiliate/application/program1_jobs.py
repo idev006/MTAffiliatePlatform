@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
-from mtaffiliate.domain.job.models import JobRecord
+from mtaffiliate.domain.job.models import JobRecord, JobState
 from mtaffiliate.domain.program1.models import (
     AffiliateSuccessHypothesis,
     DiscoveryPlan,
@@ -56,6 +56,6 @@ class Program1DiscoveryJobService:
             priority=priority,
             created_at=created_at,
         )
-        if created.state.value == "CREATED":
+        if created.state is JobState.CREATED:
             return self.jobs.queue_job(created.job_id, at=created_at)
         return created
