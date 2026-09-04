@@ -70,6 +70,69 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
         (message) => message.message_id !== messageId,
       );
     },
+    readQuarantine: async () => storage.program1_outbox_quarantine_v1 || [],
+    quarantineByMessageId: async (messageId, reason) => {
+      const items = storage.program1_outbox_v1 || [];
+      const message = items.find((item) => item.message_id === messageId);
+      if (!message) return false;
+      storage.program1_outbox_v1 = items.filter((item) => item.message_id !== messageId);
+      storage.program1_outbox_quarantine_v1 = [
+        ...(storage.program1_outbox_quarantine_v1 || []),
+        { ...message, quarantine_reason: reason, quarantined_at: "2026-09-05T00:00:00Z" },
+      ];
+      return true;
+    },
+    drainObservationOutbox: async ({ messages, deliver, validateAck, remove, quarantine }) => {
+      let attemptedCount = 0;
+      let sentCount = 0;
+      let acceptedObservationCount = 0;
+      const sentMessageIds = [];
+      const quarantinedMessageIds = [];
+      let lastFailure = null;
+      let blockingFailure = null;
+      for (const message of messages) {
+        attemptedCount += 1;
+        try {
+          const ack = await deliver(message);
+          validateAck(message.payload, ack);
+          await remove(message.message_id);
+          sentCount += 1;
+          sentMessageIds.push(message.message_id);
+          acceptedObservationCount += ack.accepted_count;
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          const permanent = ["HTTP_400", "HTTP_409", "HTTP_413", "HTTP_415", "HTTP_422"].includes(detail);
+          lastFailure = {
+            category: permanent ? "PERMANENT_PAYLOAD" : detail.startsWith("ACK_")
+              ? "AMBIGUOUS_RECONCILE"
+              : "TRANSIENT_OR_BLOCKED",
+            message: detail,
+            message_id: message.message_id,
+          };
+          if (permanent) {
+            await quarantine(message.message_id, {
+              category: lastFailure.category,
+              error: detail,
+            });
+            quarantinedMessageIds.push(message.message_id);
+            continue;
+          }
+          blockingFailure = lastFailure;
+          break;
+        }
+      }
+      return {
+        ok: blockingFailure === null,
+        attempted_count: attemptedCount,
+        sent_count: sentCount,
+        sent_message_ids: sentMessageIds,
+        quarantined_count: quarantinedMessageIds.length,
+        quarantined_message_ids: quarantinedMessageIds,
+        accepted_observation_count: acceptedObservationCount,
+        last_failure: lastFailure,
+        blocking_failure: blockingFailure,
+      };
+    },
     createBackgroundExecutionController: () => ({
       async start() {
         return { ok: true, run_state: storage.program1_run_state_v1 || null };
@@ -113,7 +176,8 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
     .readFileSync(filePath, "utf8")
     .replace('import { createBackgroundExecutionController } from "./background_execution.mjs";', "")
     .replace('import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";', "")
-    .replace('import { enqueue, readOutbox, removeByMessageId } from "./outbox.js";', "");
+    .replace('import { drainObservationOutbox } from "./delivery_reliability.mjs";', "")
+    .replace(/import \{[\s\S]*?\} from "\.\/outbox\.js";/, "");
   new vm.Script(source, { filename: filePath }).runInContext(context);
 
   async function sendMessage(message) {
@@ -211,6 +275,7 @@ test("process status reports configuration, outbox and registry state", async ()
     backend_configured: true,
     worker_configured: true,
     outbox_remaining_count: 1,
+    outbox_quarantine_count: 0,
     state: "IDLE",
     registry: {
       registered: false,
@@ -230,6 +295,19 @@ test("process status reports configuration, outbox and registry state", async ()
     },
     active_job: null,
   });
+});
+
+test("process status reports durable quarantine requiring operator attention", async () => {
+  const { sendMessage } = loadBackground({
+    initialStorage: {
+      program1_worker_settings_v1: { backend_url: "http://127.0.0.1:8000", worker_id: "worker-01" },
+      program1_outbox_quarantine_v1: [{ message_id: "poison-1" }],
+    },
+  });
+
+  const response = await sendMessage({ type: "PROGRAM1_GET_PROCESS_STATUS" });
+  assert.equal(response.outbox_remaining_count, 0);
+  assert.equal(response.outbox_quarantine_count, 1);
 });
 
 test("run state is durable and makes process status recoverable", async () => {
