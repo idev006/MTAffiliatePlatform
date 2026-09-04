@@ -12,6 +12,7 @@ class DeviceRecord(BaseModel):
     status: str = Field(pattern="^(ONLINE|OFFLINE|UNAUTHORIZED|MISSING)$")
     worker_id: str | None = None
     lease_expires_at: datetime | None = None
+    version_no: int = Field(default=1, ge=1)
 
 
 class DeviceAdmissionDecision(BaseModel):
