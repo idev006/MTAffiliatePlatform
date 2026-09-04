@@ -33,6 +33,11 @@ For Program 1 work, also read before changing business behavior:
 - `docs/affiliate-platform/PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md`
 - `docs/affiliate-platform/PROGRAM1_ARCHITECTURE_REVIEW_AND_IMPLEMENTATION_PLAN.md`
 - `docs/affiliate-platform/PROGRAM1_TRACEABILITY_MATRIX.md`
+- `docs/affiliate-platform/PROGRAM1_DEVELOPER_HANDOFF.md`
+- `docs/affiliate-platform/PROGRAM1_KANBAN.md`
+- `docs/affiliate-platform/PROGRAM1_IMPLEMENTATION_CARDS.md`
+- `docs/affiliate-platform/PROGRAM1_UX_AND_OPERATOR_EXPERIENCE.md`
+- `docs/affiliate-platform/PROGRAM1_AUTOMATED_TEST_ARCHITECTURE.md`
 - `docs/affiliate-platform/PROGRAM1_IMPLEMENTATION_READINESS.md`
 - `docs/affiliate-platform/PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`
 
