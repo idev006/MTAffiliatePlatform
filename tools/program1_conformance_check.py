@@ -31,7 +31,8 @@ REQUIRED_BACKGROUND_TOKENS = (
 REQUIRED_WORKFLOW_TOKENS = (
     "Affiliate / Marketing Strategy",
     "Product Discovery Worker leases bounded work",
-    "Normalize / Identity / History",
+    "Product identity is normalized/deduplicated",
+    "historical observations are preserved rather than overwritten",
     "Qualification / Explainable Ranking",
     "Shared Job Engine is lifecycle SSOT",
 )
