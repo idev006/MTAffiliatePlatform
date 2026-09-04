@@ -74,6 +74,17 @@ class WorkerRegistryService:
             return None
         return self._summarize(record, now=now)
 
+    def execution_record(self, worker_id: str, *, now: datetime) -> WorkerRecord:
+        record = self.repository.get(worker_id)
+        if record is None:
+            raise KeyError(worker_id)
+        summary = self._summarize(record, now=now)
+        if summary.health_state is not WorkerHealthState.ONLINE_IDLE:
+            raise ValueError(
+                f"worker is not eligible for a new lease: {summary.health_state.value}"
+            )
+        return record
+
     def summaries(self, *, now: datetime) -> list[WorkerSummary]:
         return [
             self._summarize(record, now=now)
