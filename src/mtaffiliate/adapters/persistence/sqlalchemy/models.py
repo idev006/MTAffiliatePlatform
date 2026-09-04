@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -59,7 +59,7 @@ class JobEventsRow(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    job_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    job_id: Mapped[str] = mapped_column(ForeignKey("jobs.job_id"), nullable=False, index=True)
     event_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     job_version: Mapped[int] = mapped_column(Integer, nullable=False)
     emitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
