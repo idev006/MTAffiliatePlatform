@@ -9,6 +9,7 @@ from mtaffiliate.application.program1 import Program1Service
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_opportunity import Program1OpportunityService
 from mtaffiliate.application.program2 import Program2Service
+from mtaffiliate.application.program2_artifacts import Program2ArtifactService
 from mtaffiliate.application.program2_intelligence import Program2OfferDecisionService
 from mtaffiliate.application.program2_jobs import Program2OfferDiscoveryJobService
 from mtaffiliate.application.program3 import Program3Service
@@ -21,6 +22,7 @@ from mtaffiliate.bootstrap.program1_opportunity import (
     build_durable_program1_opportunity_service,
 )
 from mtaffiliate.bootstrap.program2 import build_durable_program2
+from mtaffiliate.bootstrap.program2_artifacts import build_durable_program2_artifact_service
 from mtaffiliate.bootstrap.program2_intelligence import build_durable_program2_intelligence
 from mtaffiliate.bootstrap.program2_jobs import build_durable_program2_job_service
 from mtaffiliate.bootstrap.program3 import build_durable_program3
@@ -66,11 +68,16 @@ def create_runtime_app(
     program1_opportunities: Program1OpportunityService | None = None
     program2_jobs: Program2OfferDiscoveryJobService | None = None
     program2_intelligence: Program2OfferDecisionService | None = None
+    program2_artifacts: Program2ArtifactService | None = None
     if "program1" in enabled_programs:
         program1 = build_durable_program1(settings, project_root=root)
     if "program2" in enabled_programs:
         program2 = build_durable_program2(settings, project_root=root)
         program2_intelligence = build_durable_program2_intelligence(
+            settings,
+            project_root=root,
+        )
+        program2_artifacts = build_durable_program2_artifact_service(
             settings,
             project_root=root,
         )
@@ -107,5 +114,6 @@ def create_runtime_app(
         program1_opportunities=program1_opportunities,
         program2_jobs=program2_jobs,
         program2_intelligence=program2_intelligence,
+        program2_artifacts=program2_artifacts,
         enabled_programs=enabled_programs,
     )
