@@ -55,14 +55,20 @@ PySide6 is an optional desktop presentation shell to be built when stable comman
 
 ## 3. Reviewed Business Scope
 
-### Step 1 — Product Discovery / Product Intelligence
+### Program 1 — Affiliate Opportunity Intelligence
 Accepted direction:
+- Affiliate/Marketing Strategy defines the decision hypothesis and required signals before engineering collection work;
 - distributed browser-worker farm;
 - Back Office owns planning, sharding, job leasing, checkpoints and canonical deduplication;
 - browser extension workers collect observations only;
 - observations are historical/append-oriented;
-- Product Intelligence Engine owns scoring/ranking/shortlist policy;
-- scoring policy is versioned and explainable.
+- opportunity intelligence separates observed facts, normalized facts, derived features and decisions;
+- Opportunity Evaluation owns qualification/thesis/action/ranking policy;
+- scoring remains optional/evidence-gated and versioned;
+- UI is novice-friendly presentation/command shell, not job/business authority;
+- core behavior must be headlessly testable and CI-friendly.
+
+Program 1 developer entrypoint: `PROGRAM1_DEVELOPER_HANDOFF.md`.
 
 ### Step 2 — Affiliate Offer Automation
 Accepted direction:
@@ -249,6 +255,22 @@ Governing UI policy: `UI_SHELL_AND_PRESENTATION_ARCHITECTURE.md`.
 - optional real SQLite/PostgreSQL integration fixtures;
 - scripted browser/Scene snapshots;
 - no UI/device required for domain/component suites.
+
+## 12.1 Program 1 Developer Pack
+
+For Program 1 specifically, developers must also read:
+- `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`;
+- `PROGRAM1_SYSTEM_ARCHITECTURE.md`;
+- `PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md`;
+- `PROGRAM1_ARCHITECTURE_REVIEW_AND_IMPLEMENTATION_PLAN.md`;
+- `PROGRAM1_TRACEABILITY_MATRIX.md`;
+- `PROGRAM1_DEVELOPER_HANDOFF.md`;
+- `PROGRAM1_KANBAN.md`;
+- `PROGRAM1_IMPLEMENTATION_CARDS.md`;
+- `PROGRAM1_UX_AND_OPERATOR_EXPERIENCE.md`;
+- `PROGRAM1_AUTOMATED_TEST_ARCHITECTURE.md`.
+
+This pack is the implementation-ready Program 1 handoff and takes precedence over older generic Step 1 wording where the newer strategy-led design is more specific.
 
 ## 13. Required Reading Before Coding
 
