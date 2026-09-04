@@ -62,7 +62,7 @@ No fixed "final architecture" is assumed. Architecture evolves through versioned
 
 - [x] P1-C worker delivery reliability: failure classification, durable poison quarantine, ACK ambiguity fail-closed, quarantine telemetry
 - [x] P1-D Collection Router + Versioned Profile Registry: modular fixture/search/category/shop/PDP adapters, deterministic routing, evidence-stage gate
-- [ ] P1-H full Chromium-hosted deterministic browser fixture E2E beyond extension unit/component suites
+- [x] P1-H real Chromium MV3 restart/reconcile E2E: persistent profile, startup renew, stale-tab recovery, ACK/checkpoint, completion, no duplicate
 - [ ] P1-M Outcome Attribution Input when downstream analytics is available
 - [ ] P1-N Learned Opportunity Policy after sufficient outcome evidence
 
