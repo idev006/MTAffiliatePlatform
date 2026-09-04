@@ -313,3 +313,25 @@ def test_bad_worker_state_blocks_new_lease() -> None:
     blocked = c.post("/api/v1/jobs/job-1/lease", json={"worker_id": "worker-1"})
     assert blocked.status_code == 409
     assert "not eligible for a new lease" in blocked.json()["detail"]
+
+
+def test_program1_worker_can_read_durable_discovery_work_package() -> None:
+    c = client()
+    created = c.post("/api/v1/program1/discovery-jobs", json=create_payload())
+    assert created.status_code == 200
+
+    response = c.get("/api/v1/program1/discovery-jobs/job-1/work-package")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["hypothesis"]["hypothesis_id"] == "hyp-1"
+    assert body["discovery_plan"]["plan_id"] == "plan-1"
+    assert body["discovery_plan"]["capability_requirements"] == [
+        "collector:search-lab"
+    ]
+
+
+def test_program1_work_package_endpoint_rejects_unknown_job() -> None:
+    response = client().get(
+        "/api/v1/program1/discovery-jobs/missing/work-package"
+    )
+    assert response.status_code == 404
