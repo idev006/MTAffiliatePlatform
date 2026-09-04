@@ -20,7 +20,7 @@ from mtaffiliate.interfaces.api.shared_jobs import build_shared_job_router
 NOW = datetime(2026, 9, 4, 12, 0, tzinfo=UTC)
 
 
-class TestClock:
+class FakeClock:
     def __init__(self) -> None:
         self.value = NOW
 
@@ -38,7 +38,7 @@ def client() -> TestClient:
         InMemoryProgram1StrategyRepository(),
         engine,
     )
-    clock = TestClock()
+    clock = FakeClock()
     registry = WorkerRegistryService(
         InMemoryWorkerRegistryRepository(),
         stale_after=timedelta(minutes=5),
@@ -253,3 +253,58 @@ def test_unregistered_worker_cannot_lease() -> None:
 
     response = c.post("/api/v1/jobs/job-1/lease", json={"worker_id": "unknown"})
     assert response.status_code == 404
+
+
+def test_lease_next_returns_null_when_no_compatible_job_exists() -> None:
+    c = client()
+    payload = create_payload()
+    payload["discovery_plan"]["capability_requirements"] = ["collector:other"]
+    assert c.post("/api/v1/program1/discovery-jobs", json=payload).status_code == 200
+
+    response = c.post("/api/v1/jobs/lease-next", json={"worker_id": "worker-1"})
+    assert response.status_code == 200
+    assert response.json() is None
+
+
+def test_renew_endpoint_extends_active_lease() -> None:
+    c = client()
+    assert c.post("/api/v1/program1/discovery-jobs", json=create_payload()).status_code == 200
+    leased = c.post(
+        "/api/v1/jobs/job-1/lease",
+        json={"worker_id": "worker-1"},
+    )
+    assert leased.status_code == 200
+    before = leased.json()["lease_until"]
+    token = leased.json()["lease_token"]
+
+    renewed = c.post(
+        "/api/v1/jobs/job-1/renew",
+        json={"worker_id": "worker-1", "lease_token": token},
+    )
+    assert renewed.status_code == 200
+    assert renewed.json()["lease_until"] > before
+
+
+def test_invalid_pause_and_unknown_job_paths_return_contract_errors() -> None:
+    c = client()
+
+    unknown = c.post("/api/v1/jobs/missing/pause")
+    assert unknown.status_code == 404
+
+    assert c.post("/api/v1/program1/discovery-jobs", json=create_payload()).status_code == 200
+    invalid = c.post("/api/v1/jobs/job-1/pause")
+    assert invalid.status_code == 409
+
+
+def test_bad_worker_state_blocks_new_lease() -> None:
+    c = client()
+    assert c.post("/api/v1/program1/discovery-jobs", json=create_payload()).status_code == 200
+    heartbeat = c.post(
+        "/api/v1/workers/worker-1/heartbeat",
+        json={"health_state": "DEGRADED"},
+    )
+    assert heartbeat.status_code == 200
+
+    blocked = c.post("/api/v1/jobs/job-1/lease", json={"worker_id": "worker-1"})
+    assert blocked.status_code == 409
+    assert "not eligible for a new lease" in blocked.json()["detail"]
