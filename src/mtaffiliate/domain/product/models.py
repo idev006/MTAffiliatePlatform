@@ -21,6 +21,7 @@ class ProductObservation(BaseModel):
     rating: float | None = Field(default=None, ge=0, le=5, allow_inf_nan=False)
     review_count: int | None = Field(default=None, ge=0)
     source_worker_id: str | None = None
+    source_job_id: str | None = None
     source_query: str | None = None
     extractor_version: str | None = None
 
