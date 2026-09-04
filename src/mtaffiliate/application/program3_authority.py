@@ -5,6 +5,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from mtaffiliate.application.program3_device import Program3DeviceService
 from mtaffiliate.domain.affiliate_offer.models import (
     LinkArtifactValidationState,
     Program3OfferHandoff,
@@ -54,6 +55,7 @@ class Program3AuthoritativeService:
         ledger: PublishingLedgerRepository,
         jobs: SharedJobEngine,
         guard: PublishingGuardEngine,
+        devices: Program3DeviceService,
         policy: Program3AuthorityPolicy | None = None,
     ) -> None:
         self.decisions = decisions
@@ -62,6 +64,7 @@ class Program3AuthoritativeService:
         self.ledger = ledger
         self.jobs = jobs
         self.guard = guard
+        self.devices = devices
         self.policy = policy or Program3AuthorityPolicy()
 
     @staticmethod
@@ -204,6 +207,11 @@ class Program3AuthoritativeService:
             publish_job_id,
             worker_id=worker_id,
             lease_token=lease_token,
+            at=evaluated_at,
+        )
+        self.devices.assert_active_ownership(
+            device_id,
+            worker_id=worker_id,
             at=evaluated_at,
         )
         job = self.jobs.repository.get(publish_job_id)
