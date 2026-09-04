@@ -5,7 +5,6 @@ from pydantic import ValidationError
 
 from mtaffiliate.domain.job.models import JobRecord, JobState
 
-
 NOW = datetime(2026, 9, 4, tzinfo=UTC)
 
 
