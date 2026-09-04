@@ -152,3 +152,31 @@ Verification evidence (extension 0.1.17, local `.venv`):
 - fixture E2E in headed Brave with a fresh profile: transcript `Auto run cycle 1 -> Captured, queued and delivered to Back Office -> Auto run finished: reached the last page (page 2 of 2)`; mock log showed exactly 2 observation batches (6 accepted) covering pages [0, 1], zero requests past the last page; final capture payload on page 2 reported `has_next: false, next_url: null`; metrics cycle 2 / session accepted 6 / outbox 0; zero console or page errors; screenshots + `report.json` under `.browser-profiles/captures/2026-09-04/fixture-autorun/`.
 
 Open items unchanged (see fifth slice); live-Shopee last-page confirmation remains pending the traffic gate, but the exact finish path is now locked by a deterministic browser E2E.
+
+
+## Strategy-Led Architecture Baseline and P1-A — 2026-09-04
+
+Status: DOCUMENTS ACCEPTED / P1-A IMPLEMENTED / CI EVIDENCE PENDING
+
+Program 1 was formally reframed as **Affiliate Opportunity Intelligence** with Affiliate/Marketing Strategy leading business questions, signal requirements and evidence needs before engineering collection behavior.
+
+Governing artifacts added/updated:
+- `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`;
+- `PROGRAM1_SYSTEM_ARCHITECTURE.md`;
+- `PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md`;
+- `PROGRAM1_ARCHITECTURE_REVIEW_AND_IMPLEMENTATION_PLAN.md`;
+- `PROGRAM1_TRACEABILITY_MATRIX.md`;
+- Project Charter, Workflow, Readiness, Contracts, Data Model, Program 1 -> 2 handoff, AGENTS, diagram packs and work queue aligned.
+
+P1-A implementation:
+- added immutable strategy/domain contracts for `AffiliateSuccessHypothesis`, `SignalRequirement`, evidence lifecycle state and `DiscoveryPlan`;
+- added `Program1StrategyPlanner` to validate hypothesis/campaign/signal traceability before discovery work;
+- planner rejects unknown required signals, cross-hypothesis signals, duplicate signal IDs and signals not declared in the approved discovery plan;
+- tests added for positive and negative traceability paths;
+- CI branch-coverage scope now includes `mtaffiliate.domain.program1` and `mtaffiliate.application.program1_strategy`.
+
+Verification:
+- isolated contract smoke check: PASS;
+- full repository GitHub Actions state was not visible yet through the connected GitHub interface and must be treated as pending rather than assumed green.
+
+No Shopee production selector, scoring weight or pacing assumption was introduced in this slice.
