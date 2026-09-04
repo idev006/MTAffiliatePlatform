@@ -14,13 +14,18 @@ For Program 1, read in this order before implementation:
 4. `PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md`
 5. `PROGRAM1_ARCHITECTURE_REVIEW_AND_IMPLEMENTATION_PLAN.md`
 6. `PROGRAM1_TRACEABILITY_MATRIX.md`
-7. `WORKFLOW.md`
-8. `PROGRAM1_IMPLEMENTATION_READINESS.md`
-9. `APPLICATION_AND_ENGINE_CONTRACTS.md`
-10. `DATA_MODEL.md`
-11. `PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`
-12. Program 1 evidence documents / specs / Kanban card
-13. current implementation and tests
+7. `PROGRAM1_DEVELOPER_HANDOFF.md`
+8. `PROGRAM1_KANBAN.md`
+9. `PROGRAM1_IMPLEMENTATION_CARDS.md`
+10. `PROGRAM1_UX_AND_OPERATOR_EXPERIENCE.md`
+11. `PROGRAM1_AUTOMATED_TEST_ARCHITECTURE.md`
+12. `WORKFLOW.md`
+13. `PROGRAM1_IMPLEMENTATION_READINESS.md`
+14. `APPLICATION_AND_ENGINE_CONTRACTS.md`
+15. `DATA_MODEL.md`
+16. `PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`
+17. Program 1 evidence documents / specs / Kanban card
+18. current implementation and tests
 
 If source conflicts with the governing documents, do not silently reinterpret the documents. Resolve the discrepancy intentionally.
 
