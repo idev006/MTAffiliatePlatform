@@ -18,7 +18,7 @@ def register_worker(c: TestClient) -> None:
         json={
             "schema_version": "worker-registration-v1",
             "worker_id": "offer-worker-1",
-            "worker_type": "AFFILIATE_OFFER_BROWSER_WORKER",
+            "worker_type": "AFFILIATE_BROWSER_WORKER",
             "installation_id": "install-1",
             "version": "0.1.0",
             "capabilities": ["offer:candidate-read"],
