@@ -20,8 +20,12 @@ const JOB_RENEW_PERIOD_MINUTES = 1;
 const ACTIVE_JOB_KEY = "program1_active_job_v1";
 const WORKER_TYPE = "DISCOVERY_BROWSER_WORKER";
 const EXTENSION_CAPABILITIES = [
-  "collector:shopee-current-page-lab-v2",
+  "collector:profile-router-v1",
   "collector:fixture-profile-v1",
+  "collector:shopee-search-lab-v1",
+  "collector:shopee-category-lab-v1",
+  "collector:shopee-shop-lab-v1",
+  "collector:shopee-pdp-lab-v1",
   "mode:capture-current-page",
 ];
 let outboxDrain = Promise.resolve();
