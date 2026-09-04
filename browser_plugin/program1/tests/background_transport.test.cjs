@@ -70,6 +70,20 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
         (message) => message.message_id !== messageId,
       );
     },
+    createBackgroundExecutionController: () => ({
+      async start() {
+        return { ok: true, run_state: storage.program1_run_state_v1 || null };
+      },
+      async stop() {
+        return { desired: false };
+      },
+      async runOneCycle() {
+        return { ok: true, skipped: true };
+      },
+      async resumeAfterWake() {
+        return { ok: true, skipped: true };
+      },
+    }),
     createProgram1JobLifecycle: () => ({
       async activeState() {
         return storage.program1_active_job_v1 || null;
@@ -97,6 +111,7 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
   const filePath = path.join(__dirname, "..", "src", "background.js");
   const source = fs
     .readFileSync(filePath, "utf8")
+    .replace('import { createBackgroundExecutionController } from "./background_execution.mjs";', "")
     .replace('import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";', "")
     .replace('import { enqueue, readOutbox, removeByMessageId } from "./outbox.js";', "");
   new vm.Script(source, { filename: filePath }).runInContext(context);
