@@ -100,6 +100,13 @@ class Program3AuthoritativeService:
             raise ValueError("Program 2 handoff product mismatch")
         if decision.preferred_offer_id != handoff.preferred_offer_id:
             raise ValueError("Program 2 handoff preferred offer mismatch")
+        if decision.affiliate_account_id != handoff.affiliate_account_id:
+            raise ValueError("Program 2 handoff affiliate account mismatch")
+        if decision.backup_offer_ids != handoff.backup_offer_ids:
+            raise ValueError("Program 2 handoff backup offer mismatch")
+        handoff_age = created_at - handoff.valid_at
+        if handoff_age < timedelta(0) or handoff_age > self.policy.max_program2_handoff_age:
+            raise ValueError("Program 2 handoff is stale or has invalid time")
         if artifact.selection_decision_id != decision.decision_id:
             raise ValueError("link artifact does not belong to selection decision")
         if artifact.offer_id != decision.preferred_offer_id:
