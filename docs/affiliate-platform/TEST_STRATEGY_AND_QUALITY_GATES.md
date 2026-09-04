@@ -296,6 +296,17 @@ Before merge to main, foundation CI should eventually run:
 
 Physical Android/browser farm suites may run separately as scheduled/laboratory gates where infrastructure is required.
 
+## 15.1 Full-Automation Preference
+
+For every new capability, reviewers should first ask whether the acceptance path can be proven without UI.
+
+Preferred path:
+`domain/unit -> application/component -> contract -> integration -> resilience -> deterministic E2E`.
+
+Manual UI interaction is reserved for presentation acceptance and controlled external evidence that cannot be simulated.
+
+Where a core behavior cannot be automated, the reason and alternative control/monitoring must be documented.
+
 ## 16. Definition of Done — Testing
 
 A feature is not Done unless:
