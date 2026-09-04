@@ -176,6 +176,24 @@ def test_expired_unsafe_job_escalates_instead_of_reassigning() -> None:
     assert escalated.failure_code == "LEASE_EXPIRED_UNSAFE_TO_REASSIGN"
 
 
+def test_fail_job_clears_lease_and_records_reason() -> None:
+    shared, repo = engine()
+    started = lease_started(shared)
+
+    failed = shared.fail_job(
+        "job-1",
+        failure_code="COLLECTION_FAILED",
+        detail="fixture parser failed",
+        at=NOW + timedelta(seconds=2),
+    )
+
+    assert failed.state is JobState.FAILED
+    assert failed.lease_token is None
+    assert failed.assigned_worker_id is None
+    assert failed.failure_code == "COLLECTION_FAILED"
+    assert repo.list_events("job-1")[-1].event_type == "JOB_FAILED"
+
+
 def test_stale_worker_or_token_cannot_mutate_job() -> None:
     shared, _repo = engine()
     started = lease_started(shared)
