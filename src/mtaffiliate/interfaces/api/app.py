@@ -444,11 +444,13 @@ def create_app(
                 accepted = service2.ingest_observations(batch.observations)
             except ValueError as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
-            return {
-                "batch_id": batch.batch_id,
+            response: dict[str, int | str] = {
                 "received_count": len(batch.observations),
                 "accepted_count": accepted,
             }
+            if "batch_id" in batch.model_fields_set:
+                response["batch_id"] = batch.batch_id
+            return response
 
         @app.get(
             "/api/v1/program2/products/{product_id}/offers",
