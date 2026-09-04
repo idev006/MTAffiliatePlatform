@@ -192,6 +192,22 @@ class Program2SelectionDecisionRow(Base):
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class Program2LinkArtifactRow(Base):
+    __tablename__ = "program2_link_artifacts"
+
+    artifact_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    selection_decision_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    source_job_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    affiliate_account_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    offer_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    link_url: Mapped[str] = mapped_column(String(4096), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    validated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    validation_state: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    evidence_refs: Mapped[str] = mapped_column(String(8192), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class AffiliateOfferSelectionRow(Base):
     __tablename__ = "affiliate_offer_selections"
 
