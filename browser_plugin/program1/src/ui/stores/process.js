@@ -129,7 +129,8 @@ export const useProcessStore = defineStore("process", {
     },
 
     applyRunState(runState) {
-      if (!runState || !runState.desired) return;
+      if (!runState) return;
+      this.autoRunning = Boolean(runState.desired);
       this.activeTargetTabId = runState.active_target_tab_id ?? this.activeTargetTabId;
       this.cycleCount = runState.cycle_count ?? this.cycleCount;
       this.sessionAcceptedCount = runState.session_accepted_count ?? this.sessionAcceptedCount;
@@ -180,11 +181,14 @@ export const useProcessStore = defineStore("process", {
       }
       this.activityEntry("process", `Panel ready (${localeNow()})`);
       const runState = await bridge.sendRuntimeMessage({ type: "PROGRAM1_GET_RUN_STATE" });
-      const shouldResume = Boolean(settings.autoResume && settings.configured && runState?.run_state?.desired);
-      if (shouldResume) {
+      if (runState?.run_state) {
         this.applyRunState(runState.run_state);
-        this.activityEntry("process", "Recovering previous auto-run state");
-        this.startAutoRun({ resume: true });
+        if (runState.run_state.desired) {
+          this.activityEntry(
+            "process",
+            "Background run remains active independently of the Side Panel",
+          );
+        }
       }
     },
 
@@ -447,15 +451,19 @@ export const useProcessStore = defineStore("process", {
       autoTickTimerId = setInterval(tick, TICK_MS);
     },
 
-    stopAutoRun(reason = "Auto run stopped") {
-      if (autoTimerId !== null) {
-        clearTimeout(autoTimerId);
-        autoTimerId = null;
-      }
+    async stopAutoRun(reason = "Background run stopped by operator") {
       this.stopCountdownTicker();
+      const response = await bridge.sendRuntimeMessage({
+        type: "PROGRAM1_STOP_BACKGROUND_RUN",
+      });
       this.autoRunning = false;
-      this.setView({ state: "IDLE", step: reason, error: null });
-      void this.persistRunState(false, { last_step: reason });
+      this.setView({
+        state: response?.last_error ? "ERROR" : "IDLE",
+        step: reason,
+        error: response?.last_error || null,
+      });
+      await this.refreshStatus();
+      return this.show(response);
     },
 
     scheduleNextAutoCapture() {
@@ -499,17 +507,28 @@ export const useProcessStore = defineStore("process", {
       }
     },
 
-    startAutoRun({ resume = false } = {}) {
-      if (!resume) {
-        this.cycleCount = 0;
-        this.sessionStartedAt = Date.now();
-        this.sessionAcceptedCount = 0;
+    async startAutoRun() {
+      this.setView({
+        state: "COLLECTING",
+        step: "Requesting background-owned discovery run",
+        error: null,
+      });
+      const response = await bridge.sendRuntimeMessage({
+        type: "PROGRAM1_START_BACKGROUND_RUN",
+      });
+      if (!response?.ok) {
+        this.autoRunning = false;
+        this.setView({
+          state: "ERROR",
+          step: "Background run could not start",
+          error: response?.error || "BACKGROUND_RUN_START_FAILED",
+        });
+        return this.show(response);
       }
-      if (this.sessionStartedAt === null) this.sessionStartedAt = Date.now();
-      this.autoRunning = true;
-      this.setView({ state: "COLLECTING", step: "Auto run starting", error: null });
-      void this.persistRunState(true, { last_step: resume ? "Auto run recovered" : "Auto run starting" });
-      void this.runAutoCaptureCycle();
+      this.autoRunning = Boolean(response?.run_state?.desired);
+      this.applyRunState(response?.run_state);
+      await this.refreshStatus();
+      return this.show(response);
     },
   },
 });
