@@ -9,6 +9,7 @@ from mtaffiliate.application.program1 import Program1Service
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_opportunity import Program1OpportunityService
 from mtaffiliate.application.program2 import Program2Service
+from mtaffiliate.application.program2_jobs import Program2OfferDiscoveryJobService
 from mtaffiliate.application.program3 import Program3Service
 from mtaffiliate.application.worker_registry import WorkerRegistryService
 from mtaffiliate.bootstrap.config import load_settings
@@ -19,6 +20,7 @@ from mtaffiliate.bootstrap.program1_opportunity import (
     build_durable_program1_opportunity_service,
 )
 from mtaffiliate.bootstrap.program2 import build_durable_program2
+from mtaffiliate.bootstrap.program2_jobs import build_durable_program2_job_service
 from mtaffiliate.bootstrap.program3 import build_durable_program3
 from mtaffiliate.bootstrap.shared_job import build_durable_shared_job_engine
 from mtaffiliate.bootstrap.worker_registry import build_durable_worker_registry
@@ -60,6 +62,7 @@ def create_runtime_app(
     shared_jobs: SharedJobEngine | None = None
     program1_jobs: Program1DiscoveryJobService | None = None
     program1_opportunities: Program1OpportunityService | None = None
+    program2_jobs: Program2OfferDiscoveryJobService | None = None
     if "program1" in enabled_programs:
         program1 = build_durable_program1(settings, project_root=root)
     if "program2" in enabled_programs:
@@ -79,6 +82,12 @@ def create_runtime_app(
             project_root=root,
             jobs=shared_jobs,
         )
+    if "program2" in enabled_programs:
+        program2_jobs = build_durable_program2_job_service(
+            settings,
+            project_root=root,
+            jobs=shared_jobs,
+        )
 
     return create_app(
         settings,
@@ -89,5 +98,6 @@ def create_runtime_app(
         shared_jobs=shared_jobs,
         program1_jobs=program1_jobs,
         program1_opportunities=program1_opportunities,
+        program2_jobs=program2_jobs,
         enabled_programs=enabled_programs,
     )
