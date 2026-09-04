@@ -1,5 +1,5 @@
 function messageOf(error) {
-  return error instanceof Error ? error.message : String(error);
+  return error && typeof error.message === "string" ? error.message : String(error);
 }
 
 export function classifyDeliveryFailure(error) {
