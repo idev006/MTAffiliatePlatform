@@ -61,6 +61,7 @@ class DiscoveryPlan(BaseModel):
     required_signal_ids: tuple[str, ...] = Field(min_length=1)
     source_scope: str = Field(min_length=1)
     surface_scope: tuple[str, ...] = Field(min_length=1)
+    collection_targets: tuple[str, ...] = ()
     capability_requirements: tuple[str, ...] = ()
     evidence_policy_version: str = Field(min_length=1)
     collection_policy_version: str = Field(min_length=1)
@@ -72,6 +73,8 @@ class DiscoveryPlan(BaseModel):
             raise ValueError("required_signal_ids must be unique")
         if len(set(self.surface_scope)) != len(self.surface_scope):
             raise ValueError("surface_scope must be unique")
+        if len(set(self.collection_targets)) != len(self.collection_targets):
+            raise ValueError("collection_targets must be unique")
         if len(set(self.capability_requirements)) != len(self.capability_requirements):
             raise ValueError("capability_requirements must be unique")
         return self
