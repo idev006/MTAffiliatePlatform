@@ -75,7 +75,7 @@ Delivery result semantics:
 - mid-run `PAGE_UNSUPPORTED` is diagnosed, not just reported: the collector returns a `page_context` probe (listing shell present?, hydrated item roots, page title) so an empty throttled page is distinguishable from a genuinely unsupported page; auto-run retries a rendered listing shell twice (5 s then 12 s) before failing closed, and the stop reason carries the failing page URL (0.1.15).
 - fixture pages (`data-program1-fixture-product`) may embed a real `.shopee-page-controller`; the fixture capture then reports pagination context, which lets the **pagination-aware auto-run be exercised end-to-end against deterministic non-Shopee pages** — including the clean last-page finish (0.1.16).
 - the fixture listing E2E is scripted in `tools/program1_fixture_autorun_check.py`: it serves a two-page fixture listing + a mock Back Office on `127.0.0.1`, drives the real extension, and asserts the auto-run walks page 1 → 2 via the controller next link and finishes with `Auto run finished: reached the last page (page 2 of 2)` without requesting a page 3 (0.1.17).
-- worker registration is verified end-to-end with `tools/program1_registry_e2e_check.py` (opens the real side panel and expects `Registry: registered (...)`); Shopee evidence pages can be captured with `tools/program1_capture_search_evidence.py`.
+- worker registration is verified end-to-end with `tools/program1_registry_e2e_check.py` (opens the real side panel and expects `Registry: registered (...)`); Shopee evidence pages can be captured with `tools/program1_capture_search_evidence.py`, which now emits structurally sanitized HTML plus a SHA-256 evidence manifest governed by ADR-047.
 - host permissions are intentionally limited to Shopee and local Back Office URLs until a remote deployment profile is approved; the local Back Office (`http://127.0.0.1/*`, `http://localhost/*`) is a **required** host permission (silent grant — it is the worker's own control plane), while `https://shopee.co.th/*` stays optional so touching real Shopee pages always needs explicit operator consent (0.1.17).
 
 Playwright persistent-profile test mode:
@@ -159,3 +159,11 @@ Delivery reliability hardening (0.1.25):
 - process status exposes `outbox_quarantine_count`; heartbeat remains `DEGRADED` while either active outbox or quarantine needs attention;
 - Shared Job checkpoints are written only when the **current queued batch** receives an authoritative matching ACK;
 - delivery error normalization is structural (`error.message`) rather than `instanceof Error`, so cross-realm/VM/extension error objects preserve canonical error codes.
+
+Controlled evidence capture (2026-09-05):
+- verification/anti-bot pages fail closed immediately by default;
+- `--allow-human-verification-wait` must be supplied explicitly to wait while a human completes an ordinary platform verification step;
+- persisted HTML removes scripts/styles/iframes, input values, media URLs and secret-like attributes before writing;
+- evidence URLs retain only route plus approved evidence query keys;
+- each capture writes an evidence manifest with classification, blocked state, promotion decision, browser/session category, code version and SHA-256;
+- a successful capture is still `HOLD`; profile promotion requires repeated independent live evidence under `CONTROLLED_PRODUCTION_EVIDENCE_VALIDATION_STANDARD.md`.
