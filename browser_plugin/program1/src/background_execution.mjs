@@ -33,7 +33,6 @@ export function createBackgroundExecutionController({
   deliverBatch,
   scheduleWake,
   cancelWake,
-  sleep,
   randomDelayMs,
   randomUUID,
   now = () => Date.now(),
@@ -80,10 +79,14 @@ export function createBackgroundExecutionController({
         if (tab?.id != null) {
           if (tab.url !== targetUrl) {
             await navigateTab(tab.id, targetUrl);
-          } else {
-            await focusTab(tab.id);
+            return { tab_id: tab.id, url: targetUrl, needs_wait: true };
           }
-          return { tab_id: tab.id, url: targetUrl };
+          await focusTab(tab.id);
+          return {
+            tab_id: tab.id,
+            url: targetUrl,
+            needs_wait: tab.status === "loading",
+          };
         }
       } catch (_error) {
         // Fall through to a fresh controlled tab.
@@ -91,35 +94,7 @@ export function createBackgroundExecutionController({
     }
     const tab = await createTab(targetUrl);
     if (tab?.id == null) throw new Error("TARGET_TAB_CREATE_FAILED");
-    return { tab_id: tab.id, url: targetUrl };
-  }
-
-  async function captureWithRetry(tabId, settings) {
-    const retryCount = Math.max(
-      0,
-      Number.parseInt(String(settings?.max_page_retries ?? 2), 10) || 0,
-    );
-    const retryWaitMs =
-      Math.max(
-        1,
-        Number.parseInt(String(settings?.page_retry_wait_seconds ?? 5), 10) || 5,
-      ) * 1000;
-
-    let result = null;
-    for (let attempt = 0; attempt <= retryCount; attempt += 1) {
-      await injectCollector(tabId);
-      result = await captureTab(tabId);
-      if (result?.ok) return result;
-      if (
-        result?.error !== "PAGE_UNSUPPORTED" ||
-        !result?.page_context?.listing_shell_present ||
-        attempt >= retryCount
-      ) {
-        return result;
-      }
-      await sleep(retryWaitMs);
-    }
-    return result;
+    return { tab_id: tab.id, url: targetUrl, needs_wait: true };
   }
 
   async function scheduleNext(settings, runState) {
@@ -216,11 +191,51 @@ export function createBackgroundExecutionController({
           1,
           Number.parseInt(String(settings?.page_load_wait_seconds ?? 4), 10) || 4,
         ) * 1000;
-      await sleep(loadWaitMs);
+      if (tab.needs_wait) {
+        const when = now() + loadWaitMs;
+        await scheduleWake(when);
+        const waiting = await persist({
+          in_flight: false,
+          next_run_at: new Date(when).toISOString(),
+          last_step: "Waiting for target page to load",
+          last_error: null,
+        });
+        return { ok: true, waiting: true, run_state: waiting };
+      }
 
-      const capture = await captureWithRetry(tab.tab_id, settings);
+      await injectCollector(tab.tab_id);
+      const capture = await captureTab(tab.tab_id);
       if (!capture?.ok) {
         const failure = capture?.error || "COLLECTION_FAILED";
+        const maxRetries = Math.max(
+          0,
+          Number.parseInt(String(settings?.max_page_retries ?? 2), 10) || 0,
+        );
+        const retryAttempt = current.page_retry_attempt || 0;
+        if (
+          failure === "PAGE_UNSUPPORTED" &&
+          capture?.page_context?.listing_shell_present &&
+          retryAttempt < maxRetries
+        ) {
+          const retryWaitMs =
+            Math.max(
+              1,
+              Number.parseInt(
+                String(settings?.page_retry_wait_seconds ?? 5),
+                10,
+              ) || 5,
+            ) * 1000;
+          const when = now() + retryWaitMs;
+          await scheduleWake(when);
+          const retrying = await persist({
+            in_flight: false,
+            page_retry_attempt: retryAttempt + 1,
+            next_run_at: new Date(when).toISOString(),
+            last_step: `Page not ready; retry ${retryAttempt + 1}/${maxRetries}`,
+            last_error: null,
+          });
+          return { ok: true, retrying: true, capture, run_state: retrying };
+        }
         const stopped = await stop(
           `Background run stopped: ${failure}`,
           { error: failure },
@@ -256,6 +271,7 @@ export function createBackgroundExecutionController({
         },
       );
 
+      await persist({ page_retry_attempt: 0 });
       const stateAfterAck = await loadRunState();
       const nextCycleCount = stateAfterAck?.cycle_count || 0;
       const nextAccepted =
