@@ -1,7 +1,7 @@
 # Program 1 Browser Plugin
 
 Status: laboratory / evidence-gated implementation.
-Current extension version: `0.1.23`.
+Current extension version: `0.1.24`.
 
 This Manifest V3 extension is the Product Discovery Worker for Program 1. It intentionally does **not** contain production Shopee selectors yet. Real collection profiles remain a validation gate in the governing documents.
 
@@ -136,8 +136,17 @@ Shared Job integration (0.1.23):
 - restart reconciliation fails closed when authoritative Back Office state is no longer an active lease;
 - Side Panel remains an operator shell; remaining work is to move the full multi-page auto-run trigger/scheduling loop behind this background-owned job lifecycle and prove kill/restart recovery in a real Chromium-family browser.
 
+Background execution ownership (0.1.24):
+- Start/Stop Auto Run is now a Side Panel command to the MV3 background runtime rather than a panel-owned timer loop;
+- the background runtime executes one bounded cycle per alarm wake-up and persists phase/run state before yielding;
+- DiscoveryPlan may carry bounded `collection_targets`, so executable work can survive UI closure and browser/service-worker restart without relying on panel-only target state;
+- page-load waits, bounded PAGE_UNSUPPORTED retries and next-cycle delays are alarm-driven rather than long-lived Side Panel timers;
+- successful durable observation ACKs become Shared Job checkpoints;
+- last-page detection verifies/completes the Shared Job and terminates the background run;
+- delivery blocks, permission gaps and ambiguous pagination fail closed.
+
 Next gated work:
 - real-browser MV3 kill/restart/reconcile E2E while Side Panel is closed;
-- background-owned multi-page execution orchestration using DiscoveryPlan scope;
 - saved sanitized real-page fixtures for observed search/category/shop/product-detail surfaces;
-- versioned Shopee collection profiles after observation/validation.
+- versioned Shopee collection profiles after observation/validation;
+- complete OpportunityFeatureSnapshot / Qualification / OpportunityThesis implementation.
