@@ -5,6 +5,8 @@ Purpose: Define runtime collaboration, ownership, transaction boundaries, ACK/id
 Notation: Mermaid `sequenceDiagram`.
 
 > Rule: sequence diagrams describe business/runtime collaboration. Concrete DOM selectors, Android coordinates and ORM internals must not leak into these contracts.
+>
+> Program 1-specific sequences, including strategy-led discovery, pause/resume, MV3 restart, collection-profile selection, opportunity evaluation and Program 1 -> Program 2 v1.1, are governed in `PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md`.
 
 ## SD-01 — Step 1 Product Discovery Happy Path
 
