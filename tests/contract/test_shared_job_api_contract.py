@@ -17,7 +17,6 @@ from mtaffiliate.domain.worker_registry.models import WorkerRegistration, Worker
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 from mtaffiliate.interfaces.api.shared_jobs import build_shared_job_router
 
-
 NOW = datetime(2026, 9, 4, 12, 0, tzinfo=UTC)
 
 
