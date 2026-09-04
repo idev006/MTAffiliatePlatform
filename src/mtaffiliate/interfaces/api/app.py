@@ -213,6 +213,7 @@ def create_app(
             build_shared_job_router(
                 program1_jobs=program1_job_service,
                 jobs=shared_job_engine,
+                registry=registry_service,
                 lease_seconds=cfg.worker.lease_seconds,
                 clock=utc_now,
             )
