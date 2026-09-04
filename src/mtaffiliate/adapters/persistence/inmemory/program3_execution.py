@@ -3,6 +3,7 @@ from __future__ import annotations
 from threading import RLock
 
 from mtaffiliate.domain.publishing.models import (
+    PreSubmitDecision,
     Program3PlanPackage,
     ReconciliationDecision,
     SubmissionRecord,
@@ -13,6 +14,7 @@ from mtaffiliate.ports.repositories.program3_execution import Program3ExecutionC
 class InMemoryProgram3ExecutionRepository:
     def __init__(self) -> None:
         self._plans: dict[str, Program3PlanPackage] = {}
+        self._pre_submit: dict[str, PreSubmitDecision] = {}
         self._submissions: dict[str, SubmissionRecord] = {}
         self._submission_by_job: dict[str, str] = {}
         self._reconciliations: dict[str, ReconciliationDecision] = {}
@@ -28,6 +30,19 @@ class InMemoryProgram3ExecutionRepository:
     def get_plan(self, plan_ref: str) -> Program3PlanPackage | None:
         with self._lock:
             return self._plans.get(plan_ref)
+
+    def put_pre_submit(self, decision: PreSubmitDecision) -> None:
+        with self._lock:
+            existing = self._pre_submit.get(decision.decision_id)
+            if existing is not None and existing != decision:
+                raise Program3ExecutionConflictError(
+                    f"pre-submit decision conflict: {decision.decision_id}"
+                )
+            self._pre_submit[decision.decision_id] = decision
+
+    def get_pre_submit(self, decision_id: str) -> PreSubmitDecision | None:
+        with self._lock:
+            return self._pre_submit.get(decision_id)
 
     def put_submission(self, submission: SubmissionRecord) -> None:
         with self._lock:
