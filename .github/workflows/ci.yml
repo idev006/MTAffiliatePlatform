@@ -22,6 +22,7 @@ jobs:
         run: >-
           pytest -m 'not stress and not integration'
           --cov=mtaffiliate.domain.product
+          --cov=mtaffiliate.domain.program1
           --cov=mtaffiliate.domain.affiliate_offer
           --cov=mtaffiliate.domain.publishing
           --cov=mtaffiliate.domain.scene
@@ -33,6 +34,7 @@ jobs:
           --cov=mtaffiliate.engines.scene_engine
           --cov=mtaffiliate.engines.device_host_engine
           --cov=mtaffiliate.application.program1
+          --cov=mtaffiliate.application.program1_strategy
           --cov=mtaffiliate.application.program2
           --cov=mtaffiliate.application.program3
           --cov=mtaffiliate.application.program3_worker
