@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
+from mtaffiliate.adapters.persistence.inmemory.device import InMemoryDeviceRepository
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.program2_artifact import (
     InMemoryProgram2ArtifactRepository,
@@ -16,11 +17,13 @@ from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
 )
 from mtaffiliate.application.program3_authority import Program3AuthoritativeService
+from mtaffiliate.application.program3_device import Program3DeviceService
 from mtaffiliate.domain.affiliate_offer.models import (
     AffiliateLinkArtifact,
     LinkArtifactValidationState,
     OfferSelectionDecision,
 )
+from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 from mtaffiliate.interfaces.api.app import create_app
@@ -78,6 +81,10 @@ def build() -> tuple[TestClient, Program3AuthoritativeService]:
         ledger=InMemoryPublishingLedgerRepository(),
         jobs=jobs,
         guard=PublishingGuardEngine(),
+        devices=Program3DeviceService(
+            InMemoryDeviceRepository(),
+            DeviceHostEngine(),
+        ),
     )
     app = create_app(
         program3_authority=authority,
@@ -103,6 +110,25 @@ def test_program3_authoritative_api_flow_reaches_confirmed_ledger() -> None:
         },
     )
     assert registered.status_code == 200
+
+    device = client.post(
+        "/api/v1/program3/devices/register",
+        json={
+            "device_id": "device-1",
+            "adb_serial": "adb-device-1",
+            "host_id": "host-1",
+            "status": "ONLINE",
+        },
+    )
+    assert device.status_code == 200
+    claimed = client.post(
+        "/api/v1/program3/devices/device-1/claim",
+        json={
+            "worker_id": "android-worker-1",
+            "at": now.isoformat(),
+        },
+    )
+    assert claimed.status_code == 200
 
     plan = client.post(
         "/api/v1/program3/plans",
@@ -224,6 +250,22 @@ def test_program3_api_blocks_unconfirmed_scene_and_unknown_retry() -> None:
             "installation_id": "android-install-1",
             "version": "0.1.0",
             "capabilities": ["android:publish"],
+        },
+    )
+    client.post(
+        "/api/v1/program3/devices/register",
+        json={
+            "device_id": "device-1",
+            "adb_serial": "adb-device-1",
+            "host_id": "host-1",
+            "status": "ONLINE",
+        },
+    )
+    client.post(
+        "/api/v1/program3/devices/device-1/claim",
+        json={
+            "worker_id": "android-worker-1",
+            "at": now.isoformat(),
         },
     )
     client.post(
