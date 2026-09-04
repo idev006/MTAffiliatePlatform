@@ -1,3 +1,4 @@
+from .affiliate_offer import SQLAlchemyAffiliateOfferRepository
 from .factory import build_engine, build_session_factory, resolve_database_url
 from .ingestion import SQLAlchemyProgram1BatchIngestor
 from .job import SQLAlchemyJobRepository
@@ -10,6 +11,7 @@ from .program2_work import SQLAlchemyProgram2WorkRepository
 from .worker_registry import SQLAlchemyWorkerRegistryRepository
 
 __all__ = [
+    "SQLAlchemyAffiliateOfferRepository",
     "SQLAlchemyJobRepository",
     "SQLAlchemyProductRepository",
     "SQLAlchemyProgram1BatchIngestor",
