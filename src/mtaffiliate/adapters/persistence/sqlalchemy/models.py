@@ -220,6 +220,18 @@ class AffiliateOfferSelectionRow(Base):
     model_version: Mapped[str] = mapped_column(String(128), nullable=False)
 
 
+class Program3DeviceRow(Base):
+    __tablename__ = "program3_devices"
+
+    device_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    adb_serial: Mapped[str] = mapped_column(String(256), nullable=False, unique=True)
+    host_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    worker_id: Mapped[str | None] = mapped_column(String(128), index=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    version_no: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
 class Program3PlanRow(Base):
     __tablename__ = "program3_plans"
 
