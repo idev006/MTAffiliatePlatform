@@ -47,7 +47,7 @@ No fixed "final architecture" is assumed. Architecture evolves through versioned
 
 ## 4. Current Board
 
-### DONE
+### VERIFY
 
 #### P1-A — Strategy-to-Work Contract
 Outcome:
@@ -60,7 +60,8 @@ Evidence:
 
 Verification state:
 - isolated smoke PASS;
-- repository CI evidence still requires current GitHub run confirmation.
+- repository CI evidence still requires current GitHub run confirmation;
+- move to DONE only after authoritative repository gates are confirmed and recorded.
 
 ### READY / NEXT
 
