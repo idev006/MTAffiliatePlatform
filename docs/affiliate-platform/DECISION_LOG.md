@@ -216,6 +216,23 @@ Program 1 -> Program 2 and Program 2 -> Program 3 integrate through explicit ver
 
 Governing records: `PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`, `PROGRAM2_TO_PROGRAM3_HANDOFF_CONTRACT.md`, `PROGRAM2_PROGRAM3_IMPLEMENTATION_KANBAN.md`.
 
+## ADR-046 — Program 1 Is Strategy-Led Affiliate Opportunity Intelligence
+**Status: Accepted — 2026-09-04**
+
+Program 1 is governed by Affiliate/Marketing Strategy before collection mechanics.
+
+Decision:
+- Program 1 exists to identify and prioritize affiliate opportunities, not to maximize scraping volume or merely list popular products.
+- Marketing/Affiliate hypotheses define the business questions and decision signals; engineering derives data/evidence/collection requirements from them.
+- Browser workers remain bounded fact collectors and do not own commercial scoring, contentability, opportunity ranking or recommendation policy.
+- Program 1 preserves separation between observed facts, normalized facts, derived features and business decisions.
+- Early phases favor explainable features, qualification, opportunity thesis and human-reviewable rules over invented production scoring weights.
+- Program 1 must preserve historical/provenance data required for downstream attribution and future learning.
+- Qualified opportunity candidates, not arbitrary harvested products, are the intended Program 1 -> Program 2 output.
+- Strategic success is measured by improved affiliate decision quality and downstream outcome yield per unit of effort, not raw products collected.
+
+Governing record: `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`.
+
 ## Pending Validation / Implementation Gates
 - Product Scoring Model v1 exact formula.
 - Affiliate Offer Scoring Model v1 exact formula.
