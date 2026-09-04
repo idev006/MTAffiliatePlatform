@@ -6,10 +6,10 @@ from .program1_strategy import SQLAlchemyProgram1StrategyRepository
 from .worker_registry import SQLAlchemyWorkerRegistryRepository
 
 __all__ = [
-    "SQLAlchemyProductRepository",
-    "SQLAlchemyProgram1StrategyRepository",
-    "SQLAlchemyProgram1BatchIngestor",
     "SQLAlchemyJobRepository",
+    "SQLAlchemyProductRepository",
+    "SQLAlchemyProgram1BatchIngestor",
+    "SQLAlchemyProgram1StrategyRepository",
     "SQLAlchemyWorkerRegistryRepository",
     "build_engine",
     "build_session_factory",
