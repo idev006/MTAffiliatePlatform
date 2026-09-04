@@ -14,6 +14,7 @@ REQUIRED = (
     "docs/affiliate-platform/PROGRAM3_IMPLEMENTATION_CARDS.md",
     "docs/affiliate-platform/PROGRAM3_AUTOMATED_TEST_ARCHITECTURE.md",
     "src/mtaffiliate/application/program3_authority.py",
+    "src/mtaffiliate/application/program3_device.py",
     "src/mtaffiliate/application/program3_worker.py",
     "src/mtaffiliate/application/program3_workflow.py",
     "src/mtaffiliate/engines/publishing_guard_engine/service.py",
@@ -65,6 +66,15 @@ def main() -> int:
         "CONFIRMED_SUCCESS",
     ):
         require(token in authority, f"Program 3 authority missing control: {token}", findings)
+
+    device = read("src/mtaffiliate/application/program3_device.py")
+    for token in (
+        "assert_active_ownership",
+        "DEVICE_OWNERSHIP_LEASE_EXPIRED",
+        "DeviceHostEngine",
+        "version_no",
+    ):
+        require(token in device, f"Program 3 device authority missing control: {token}", findings)
 
     worker = read("src/mtaffiliate/application/program3_worker.py")
     for token in (
