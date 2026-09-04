@@ -213,6 +213,7 @@ test("process status reports configuration, outbox and registry state", async ()
       last_error: null,
       updated_at: null,
     },
+    active_job: null,
   });
 });
 
