@@ -168,3 +168,51 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Verification evidence: final current-tree CI pending.
 - Lesson learned: coverage is useful when it identifies unverified execution paths, but coverage ownership should follow test-layer responsibility rather than one undifferentiated percentage.
 - Cross-program applicability: YES.
+
+---
+
+## PL-2026-007 — Windows SQLite absolute URL was misclassified as managed relative path
+- Date: 2026-08-31
+- Program/Component: Program 1 / SQLAlchemy SQLite bootstrap and path resolution
+- Severity: MEDIUM
+- Detection source: local Program 1 SQLite integration test on Windows
+- Status: FIXED / REGRESSION COVERED
+- Symptom: Program 1 bootstrap migration tests failed when using a temporary SQLite database URL shaped as `sqlite:///C:/...`.
+- Expected behavior: explicit absolute SQLite URLs supplied by the test/infrastructure boundary should pass through unchanged, while managed project-owned SQLite paths remain relative-first and escape-checked.
+- Actual behavior: the resolver treated the Windows absolute path after `sqlite:///` as a managed relative path and rejected it before migration bootstrap.
+- Impact: Portable-mode SQLite bootstrap was blocked in Windows temp-path based tests, even though the production path policy itself was still correct.
+- Evidence/Reproduction: `tests/integration/sqlite/test_program1_bootstrap.py` failed before the resolver fix.
+- Immediate containment: do not treat the local Program 1 SQLite gate as green until the resolver regression and full SQLite suite pass.
+- Root cause: SQLite URL handling recognized `sqlite:////...` absolute paths but missed the valid Windows form `sqlite:///C:/...`.
+- Contributing factors: URL/path boundary behavior differs by platform and was not explicitly covered by a regression test.
+- Corrective action: classify Windows absolute SQLite paths with `PureWindowsPath(...).is_absolute()` and pass them through before applying managed-relative containment checks.
+- Preventive action: keep cross-platform SQLite URL boundary cases in the integration suite; add platform-specific path forms when resolver behavior changes.
+- Regression test / monitoring: `test_database_url_resolution_boundary_cases` now covers `sqlite:///C:/runtime/program1.db`; Program 1 bootstrap and SQLite integration suites pass locally.
+- Documents/ADR/config updated: this register.
+- Owner: Program 1 Persistence
+- Verification evidence: local `.venv` verification on 2026-08-31: Ruff PASS; Program 1 SQLite integration `14 passed, 1 skipped`; full SQLite integration `22 passed, 1 skipped`; stress `1 passed`.
+- Lesson learned: path policy tests must cover URL syntax as well as filesystem semantics, especially where SQLAlchemy accepts platform-specific absolute SQLite forms.
+- Cross-program applicability: YES — all SQLite-backed portable-mode components.
+
+---
+
+## PL-2026-008 — Program 1 side panel left Chrome message-port errors visible
+- Date: 2026-08-31
+- Program/Component: Program 1 / Browser Worker extension
+- Severity: MEDIUM usability and testability defect
+- Detection source: user acceptance test in Brave extension side panel
+- Status: FIXED / REGRESSION COVERED
+- Symptom: the extension errors page reported `Unchecked runtime.lastError: The message port closed before a response was received` with context `src/sidepanel.html`.
+- Expected behavior: all extension transport failures should be consumed at the browser API boundary and shown as deterministic process-state errors in the side panel.
+- Actual behavior: background runtime messaging was normalized, but active-tab capture still used a direct `chrome.tabs.sendMessage` callback path that could expose closed-port errors.
+- Impact: user testing looked broken even when the backend was healthy, and the side panel did not consistently explain whether the failure was backend, page support, permission, or content-script transport.
+- Evidence/Reproduction: Brave extension error surfaced after backend `/health` and root endpoint both returned OK on `http://127.0.0.1:8000/`.
+- Root cause: extension transport handling was split between runtime messages and tab messages; only the runtime path had a Promise wrapper that consumed `chrome.runtime.lastError`.
+- Corrective action: added `sendTabMessage(tabId, message)` wrapper, routed active-tab capture through `await`, normalized missing responses, preserved visible process-state errors, and bumped the extension manifest to `0.1.2` for reload verification.
+- Preventive action: every Chrome/Brave messaging boundary must use a local wrapper that reads `chrome.runtime.lastError` inside the callback and returns an explicit `{ ok: false, error }` shape.
+- Regression test / monitoring: `browser_plugin/program1/tests/sidepanel.test.cjs` now covers closed-port errors for both runtime messages and tab messages.
+- Documents/ADR/config updated: Program 1 extension message-port reliability implementation plan and this register.
+- Owner: Program 1 Browser Worker
+- Verification evidence: local Node extension tests passed on 2026-08-31: `24 passed, 0 failed`; `node --check` passed for `sidepanel.js` and `background.js`; backend health returned `ok`.
+- Lesson learned: Manifest V3 extension APIs have multiple transport surfaces; reliability policy must cover each browser callback boundary, not just the background service-worker channel.
+- Cross-program applicability: YES — all browser extensions and side-panel workers.
