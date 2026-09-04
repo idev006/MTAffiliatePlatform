@@ -172,6 +172,26 @@ class AffiliateOfferObservationRow(Base):
     available: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
 
+class Program2SelectionDecisionRow(Base):
+    __tablename__ = "program2_selection_decisions"
+
+    decision_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    product_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    affiliate_account_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    source_job_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    selected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    preferred_offer_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    backup_offer_ids: Mapped[str] = mapped_column(String(4096), nullable=False)
+    preferred_commercial_key: Mapped[str] = mapped_column(String(4096), nullable=False)
+    evidence_refs: Mapped[str] = mapped_column(String(8192), nullable=False)
+    feature_policy_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    qualification_policy_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    decision_policy_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    reasons: Mapped[str] = mapped_column(String(8192), nullable=False)
+    risks: Mapped[str] = mapped_column(String(8192), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class AffiliateOfferSelectionRow(Base):
     __tablename__ = "affiliate_offer_selections"
 
