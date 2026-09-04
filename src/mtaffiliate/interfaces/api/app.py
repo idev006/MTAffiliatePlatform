@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from mtaffiliate.adapters.persistence.inmemory.affiliate_offer import (
     InMemoryAffiliateOfferRepository,
 )
+from mtaffiliate.adapters.persistence.inmemory.device import InMemoryDeviceRepository
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.product import InMemoryProductRepository
 from mtaffiliate.adapters.persistence.inmemory.program1_opportunity import (
@@ -42,6 +43,7 @@ from mtaffiliate.application.program2_intelligence import Program2OfferDecisionS
 from mtaffiliate.application.program2_jobs import Program2OfferDiscoveryJobService
 from mtaffiliate.application.program3 import Program3Service
 from mtaffiliate.application.program3_authority import Program3AuthoritativeService
+from mtaffiliate.application.program3_device import Program3DeviceService
 from mtaffiliate.application.worker_registry import (
     DEFAULT_STALE_HEARTBEAT_MULTIPLIER,
     WorkerRegistryService,
@@ -56,6 +58,7 @@ from mtaffiliate.domain.affiliate_offer.models import (
     OfferSelectionDecision,
     Program3OfferHandoff,
 )
+from mtaffiliate.domain.device.models import DeviceRecord
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
 from mtaffiliate.domain.program1.opportunity import (
     OpportunityDecisionRecord,
@@ -81,6 +84,7 @@ from mtaffiliate.engines.affiliate_offer_engine.service import (
     EvidenceFirstOfferIntelligence,
     OfferScoringPolicy,
 )
+from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
 from mtaffiliate.engines.opportunity_intelligence_engine.service import (
     OpportunityIntelligenceEngine,
 )
@@ -181,6 +185,22 @@ class Program3ReconcileRequest(BaseModel):
 class Program3ConfirmRequest(BaseModel):
     reconciliation: ReconciliationDecision
     confirmed_at: datetime
+
+
+class Program3DeviceRegistrationRequest(BaseModel):
+    device_id: str = Field(min_length=1)
+    adb_serial: str = Field(min_length=1)
+    host_id: str = Field(min_length=1)
+    status: str = Field(pattern="^(ONLINE|OFFLINE|UNAUTHORIZED|MISSING)$")
+
+
+class Program3DeviceLeaseRequest(BaseModel):
+    worker_id: str = Field(min_length=1)
+    at: datetime
+
+
+class Program3DeviceReleaseRequest(BaseModel):
+    worker_id: str = Field(min_length=1)
 
 
 class WorkerHeartbeatRequest(BaseModel):
@@ -324,6 +344,10 @@ def create_app(
             ledger=program3_ledger,
             jobs=shared_job_engine,
             guard=PublishingGuardEngine(),
+            devices=Program3DeviceService(
+                InMemoryDeviceRepository(),
+                DeviceHostEngine(),
+            ),
         )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
 
@@ -631,6 +655,82 @@ def create_app(
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     if "program3" in enabled:
+
+        @app.post("/api/v1/program3/devices/register", response_model=DeviceRecord)
+        def register_program3_device(
+            request: Program3DeviceRegistrationRequest,
+        ) -> DeviceRecord:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.devices.register(
+                    device_id=request.device_id,
+                    adb_serial=request.adb_serial,
+                    host_id=request.host_id,
+                    status=request.status,
+                )
+            except (ValueError, RuntimeError) as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program3/devices/{device_id}/claim",
+            response_model=DeviceRecord,
+        )
+        def claim_program3_device(
+            device_id: str,
+            request: Program3DeviceLeaseRequest,
+        ) -> DeviceRecord:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.devices.claim(
+                    device_id,
+                    worker_id=request.worker_id,
+                    at=request.at,
+                    lease_for=timedelta(seconds=cfg.worker.lease_seconds),
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail=f"unknown device: {exc.args[0]}") from exc
+            except (ValueError, RuntimeError) as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program3/devices/{device_id}/renew",
+            response_model=DeviceRecord,
+        )
+        def renew_program3_device(
+            device_id: str,
+            request: Program3DeviceLeaseRequest,
+        ) -> DeviceRecord:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.devices.renew(
+                    device_id,
+                    worker_id=request.worker_id,
+                    at=request.at,
+                    lease_for=timedelta(seconds=cfg.worker.lease_seconds),
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail=f"unknown device: {exc.args[0]}") from exc
+            except (ValueError, RuntimeError) as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program3/devices/{device_id}/release",
+            response_model=DeviceRecord,
+        )
+        def release_program3_device(
+            device_id: str,
+            request: Program3DeviceReleaseRequest,
+        ) -> DeviceRecord:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.devices.release(
+                    device_id,
+                    worker_id=request.worker_id,
+                )
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail=f"unknown device: {exc.args[0]}") from exc
+            except (ValueError, RuntimeError) as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
 
         @app.post("/api/v1/program3/publish/evaluate", response_model=DuplicateDecision)
         def evaluate_publish(plan: PublishPlan) -> DuplicateDecision:
