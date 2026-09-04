@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from mtaffiliate.adapters.persistence.sqlalchemy import (
+    SQLAlchemyDeviceRepository,
     SQLAlchemyProgram2ArtifactRepository,
     SQLAlchemyProgram2DecisionRepository,
     SQLAlchemyProgram3ExecutionRepository,
@@ -13,7 +14,9 @@ from mtaffiliate.adapters.persistence.sqlalchemy.publishing import (
     SQLAlchemyPublishingLedgerRepository,
 )
 from mtaffiliate.application.program3_authority import Program3AuthoritativeService
+from mtaffiliate.application.program3_device import Program3DeviceService
 from mtaffiliate.bootstrap.config import Settings
+from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 
@@ -33,4 +36,8 @@ def build_durable_program3_authority(
         ledger=SQLAlchemyPublishingLedgerRepository(sessions),
         jobs=jobs,
         guard=PublishingGuardEngine(),
+        devices=Program3DeviceService(
+            SQLAlchemyDeviceRepository(sessions),
+            DeviceHostEngine(),
+        ),
     )
