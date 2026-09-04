@@ -88,7 +88,11 @@ class ObservationBatch(BaseModel):
 
 
 class OfferObservationBatch(BaseModel):
+    batch_id: str = Field(min_length=1)
     observations: list[AffiliateOfferObservation]
+    job_id: str | None = Field(default=None, min_length=1)
+    worker_id: str | None = Field(default=None, min_length=1)
+    lease_token: str | None = Field(default=None, min_length=1)
 
 
 class OfferSelectionRequest(BaseModel):
@@ -348,13 +352,65 @@ def create_app(
     if "program2" in enabled:
 
         @app.post("/api/v1/program2/observations")
-        def ingest_offers(batch: OfferObservationBatch) -> dict[str, int]:
+        def ingest_offers(batch: OfferObservationBatch) -> dict[str, int | str]:
             assert service2 is not None
+            bound = [
+                observation
+                for observation in batch.observations
+                if observation.source_job_id is not None
+            ]
+            if bound:
+                if not (batch.job_id and batch.worker_id and batch.lease_token):
+                    raise HTTPException(
+                        status_code=422,
+                        detail="job-bound offer observations require job_id, worker_id and lease_token",
+                    )
+                try:
+                    shared_job_engine.validate_active_execution(
+                        batch.job_id,
+                        worker_id=batch.worker_id,
+                        lease_token=batch.lease_token,
+                        at=utc_now(),
+                    )
+                    if program2_job_service is None:
+                        raise ValueError("Program 2 job service is unavailable")
+                    package = program2_job_service.get_work_package(batch.job_id)
+                except (KeyError, ValueError, RuntimeError) as exc:
+                    raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+                if any(
+                    observation.source_job_id != batch.job_id
+                    or observation.source_worker_id != batch.worker_id
+                    for observation in bound
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="offer observation provenance does not match execution envelope",
+                    )
+                if any(
+                    observation.product_id != package.product_id
+                    or observation.affiliate_account_id != package.affiliate_account_id
+                    for observation in bound
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="offer observation product/account does not match work package",
+                    )
+                if any(not observation.session_context_id for observation in bound):
+                    raise HTTPException(
+                        status_code=422,
+                        detail="job-bound offer observations require session_context_id",
+                    )
+
             try:
                 accepted = service2.ingest_observations(batch.observations)
             except ValueError as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
-            return {"received_count": len(batch.observations), "accepted_count": accepted}
+            return {
+                "batch_id": batch.batch_id,
+                "received_count": len(batch.observations),
+                "accepted_count": accepted,
+            }
 
         @app.get(
             "/api/v1/program2/products/{product_id}/offers",
