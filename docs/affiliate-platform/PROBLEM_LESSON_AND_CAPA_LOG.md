@@ -240,3 +240,26 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Verification evidence: CI run `33929170024` passed Program 1 extension, core/conformance, SQLite and stress after CAPA round 3.
 - Lesson learned: durable delivery needs failure taxonomy and isolation, and JavaScript error normalization at extension/VM boundaries should be structural rather than realm-dependent.
 - Cross-program applicability: YES — browser/worker outboxes and any JavaScript plugin boundary.
+
+---
+
+## PL-2026-010 — Program 1 live evidence capture was labeled sanitized before structural sanitization existed
+- Date: 2026-09-05
+- Program/Component: Program 1 / Controlled live evidence tooling
+- Severity: HIGH privacy/evidence-quality finding
+- Detection source: controlled production-evidence audit
+- Status: VERIFIED
+- Symptom: `program1_capture_search_evidence.py` described output as sanitized but originally persisted a main DOM fragment almost directly from an authorized logged-in browser context.
+- Expected behavior: persisted evidence contains only the minimum structure required for selector/field validation, excludes unnecessary runtime-sensitive values, records provenance/integrity, and never auto-promotes a profile from one capture.
+- Actual behavior: structural sanitization and promotion manifest were not yet implemented.
+- Impact: evidence files could retain unnecessary dynamic/personalized markup and the audit trail did not explicitly distinguish capture success from promotion approval.
+- Root cause: the first evidence spike prioritized rapid DOM discovery before the project had a formal cross-program evidence-promotion standard.
+- Corrective action: added `CONTROLLED_PRODUCTION_EVIDENCE_VALIDATION_STANDARD.md`, `PRODUCTION_EVIDENCE_PROMOTION_MATRIX.md`, ADR-047, structurally sanitized DOM clone output, evidence-relevant URL sanitization, SHA-256 manifest, explicit capture classification, and HOLD/BLOCK promotion decisions.
+- Safety action: verification pages fail closed by default; waiting for a human verification step requires an explicit flag and the tool never solves or bypasses the verification boundary.
+- Architecture CAPA: pure evidence policy moved into `mtaffiliate.common.evidence` so installed tooling and tests share one SSOT.
+- Regression test / monitoring: `tests/unit/test_program1_evidence_support.py`; repository CI run `33929759911` passed 268 core tests, 57 SQLite tests, 86 extension tests and stress.
+- Documents/ADR/config updated: ADR-047, evidence validation standard, promotion matrix, this CAPA register.
+- Owner: Program 1 Evidence / QA
+- Verification evidence: PR #34 merged after all CI jobs passed.
+- Lesson learned: evidence tooling itself is a production-quality boundary; a label such as "sanitized" must be backed by deterministic sanitization and provenance controls.
+- Cross-program applicability: YES — Program 2 affiliate evidence and Program 3 Android Scene evidence must use the same standard.
