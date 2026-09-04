@@ -72,7 +72,9 @@ class JobRecord(BaseModel):
         populated = [value is not None for value in lease_fields]
         if any(populated) and not all(populated):
             raise ValueError("lease owner, token and expiry must be populated together")
-        if self.state in {JobState.LEASED, JobState.IN_PROGRESS, JobState.VERIFYING}:
-            if not all(populated):
-                raise ValueError(f"{self.state} requires an active lease")
+        if (
+            self.state in {JobState.LEASED, JobState.IN_PROGRESS, JobState.VERIFYING}
+            and not all(populated)
+        ):
+            raise ValueError(f"{self.state} requires an active lease")
         return self
