@@ -1,4 +1,4 @@
-# โปรแกรมที่ 1 — Product Discovery / Product Intelligence — Implementation Readiness
+# โปรแกรมที่ 1 — Affiliate Opportunity Intelligence — Implementation Readiness
 
 Status: IMPLEMENTATION READY FOR FOUNDATION + MVP THIN SLICE
 Date: 2026-08-31
@@ -12,20 +12,26 @@ Historical documents may still contain the label `Step 1`; they refer to the sam
 
 ## 2. Program 1 Goal
 
+Governing business strategy: `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`.
+
 Answer the business question:
 
-> Which products should we market next, and why?
+> Which product opportunities should we pursue next to maximize expected affiliate success per unit of effort, and why?
 
 Program 1 includes two major capability groups:
 
-1. Product Discovery Worker / acquisition adapter
-2. Product Intelligence Engine / normalization, qualification, scoring, ranking and shortlist
+1. Product/Market Discovery Worker / acquisition adapter — observes bounded evidence.
+2. Affiliate Opportunity Intelligence — normalization, history, feature derivation, qualification, explainable ranking, opportunity thesis and shortlist/action-candidate decisions.
 
-Workers collect facts. Back Office/Engine decides.
+**Marketing/Affiliate Strategy leads. Engineering implements the signals and decision support required by that strategy.**
+
+Workers collect facts. Back Office/Engine decides. A technically available field is not automatically a business requirement.
 
 ## 3. Implementation Readiness Decision
 
 ### GO — coding may begin
+
+Before a Program 1 business-feature slice is coded, its card must identify the affiliate decision/hypothesis it supports and the required signal/evidence. Foundational infrastructure or controlled evidence-research slices must be labeled explicitly.
 
 The development team is authorized to implement:
 - Program 1 package/module skeleton;
@@ -35,8 +41,10 @@ The development team is authorized to implement:
 - canonical identity abstraction without hard-freezing unvalidated Shopee assumptions;
 - Product Intelligence Engine interfaces and deterministic rules framework;
 - qualification/filter framework;
-- explainable scoring framework with configurable model/ruleset input;
-- shortlist engine;
+- explainable feature/qualification framework with configurable model/ruleset input;
+- opportunity-thesis / recommendation framework;
+- explainable scoring framework only where evidence justifies its components, without inventing production weights;
+- shortlist/action-candidate engine;
 - repository ports and in-memory implementations;
 - SQLAlchemy persistence adapters after shared persistence foundation exists;
 - worker registration/heartbeat/job lease integration;
@@ -91,7 +99,13 @@ The Product Intelligence Engine must run headless with fake/in-memory dependenci
 
 ## 5. Program 1 Inputs
 
-Conceptual inputs:
+Conceptual business inputs:
+- affiliate objective / success hypothesis;
+- target audience/account context where applicable;
+- campaign/season/event context;
+- required decision signals and evidence policy;
+
+Conceptual operational inputs:
 - discovery campaign/job;
 - worker/source provenance;
 - raw/surface product observations;
@@ -103,13 +117,17 @@ Conceptual inputs:
 
 ## 6. Program 1 Outputs
 
-Conceptual outputs:
+Conceptual outputs must distinguish observation, normalized fact, derived feature and business decision.
+
+Outputs include:
 - canonical Product records/references;
 - immutable ProductObservations;
 - normalization findings;
 - qualification decisions/reasons;
-- product scores + component scores + explanation;
-- shortlist decisions/rank/reasons;
+- versioned opportunity features and data-sufficiency/uncertainty state;
+- product scores + component scores + explanation where an approved model exists;
+- Opportunity Thesis / recommended action with reasons, risks, evidence freshness and policy/model version;
+- shortlist/action-candidate decisions/rank/reasons;
 - audit/domain events;
 - stable Program 1 output references for Program 2.
 
@@ -207,7 +225,14 @@ Recommended initial Program 1 cards:
 
 ## 10. Definition of Ready for Each Program 1 Card
 
-Every card must identify:
+Every business-feature card must first answer:
+- What affiliate-success decision or hypothesis does this improve/test?
+- What signal(s) are required for that decision?
+- Why are those signals expected to matter?
+- What evidence/source can support them without guessing platform facts?
+- What downstream outcome could eventually validate or falsify the hypothesis?
+
+Every card must then identify:
 - governing documents;
 - objective/input/output/non-goal;
 - authority owner;
