@@ -1,7 +1,7 @@
 # Program 1 Browser Plugin
 
 Status: laboratory / evidence-gated implementation.
-Current extension version: `0.1.24`.
+Current extension version: `0.1.25`.
 
 This Manifest V3 extension is the Product Discovery Worker for Program 1. It intentionally does **not** contain production Shopee selectors yet. Real collection profiles remain a validation gate in the governing documents.
 
@@ -11,8 +11,10 @@ Current implemented capabilities:
 - backend URL and worker ID stored in extension local storage;
 - target page URL shortcut for opening a supported Shopee page from the worker UI;
 - local durable outbox;
+- durable quarantine for clearly permanent payload failures so a poison message cannot block later valid batches indefinitely;
 - ACK-style removal only after Back Office confirms `batch_id`, `received_count` and `accepted_count`;
 - serialized outbox flushing to avoid concurrent read/mutate/write drains;
+- conservative failure classification: permanent payload errors quarantine, while auth/config, transient/network and ACK ambiguity stop fail-closed without deleting the message;
 - queue/flush status that reports captured observations, queued observations, delivered batches, accepted observations, remaining and delivery error counts;
 - side-panel auto-run mode with a dual-thumb from–to random delay range slider (`0-600` s), a live next-cycle countdown ticker, single in-flight cycle guard, and timer cleanup when stopped or when the panel closes;
 - fixture-page capture adapter for deterministic development/testing;
@@ -136,7 +138,7 @@ Shared Job integration (0.1.23):
 - restart reconciliation fails closed when authoritative Back Office state is no longer an active lease;
 - Side Panel remains an operator shell; remaining work is to move the full multi-page auto-run trigger/scheduling loop behind this background-owned job lifecycle and prove kill/restart recovery in a real Chromium-family browser.
 
-Background execution ownership (0.1.24):
+Background execution ownership (0.1.25):
 - Start/Stop Auto Run is now a Side Panel command to the MV3 background runtime rather than a panel-owned timer loop;
 - the background runtime executes one bounded cycle per alarm wake-up and persists phase/run state before yielding;
 - DiscoveryPlan may carry bounded `collection_targets`, so executable work can survive UI closure and browser/service-worker restart without relying on panel-only target state;
@@ -150,3 +152,10 @@ Next gated work:
 - saved sanitized real-page fixtures for observed search/category/shop/product-detail surfaces;
 - versioned Shopee collection profiles after observation/validation;
 - complete OpportunityFeatureSnapshot / Qualification / OpportunityThesis implementation.
+
+Delivery reliability hardening (0.1.25):
+- clearly permanent payload errors (`400/409/413/415/422`) are moved atomically from the active outbox to a durable quarantine record and later valid messages may continue;
+- `401/403/404/405/410`, `408/425/429`, `5xx`, network/unknown errors and ACK mismatches never remove the current message;
+- process status exposes `outbox_quarantine_count`; heartbeat remains `DEGRADED` while either active outbox or quarantine needs attention;
+- Shared Job checkpoints are written only when the **current queued batch** receives an authoritative matching ACK;
+- delivery error normalization is structural (`error.message`) rather than `instanceof Error`, so cross-realm/VM/extension error objects preserve canonical error codes.
