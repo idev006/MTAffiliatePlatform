@@ -5,6 +5,9 @@ import pytest
 from mtaffiliate.adapters.persistence.inmemory.job import (
     InMemoryJobRepository,
 )
+from mtaffiliate.adapters.persistence.inmemory.program1_strategy import (
+    InMemoryProgram1StrategyRepository,
+)
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.domain.job.models import JobState
@@ -60,7 +63,14 @@ def plan() -> DiscoveryPlan:
 def service() -> tuple[Program1DiscoveryJobService, InMemoryJobRepository]:
     repo = InMemoryJobRepository()
     jobs = SharedJobEngine(repo, token_factory=lambda: "lease-1")
-    return Program1DiscoveryJobService(Program1StrategyPlanner(), jobs), repo
+    return (
+        Program1DiscoveryJobService(
+            Program1StrategyPlanner(),
+            InMemoryProgram1StrategyRepository(),
+            jobs,
+        ),
+        repo,
+    )
 
 
 def test_strategy_approved_plan_creates_queued_shared_job() -> None:
