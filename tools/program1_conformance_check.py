@@ -16,6 +16,7 @@ REQUIRED_FILES = (
     "docs/affiliate-platform/COMPONENT_RESPONSIBILITY_AND_HEALTH_MATRIX.md",
     "browser_plugin/program1/src/background.js",
     "browser_plugin/program1/src/job_lifecycle.mjs",
+    "browser_plugin/program1/src/background_execution.mjs",
     "tests/integration/sqlite/test_program1_world_class_simulation.py",
 )
 
@@ -25,6 +26,10 @@ REQUIRED_BACKGROUND_TOKENS = (
     "PROGRAM1_RENEW_ACTIVE_JOB",
     "PROGRAM1_RECONCILE_ACTIVE_JOB",
     "PROGRAM1_COMPLETE_ACTIVE_JOB",
+    "PROGRAM1_START_BACKGROUND_RUN",
+    "PROGRAM1_STOP_BACKGROUND_RUN",
+    "PROGRAM1_RUN_BACKGROUND_CYCLE",
+    "AUTO_RUN_ALARM",
     "OBSERVATION_BATCH_ACK",
 )
 
@@ -119,6 +124,28 @@ def main() -> int:
             f"background lifecycle controller missing operation: {token}",
             findings,
         )
+
+    execution = read("browser_plugin/program1/src/background_execution.mjs")
+    for token in (
+        "collection_targets",
+        "scheduleWake",
+        "runOneCycle",
+        "resumeAfterWake",
+        "PAGINATION_NEXT_URL_MISSING",
+    ):
+        require(
+            token in execution,
+            f"background execution control missing token: {token}",
+            findings,
+        )
+
+    panel = read("browser_plugin/program1/src/ui/stores/process.js")
+    require(
+        "PROGRAM1_START_BACKGROUND_RUN" in panel
+        and "PROGRAM1_STOP_BACKGROUND_RUN" in panel,
+        "Side Panel must command the background runtime for auto execution",
+        findings,
+    )
 
     if findings:
         for finding in findings:
