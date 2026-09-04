@@ -16,6 +16,7 @@ from mtaffiliate.adapters.persistence.inmemory.program1_opportunity import (
 from mtaffiliate.adapters.persistence.inmemory.program1_strategy import (
     InMemoryProgram1StrategyRepository,
 )
+from mtaffiliate.adapters.persistence.inmemory.program2_work import InMemoryProgram2WorkRepository
 from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
 )
@@ -27,6 +28,7 @@ from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_opportunity import Program1OpportunityService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.application.program2 import Program2Service
+from mtaffiliate.application.program2_jobs import Program2OfferDiscoveryJobService
 from mtaffiliate.application.program3 import Program3Service
 from mtaffiliate.application.worker_registry import (
     DEFAULT_STALE_HEARTBEAT_MULTIPLIER,
@@ -36,6 +38,7 @@ from mtaffiliate.application.worker_registry import (
 from mtaffiliate.bootstrap.config import Settings
 from mtaffiliate.domain.affiliate_offer.models import (
     AffiliateOfferObservation,
+    OfferDiscoveryPlan,
     OfferScore,
     OfferSelection,
 )
@@ -167,6 +170,7 @@ def create_app(
     shared_jobs: SharedJobEngine | None = None,
     program1_jobs: Program1DiscoveryJobService | None = None,
     program1_opportunities: Program1OpportunityService | None = None,
+    program2_jobs: Program2OfferDiscoveryJobService | None = None,
     enabled_programs: set[str] | None = None,
 ) -> FastAPI:
     enabled = enabled_programs or {"program1", "program2", "program3"}
@@ -193,6 +197,12 @@ def create_app(
             strategies=program1_job_service.strategy_repository,
             decisions=InMemoryProgram1OpportunityRepository(),
             intelligence=OpportunityIntelligenceEngine(),
+        )
+    program2_job_service = program2_jobs
+    if program2_job_service is None and "program2" in enabled:
+        program2_job_service = Program2OfferDiscoveryJobService(
+            InMemoryProgram2WorkRepository(),
+            shared_job_engine,
         )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
 
@@ -242,16 +252,19 @@ def create_app(
             raise HTTPException(status_code=404, detail=f"unknown worker: {worker_id}")
         return summary
 
-    if "program1" in enabled:
+    if "program1" in enabled or "program2" in enabled:
         app.include_router(
             build_shared_job_router(
-                program1_jobs=program1_job_service,
+                program1_jobs=program1_job_service if "program1" in enabled else None,
+                program2_jobs=program2_job_service if "program2" in enabled else None,
                 jobs=shared_job_engine,
                 registry=registry_service,
                 lease_seconds=cfg.worker.lease_seconds,
                 clock=utc_now,
             )
         )
+
+    if "program1" in enabled:
 
         @app.post("/api/v1/program1/observations")
         def ingest(batch: ObservationBatch) -> dict[str, int | str]:
