@@ -246,3 +246,19 @@ Governing record: `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`.
 - numeric pacing/retry defaults from endurance testing.
 
 The pending items block production completion of affected features, but do not block foundation code that is isolated behind the accepted ports/contracts and test doubles.
+
+## ADR-047 — Controlled Evidence Promotion Is Required for Live Platform Assumptions
+**Status: Accepted — 2026-09-05**
+
+Live Shopee/browser/affiliate/Android assumptions may not move from laboratory status to production solely because one capture or one manual run succeeds.
+
+Promotion follows the lifecycle:
+`EXPERIMENTAL -> LAB_VALIDATED -> EVIDENCE_VALIDATED -> PRODUCTION_CANDIDATE -> PRODUCTION_APPROVED`.
+
+At minimum, evidence validation requires independent repeated captures, explicit negative/failure evidence, provenance, fail-closed mismatch behavior and tests tied to the promoted profile/policy. Production approval additionally requires controlled operational/endurance evidence, rollback/runbook support and senior review.
+
+CAPTCHA/access-control/anti-abuse boundaries must not be bypassed. A traffic/verification gate is evidence of a blocked state, not permission to increase retry rate or evade controls.
+
+Governing records:
+- `CONTROLLED_PRODUCTION_EVIDENCE_VALIDATION_STANDARD.md`
+- `PRODUCTION_EVIDENCE_PROMOTION_MATRIX.md`
