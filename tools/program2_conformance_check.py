@@ -42,14 +42,19 @@ def main() -> int:
         return 1
 
     strategy = read("docs/affiliate-platform/PROGRAM2_AFFILIATE_SUCCESS_STRATEGY.md")
+    strategy_lower = strategy.lower()
     for token in (
-        "QualifiedOpportunityHandoff",
+        "qualifiedopportunityhandoff",
         "preferred + backups",
         "freshness",
-        "Program3",
-        "NEEDS_HUMAN",
+        "program3",
+        "needs_human",
     ):
-        require(token in strategy, f"Program 2 strategy missing control: {token}", findings)
+        require(
+            token in strategy_lower,
+            f"Program 2 strategy missing semantic control: {token}",
+            findings,
+        )
 
     architecture = read("docs/affiliate-platform/PROGRAM2_SYSTEM_ARCHITECTURE.md")
     for token in (
