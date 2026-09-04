@@ -2,7 +2,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
+from mtaffiliate.adapters.persistence.inmemory.job import (
+    InMemoryJobRepository,
+)
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.domain.job.models import JobState
