@@ -138,8 +138,8 @@ async function drainOutboxOnce() {
     ...result,
     remaining_count: remaining.length,
     quarantine_count: quarantine.length,
-    error: result.failure?.message || null,
-    error_category: result.failure?.category || null,
+    error: result.blocking_failure?.message || result.last_failure?.message || null,
+    error_category: result.blocking_failure?.category || result.last_failure?.category || null,
   };
 }
 
@@ -156,8 +156,10 @@ async function queueObservationBatch(payload, { checkpoint = true } = {}) {
   };
   await enqueue(envelope);
   const flush = await flushOutbox();
+  const currentSent = flush.sent_message_ids.includes(envelope.message_id);
+  const currentQuarantined = flush.quarantined_message_ids.includes(envelope.message_id);
   let checkpointResult = null;
-  if (checkpoint && flush.ok) {
+  if (checkpoint && currentSent) {
     const settings = await getSettings();
     const activeJob = await jobLifecycle.activeState();
     if (activeJob?.job_id && settings.worker_id) {
@@ -174,8 +176,10 @@ async function queueObservationBatch(payload, { checkpoint = true } = {}) {
     }
   }
   return {
-    ok: flush.ok,
+    ok: currentSent,
     queued: true,
+    delivered: currentSent,
+    quarantined: currentQuarantined,
     queued_message_id: envelope.message_id,
     queued_observation_count: payload?.observations?.length || 0,
     flush,
