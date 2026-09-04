@@ -246,7 +246,7 @@ class Program3AuthoritativeService:
             "state": state.value,
             "reasons": reasons,
         }
-        return PreSubmitDecision(
+        decision = PreSubmitDecision(
             decision_id=self._stable_id("p3pre", payload),
             publish_job_id=publish_job_id,
             plan_ref=package.plan_ref,
@@ -259,17 +259,29 @@ class Program3AuthoritativeService:
             evidence_refs=evidence_refs,
             policy_version=self.policy.version,
         )
+        self.execution.put_pre_submit(decision)
+        return decision
 
     def record_post_submitted(
         self,
         *,
-        decision: PreSubmitDecision,
+        decision_id: str,
+        lease_token: str,
         submitted_at: datetime,
         idempotency_key: str,
         evidence_refs: tuple[str, ...] = (),
     ) -> SubmissionRecord:
+        decision = self.execution.get_pre_submit(decision_id)
+        if decision is None:
+            raise ValueError("pre-submit decision does not exist")
         if decision.state is not PreSubmitDecisionState.ALLOW_SUBMIT:
             raise ValueError("POST_SUBMITTED requires ALLOW_SUBMIT decision")
+        self.jobs.validate_active_execution(
+            decision.publish_job_id,
+            worker_id=decision.worker_id,
+            lease_token=lease_token,
+            at=submitted_at,
+        )
         existing = self.execution.get_submission_for_job(decision.publish_job_id)
         if existing is not None:
             if existing.idempotency_key != idempotency_key:
@@ -291,6 +303,29 @@ class Program3AuthoritativeService:
             idempotency_key=idempotency_key,
         )
         self.execution.put_submission(record)
+        package = self.execution.get_plan(decision.plan_ref)
+        if package is None:
+            raise ValueError("publish plan package does not exist")
+        plan = package.publish_plan
+        self.ledger.append(
+            PublishingLedgerEntry(
+                publish_job_id=plan.publish_job_id,
+                platform=plan.platform,
+                target_account_id=plan.target_account_id,
+                video_id=plan.video_id,
+                video_sha256=plan.video_sha256,
+                status="POST_SUBMITTED",
+                updated_at=submitted_at,
+            )
+        )
+        self.jobs.record_checkpoint(
+            decision.publish_job_id,
+            worker_id=decision.worker_id,
+            lease_token=lease_token,
+            checkpoint_type="POST_SUBMITTED",
+            payload={"submission_id": record.submission_id},
+            at=submitted_at,
+        )
         return record
 
     def reconcile(
@@ -343,6 +378,21 @@ class Program3AuthoritativeService:
             policy_version=self.policy.version,
         )
         self.execution.put_reconciliation(decision)
+        package = self.execution.get_plan(submission.plan_ref)
+        if package is None:
+            raise ValueError("publish plan package does not exist")
+        plan = package.publish_plan
+        self.ledger.append(
+            PublishingLedgerEntry(
+                publish_job_id=plan.publish_job_id,
+                platform=plan.platform,
+                target_account_id=plan.target_account_id,
+                video_id=plan.video_id,
+                video_sha256=plan.video_sha256,
+                status=outcome.value,
+                updated_at=evaluated_at,
+            )
+        )
         return decision
 
     def confirm_success(
