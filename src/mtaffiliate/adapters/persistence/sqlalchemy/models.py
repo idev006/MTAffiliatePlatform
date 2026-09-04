@@ -87,6 +87,15 @@ class Program1StrategyWorkRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class Program2WorkRow(Base):
+    __tablename__ = "program2_work"
+
+    reference: Mapped[str] = mapped_column(String(1024), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    package_json: Mapped[str] = mapped_column(String(32768), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 class ProductObservationRow(Base):
     __tablename__ = "product_observations"
     __table_args__ = (UniqueConstraint("observation_id", name="uq_product_observation_id"),)
@@ -147,6 +156,10 @@ class AffiliateOfferObservationRow(Base):
     shop_id: Mapped[str] = mapped_column(String(128), nullable=False)
     item_id: Mapped[str] = mapped_column(String(128), nullable=False)
     affiliate_account_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    session_context_id: Mapped[str | None] = mapped_column(String(128))
+    source_worker_id: Mapped[str | None] = mapped_column(String(128), index=True)
+    source_job_id: Mapped[str | None] = mapped_column(String(128), index=True)
+    extractor_version: Mapped[str | None] = mapped_column(String(128))
     observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     seller_name: Mapped[str | None] = mapped_column(String(1024))
     product_name: Mapped[str] = mapped_column(String(1024), nullable=False)
