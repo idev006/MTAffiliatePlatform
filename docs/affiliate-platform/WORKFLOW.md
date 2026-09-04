@@ -6,11 +6,14 @@ Date: 2026-08-31
 ## 1. Governing Flow
 
 ```text
-Strategy / Rules
-    -> Product Discovery
-    -> Normalize / Dedupe
-    -> Product Intelligence
-    -> Shortlist / Approval
+Affiliate / Marketing Strategy
+    -> Business Questions / Hypotheses
+    -> Required Decision Signals
+    -> Product / Market Discovery
+    -> Observe / Normalize / History
+    -> Opportunity Features / Intelligence
+    -> Qualification / Explainable Ranking
+    -> Shortlist / Action Candidate / Approval
     -> Affiliate Offer Discovery
     -> Offer Eligibility / Freshness / Ranking
     -> Offer Selection
@@ -31,26 +34,38 @@ Strategy / Rules
 
 The workflow is business-authoritative at the Back Office. Workers execute bounded tasks and report facts.
 
-## 2. Step 1 — Product Discovery and Intelligence
+## 2. Program 1 — Affiliate Opportunity Intelligence
 
-### Input
-- campaign/ruleset;
+Governing strategy: `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`.
+
+### Business Input
+- affiliate/marketing objective and target outcome;
+- target audience/account context where applicable;
+- campaign/season/event context;
+- business hypotheses to test;
+- decision signals required by those hypotheses;
+- campaign/ruleset and evidence-freshness policy.
+
+### Operational Input
 - discovery source/mode;
 - search/category/shop/current-page scope;
-- worker capabilities.
+- worker capabilities;
+- versioned collection/profile/evidence status.
 
 ### Execution
-1. Back Office creates campaign/jobs/shards.
-2. Product Discovery Worker leases bounded work.
-3. Worker observes product facts and persists them to local outbox before transmission.
-4. Back Office commits observation batch and ACKs after durable commit.
-5. Product identity is normalized/deduplicated.
-6. Product Intelligence Engine calculates features/scores using versioned rules.
-7. Shortlist entries are created with explanation/provenance.
-8. Human approval may be required according to campaign policy.
+1. Affiliate/Marketing Strategy defines the business question or opportunity hypothesis before collection work is authorized, except foundational infrastructure/evidence-research slices.
+2. Back Office translates the hypothesis into required signals, discovery scope, evidence requirements and bounded jobs/shards.
+3. Product Discovery Worker leases bounded work and observes facts only; it does not decide commercial attractiveness.
+4. Worker persists observations to local outbox before transmission.
+5. Back Office durably commits observation batches and ACKs according to idempotent ingestion semantics.
+6. Product identity is normalized/deduplicated and historical observations are preserved rather than overwritten.
+7. Intelligence processing derives versioned features such as demand, momentum/timing, buyer-intent context, price/value, seller confidence, competition/saturation, contentability and risk where evidence supports them.
+8. Qualification/ranking policy creates explainable Opportunity Thesis/shortlist decisions with reasons, uncertainty, freshness and model/ruleset provenance.
+9. Human review/approval may be required according to campaign policy, especially while outcome evidence is insufficient for production scoring.
+10. Only qualified/actionable candidates proceed to Program 2; raw harvest volume is not a success criterion.
 
 ### Output
-Approved/eligible Product references for Step 2.
+Qualified Product Opportunity references for Program 2, including decision rationale/provenance sufficient to explain why the candidate deserves affiliate-offer discovery.
 
 ## 3. Step 2 — Affiliate Offer Discovery and Selection
 
