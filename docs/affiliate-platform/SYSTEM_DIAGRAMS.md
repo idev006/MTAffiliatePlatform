@@ -3,6 +3,8 @@
 Status: DEVELOPMENT HANDOFF BASELINE
 Notation: Mermaid diagrams are source-controlled documentation and must evolve with the architecture.
 
+Program 1 has a dedicated governing design pack at `PROGRAM1_SYSTEM_ARCHITECTURE.md` and `PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md`. When a generic diagram here conflicts with the newer Program 1-specific strategy-led design, the Program 1-specific governing documents take precedence for Program 1 implementation.
+
 ## 1. System Context
 
 ```mermaid
