@@ -230,6 +230,16 @@ class Program3PlanRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class Program3PreSubmitDecisionRow(Base):
+    __tablename__ = "program3_pre_submit_decisions"
+
+    decision_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    publish_job_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    decision_json: Mapped[str] = mapped_column(String(16384), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+
+
 class Program3SubmissionRow(Base):
     __tablename__ = "program3_submissions"
 
