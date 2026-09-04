@@ -70,6 +70,7 @@ class Program3PlanPackage(BaseModel):
     source_program2_handoff_id: str = Field(min_length=1)
     source_selection_decision_id: str = Field(min_length=1)
     source_link_artifact_id: str = Field(min_length=1)
+    program2_handoff_valid_at: datetime
     publish_plan: PublishPlan
     evidence_refs: tuple[str, ...] = ()
 
