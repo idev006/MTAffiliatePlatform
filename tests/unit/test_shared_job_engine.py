@@ -2,7 +2,9 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
+from mtaffiliate.adapters.persistence.inmemory.job import (
+    InMemoryJobRepository,
+)
 from mtaffiliate.domain.job.models import JobState
 from mtaffiliate.engines.shared_job_engine.service import (
     IdempotencyConflictError,
@@ -178,7 +180,7 @@ def test_expired_unsafe_job_escalates_instead_of_reassigning() -> None:
 
 def test_fail_job_clears_lease_and_records_reason() -> None:
     shared, repo = engine()
-    started = lease_started(shared)
+    lease_started(shared)
 
     failed = shared.fail_job(
         "job-1",
