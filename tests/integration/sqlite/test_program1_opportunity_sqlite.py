@@ -26,6 +26,9 @@ from mtaffiliate.domain.program1.models import (
     SignalRequirement,
 )
 from mtaffiliate.domain.program1.opportunity import OpportunityAction
+from mtaffiliate.ports.repositories.program1_opportunity import (
+    OpportunityDecisionConflictError,
+)
 from mtaffiliate.engines.opportunity_intelligence_engine.service import (
     OpportunityIntelligenceEngine,
 )
@@ -170,4 +173,28 @@ def test_product_history_preserves_source_job_provenance(tmp_path) -> None:
     history = products.observation_history(("shopee", "shop-1", "item-1"))
     assert [item.source_job_id for item in history] == ["job-1", "job-1"]
     assert [item.observation_id for item in history] == ["obs-1", "obs-2"]
+    engine.dispose()
+
+
+def test_sql_opportunity_repository_latest_missing_and_conflict_paths(tmp_path) -> None:
+    engine, products, discovery, opportunities, decisions = compose(tmp_path)
+    seed(products, discovery)
+
+    assert decisions.get("missing") is None
+    assert decisions.latest_for_product(("shopee", "missing", "missing")) is None
+
+    first = opportunities.evaluate_campaign("campaign-1", evaluated_at=NOW)[0]
+    later = opportunities.evaluate_campaign(
+        "campaign-1",
+        evaluated_at=NOW + timedelta(minutes=1),
+    )[0]
+
+    assert decisions.latest_for_product(("shopee", "shop-1", "item-1")) == later
+    assert decisions.list_for_campaign("campaign-1") == [later, first]
+
+    conflicting = first.model_copy(
+        update={"campaign_id": "different-campaign"}
+    )
+    with pytest.raises(OpportunityDecisionConflictError):
+        decisions.put(conflicting)
     engine.dispose()
