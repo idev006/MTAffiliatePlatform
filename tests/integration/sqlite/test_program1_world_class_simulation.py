@@ -35,7 +35,10 @@ from mtaffiliate.engines.product_intelligence_engine.service import (
     ProductIntelligenceEngine,
     ScoringPolicy,
 )
-from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine, StaleLeaseError
+from mtaffiliate.engines.shared_job_engine.service import (
+    InvalidJobTransitionError,
+    SharedJobEngine,
+)
 from mtaffiliate.ports.repositories.ingestion import IngestionBatchConflictError
 
 pytestmark = pytest.mark.integration
@@ -347,7 +350,7 @@ def test_program1_expired_unsafe_execution_escalates_instead_of_replaying(tmp_pa
     assert escalated.state is JobState.NEEDS_HUMAN
     assert escalated.failure_code == "LEASE_EXPIRED_UNSAFE_TO_REASSIGN"
 
-    with pytest.raises(StaleLeaseError):
+    with pytest.raises(InvalidJobTransitionError, match="NEEDS_HUMAN"):
         jobs.record_checkpoint(
             leased.job_id,
             worker_id=worker.worker_id,
