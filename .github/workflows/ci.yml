@@ -22,6 +22,8 @@ jobs:
         run: python tools/program1_conformance_check.py
       - name: Program 2 process conformance
         run: python tools/program2_conformance_check.py
+      - name: Program 3 process conformance
+        run: python tools/program3_conformance_check.py
       - name: Core and contract tests with branch coverage
         run: >-
           pytest -m 'not stress and not integration'
@@ -50,6 +52,7 @@ jobs:
           --cov=mtaffiliate.application.program2_intelligence
           --cov=mtaffiliate.application.program2_artifacts
           --cov=mtaffiliate.application.program3
+          --cov=mtaffiliate.application.program3_authority
           --cov=mtaffiliate.application.program3_worker
           --cov=mtaffiliate.application.program3_workflow
           --cov=mtaffiliate.application.worker_registry
@@ -84,6 +87,7 @@ jobs:
           --cov=mtaffiliate.bootstrap.program2_jobs
           --cov=mtaffiliate.bootstrap.program2_intelligence
           --cov=mtaffiliate.bootstrap.program2_artifacts
+          --cov=mtaffiliate.bootstrap.program3_authority
           --cov=mtaffiliate.bootstrap.worker_registry
           --cov=mtaffiliate.bootstrap.shared_job
           --cov=mtaffiliate.bootstrap.program1_opportunity
