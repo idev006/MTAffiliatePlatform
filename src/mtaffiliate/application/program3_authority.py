@@ -94,8 +94,6 @@ class Program3AuthoritativeService:
         artifact = self.artifacts.get(handoff.link_artifact_id)
         if artifact is None:
             raise ValueError("Program 2 link artifact does not exist")
-        if decision.decision_id != handoff.selection_decision_id:
-            raise ValueError("Program 2 handoff decision mismatch")
         if decision.product_id != handoff.product_id:
             raise ValueError("Program 2 handoff product mismatch")
         if decision.preferred_offer_id != handoff.preferred_offer_id:
