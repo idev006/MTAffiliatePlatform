@@ -1,0 +1,6 @@
+[app]
+environment = "program3"
+
+[database]
+url = "sqlite:///data/program3.db"
+auto_migrate = true

@@ -145,6 +145,28 @@ pytest -m stress --timeout=60
 
 CI definitions and authoritative quality gates are in `.github/workflows/ci.yml`.
 
+## Separate Program Runtime Profiles
+
+Each program can be installed/launched separately while keeping one shared core:
+
+```powershell
+mtaffiliate-program1-api
+mtaffiliate-program2-api
+mtaffiliate-program3-api
+mtaffiliate-all-api
+```
+
+Direct ASGI module paths are also available:
+
+```powershell
+uvicorn mtaffiliate.runtime.program1:app --port 8001
+uvicorn mtaffiliate.runtime.program2:app --port 8002
+uvicorn mtaffiliate.runtime.program3:app --port 8003
+uvicorn mtaffiliate.runtime.all:app --port 8000
+```
+
+See `docs/affiliate-platform/INSTALLATION_PROFILES.md`.
+
 ## Optional UI
 
 PySide6/Qt 6 is the baseline desktop UI technology when a GUI becomes useful. The UI must wrap stable application commands/queries/read models and must not own scoring, duplicate policy, job state transitions, recovery policy or direct database writes.
