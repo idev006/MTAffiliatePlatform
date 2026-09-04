@@ -2,12 +2,12 @@ from pathlib import Path
 
 import pytest
 
+from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.bootstrap.config import DatabaseConfig, Settings
 from mtaffiliate.bootstrap.program2_artifacts import build_durable_program2_artifact_service
 from mtaffiliate.bootstrap.program2_intelligence import build_durable_program2_intelligence
 from mtaffiliate.bootstrap.program2_jobs import build_durable_program2_job_service
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
-from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 
 pytestmark = pytest.mark.integration
 
