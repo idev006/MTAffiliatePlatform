@@ -1,7 +1,7 @@
 # Program 1 Browser Plugin
 
 Status: laboratory / evidence-gated implementation.
-Current extension version: `0.1.17`.
+Current extension version: `0.1.22`.
 
 This Manifest V3 extension is the Product Discovery Worker for Program 1. It intentionally does **not** contain production Shopee selectors yet. Real collection profiles remain a validation gate in the governing documents.
 
