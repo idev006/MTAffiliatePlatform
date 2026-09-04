@@ -26,13 +26,13 @@ from mtaffiliate.domain.program1.models import (
     SignalRequirement,
 )
 from mtaffiliate.domain.program1.opportunity import OpportunityAction
-from mtaffiliate.ports.repositories.program1_opportunity import (
-    OpportunityDecisionConflictError,
-)
 from mtaffiliate.engines.opportunity_intelligence_engine.service import (
     OpportunityIntelligenceEngine,
 )
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
+from mtaffiliate.ports.repositories.program1_opportunity import (
+    OpportunityDecisionConflictError,
+)
 
 pytestmark = pytest.mark.integration
 
