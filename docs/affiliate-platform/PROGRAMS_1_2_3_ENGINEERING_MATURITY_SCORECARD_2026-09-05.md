@@ -62,6 +62,7 @@ Evidence:
 - durable local outbox and worker registry;
 - evidence-first Opportunity Intelligence and QualifiedOpportunityHandoff;
 - full deterministic Program 1 -> Program 2 -> Program 3 contract E2E PASS;
+- collection router/profile registry and delivery reliability are verified while Shopee surface profiles remain evidence-gated;
 - anti-bot state fails closed rather than being treated as an empty page.
 
 Remaining production-evidence limits:
