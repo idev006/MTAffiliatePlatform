@@ -1,7 +1,7 @@
 # Program 1 — Developer Implementation Handoff
 
-Status: READY FOR ITERATIVE DEVELOPMENT
-Date: 2026-09-04
+Status: ENGINEERING MATURITY BASELINE ACHIEVED / CONTINUOUS EVIDENCE DEVELOPMENT
+Date: 2026-09-05
 Scope: Program 1 — Affiliate Opportunity Intelligence
 
 ## 1. Purpose
@@ -76,22 +76,24 @@ Do not begin with UI.
 
 ## 6. Current Development Track
 
-Completed:
-- strategy-led documentation baseline;
-- Program 1 architecture/UML/traceability pack;
-- P1-A Strategy-to-Work contracts implemented.
+Verified baseline:
+- strategy-led architecture/UML/traceability;
+- Strategy-to-Work contracts;
+- Shared Job/lease/checkpoint lifecycle;
+- ProductObservation persistence and worker provenance;
+- Opportunity Feature/Qualification/Thesis/Decision flow;
+- typed QualifiedOpportunityHandoff to Program 2;
+- Program 1 conformance;
+- Program 1 extension 82/82 test baseline;
+- deterministic Program 1 -> Program 2 -> Program 3 closed-loop contract.
 
-Next:
-- P1-B Shared Job / lease / pause / resume integration;
-- P1-C Worker delivery reliability;
-- P1-D Collection Router / Profile architecture;
-- P1-E Opportunity Feature Snapshot;
-- P1-F Opportunity Decision / Thesis;
-- P1-G Program 1 -> 2 v1.1;
-- P1-H deterministic browser E2E CI;
-- P1-I evidence-gated live profile promotion.
+Current engineering maturity score: **93.0 / 100**. See `PROGRAMS_1_2_3_ENGINEERING_MATURITY_SCORECARD_2026-09-05.md`.
 
-P1-E/F may proceed in parallel with P1-B/C/D using fake observations.
+Next work is evidence/product hardening rather than missing core authority:
+- stronger quarantine/ambiguous-ACK operator visibility;
+- collection profile promotion from repeated live evidence;
+- Chromium-hosted browser fixture E2E;
+- attribution/learning once downstream outcome data exists.
 
 ## 7. One-Card Rule
 
