@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.program2_artifact import (
     InMemoryProgram2ArtifactRepository,
 )
@@ -14,10 +15,9 @@ from mtaffiliate.adapters.persistence.inmemory.program3_execution import (
 from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
 )
-from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.application.program3_authority import (
-    Program3AuthorityPolicy,
     Program3AuthoritativeService,
+    Program3AuthorityPolicy,
 )
 from mtaffiliate.domain.affiliate_offer.models import (
     AffiliateLinkArtifact,
