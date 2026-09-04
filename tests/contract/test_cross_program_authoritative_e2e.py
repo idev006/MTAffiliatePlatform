@@ -128,7 +128,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
         "/api/v1/program1/opportunities/evaluate",
         json={
             "campaign_id": "campaign-e2e",
-            "evaluated_at": (NOW + timedelta(minutes=1)).isoformat(),
+            "evaluated_at": (NOW + timedelta(seconds=10)).isoformat(),
         },
     )
     assert p1_decisions.status_code == 200
@@ -246,7 +246,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
         json={
             "affiliate_account_id": "affiliate-account-e2e",
             "source_job_id": "program2-job-e2e",
-            "evaluated_at": (NOW + timedelta(minutes=2)).isoformat(),
+            "evaluated_at": (NOW + timedelta(seconds=20)).isoformat(),
         },
     )
     assert p2_decision.status_code == 200
@@ -262,8 +262,8 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
             "affiliate_account_id": "affiliate-account-e2e",
             "offer_id": "offer-e2e-1",
             "link_url": "https://example.invalid/affiliate/e2e",
-            "created_at": (NOW + timedelta(minutes=2)).isoformat(),
-            "validated_at": (NOW + timedelta(minutes=3)).isoformat(),
+            "created_at": (NOW + timedelta(seconds=20)).isoformat(),
+            "validated_at": (NOW + timedelta(seconds=21)).isoformat(),
             "validation_state": "LAB_VALIDATED",
             "evidence_refs": ["link-validation-e2e"],
         },
@@ -272,7 +272,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
 
     p3_handoff_response = client.post(
         f"/api/v1/program2/selection-decisions/{p2_decision_body['decision_id']}/program3-handoff",
-        json={"as_of": (NOW + timedelta(minutes=4)).isoformat()},
+        json={"as_of": (NOW + timedelta(seconds=22)).isoformat()},
     )
     assert p3_handoff_response.status_code == 200
     p3_handoff = p3_handoff_response.json()
@@ -298,7 +298,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
         "/api/v1/program3/devices/device-e2e/claim",
         json={
             "worker_id": "android-worker",
-            "at": (NOW + timedelta(minutes=4)).isoformat(),
+            "at": (NOW + timedelta(seconds=22)).isoformat(),
         },
     ).status_code == 200
 
@@ -311,7 +311,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
             "target_account_id": "publish-account-e2e",
             "video_id": "video-e2e",
             "video_sha256": VIDEO_SHA,
-            "created_at": (NOW + timedelta(minutes=4)).isoformat(),
+            "created_at": (NOW + timedelta(seconds=22)).isoformat(),
             "caption": "Synthetic closed-loop fixture",
             "tags": ["#fixture"],
         },
@@ -322,7 +322,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
         "/api/v1/program3/plans/program3-plan:e2e/job",
         json={
             "idempotency_key": "program3:e2e",
-            "created_at": (NOW + timedelta(minutes=4)).isoformat(),
+            "created_at": (NOW + timedelta(seconds=22)).isoformat(),
         },
     )
     assert created_p3.status_code == 200
@@ -346,7 +346,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
             "device_id": "device-e2e",
             "target_account_id": "publish-account-e2e",
             "scene_ready": True,
-            "evaluated_at": (NOW + timedelta(minutes=4, seconds=10)).isoformat(),
+            "evaluated_at": (NOW + timedelta(seconds=23)).isoformat(),
             "evidence_refs": ["ready-scene-e2e"],
         },
     )
@@ -358,7 +358,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
         json={
             "decision_id": pre_submit.json()["decision_id"],
             "lease_token": p3_token,
-            "submitted_at": (NOW + timedelta(minutes=4, seconds=11)).isoformat(),
+            "submitted_at": (NOW + timedelta(seconds=24)).isoformat(),
             "idempotency_key": "submit-e2e",
             "evidence_refs": ["submit-evidence-e2e"],
         },
@@ -368,7 +368,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
     reconciled = client.post(
         f"/api/v1/program3/submissions/{submitted.json()['submission_id']}/reconcile",
         json={
-            "evaluated_at": (NOW + timedelta(minutes=5)).isoformat(),
+            "evaluated_at": (NOW + timedelta(seconds=25)).isoformat(),
             "success_confirmed": True,
             "evidence_refs": ["publish-success-e2e"],
         },
@@ -379,7 +379,7 @@ def test_program1_to_program2_to_program3_authoritative_closed_loop() -> None:
         "/api/v1/program3/publish/confirm",
         json={
             "reconciliation": reconciled.json(),
-            "confirmed_at": (NOW + timedelta(minutes=5)).isoformat(),
+            "confirmed_at": (NOW + timedelta(seconds=25)).isoformat(),
         },
     )
     assert confirmed.status_code == 200
