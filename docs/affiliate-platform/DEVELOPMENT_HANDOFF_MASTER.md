@@ -93,7 +93,12 @@ Accepted direction:
 - Android selectors/device commands are adapters;
 - screen streaming is observability/operator control, not business SSOT;
 - publish ambiguity never triggers blind repost;
-- Publishing Engine + Ledger enforce duplicate/irreversible-action policy.
+- Publishing Engine + Ledger enforce duplicate/irreversible-action policy;
+- typed Program 2 offer handoff is the commercial admission authority;
+- POST_SUBMITTED is a durable irreversible boundary;
+- reconciliation, not worker memory, decides whether retry is safe.
+
+Program 3 developer entrypoint: `PROGRAM3_DEVELOPER_HANDOFF.md`.
 
 ## 4. Core Engines
 
@@ -291,6 +296,21 @@ For Program 2 specifically, developers must also read:
 - `PROGRAM2_AUTOMATED_TEST_ARCHITECTURE.md`.
 
 This pack is the implementation-ready Program 2 handoff and takes precedence over older generic Step 2 wording where more specific.
+
+## 12.3 Program 3 Developer Pack
+
+For Program 3 specifically, developers must also read:
+- `PROGRAM3_PUBLISHING_SUCCESS_AND_SAFETY_STRATEGY.md`;
+- `PROGRAM3_SYSTEM_ARCHITECTURE.md`;
+- `PROGRAM3_UML_AND_RUNTIME_DIAGRAMS.md`;
+- `PROGRAM3_TRACEABILITY_MATRIX.md`;
+- `PROGRAM3_DEVELOPER_HANDOFF.md`;
+- `PROGRAM3_KANBAN.md`;
+- `PROGRAM3_IMPLEMENTATION_CARDS.md`;
+- `PROGRAM3_UX_AND_OPERATOR_EXPERIENCE.md`;
+- `PROGRAM3_AUTOMATED_TEST_ARCHITECTURE.md`.
+
+This pack is the implementation-ready Program 3 handoff and takes precedence over older generic Step 3 wording where more specific.
 
 ## 13. Required Reading Before Coding
 
