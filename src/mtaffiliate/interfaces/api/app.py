@@ -16,6 +16,9 @@ from mtaffiliate.adapters.persistence.inmemory.program1_opportunity import (
 from mtaffiliate.adapters.persistence.inmemory.program1_strategy import (
     InMemoryProgram1StrategyRepository,
 )
+from mtaffiliate.adapters.persistence.inmemory.program2_decision import (
+    InMemoryProgram2DecisionRepository,
+)
 from mtaffiliate.adapters.persistence.inmemory.program2_work import InMemoryProgram2WorkRepository
 from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
@@ -28,6 +31,7 @@ from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_opportunity import Program1OpportunityService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.application.program2 import Program2Service
+from mtaffiliate.application.program2_intelligence import Program2OfferDecisionService
 from mtaffiliate.application.program2_jobs import Program2OfferDiscoveryJobService
 from mtaffiliate.application.program3 import Program3Service
 from mtaffiliate.application.worker_registry import (
@@ -41,6 +45,7 @@ from mtaffiliate.domain.affiliate_offer.models import (
     OfferDiscoveryPlan,
     OfferScore,
     OfferSelection,
+    OfferSelectionDecision,
 )
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
 from mtaffiliate.domain.program1.opportunity import (
@@ -60,6 +65,7 @@ from mtaffiliate.domain.worker_registry.models import (
 )
 from mtaffiliate.engines.affiliate_offer_engine.service import (
     AffiliateOfferEngine,
+    EvidenceFirstOfferIntelligence,
     OfferScoringPolicy,
 )
 from mtaffiliate.engines.opportunity_intelligence_engine.service import (
@@ -98,6 +104,12 @@ class OfferObservationBatch(BaseModel):
 class OfferSelectionRequest(BaseModel):
     affiliate_account_id: str = Field(min_length=1)
     backup_count: int | None = Field(default=None, ge=0, le=20)
+
+
+class OfferDecisionRequest(BaseModel):
+    affiliate_account_id: str = Field(min_length=1)
+    source_job_id: str = Field(min_length=1)
+    evaluated_at: datetime
 
 
 class PublishStatusRequest(BaseModel):
@@ -175,6 +187,7 @@ def create_app(
     program1_jobs: Program1DiscoveryJobService | None = None,
     program1_opportunities: Program1OpportunityService | None = None,
     program2_jobs: Program2OfferDiscoveryJobService | None = None,
+    program2_intelligence: Program2OfferDecisionService | None = None,
     enabled_programs: set[str] | None = None,
 ) -> FastAPI:
     enabled = enabled_programs or {"program1", "program2", "program3"}
@@ -207,6 +220,14 @@ def create_app(
         program2_job_service = Program2OfferDiscoveryJobService(
             InMemoryProgram2WorkRepository(),
             shared_job_engine,
+        )
+    program2_decision_service = program2_intelligence
+    if program2_decision_service is None and "program2" in enabled:
+        assert service2 is not None
+        program2_decision_service = Program2OfferDecisionService(
+            offers=service2.repository,
+            decisions=InMemoryProgram2DecisionRepository(),
+            intelligence=EvidenceFirstOfferIntelligence(),
         )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
 
@@ -444,6 +465,42 @@ def create_app(
                 )
             except ValueError as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program2/products/{product_id}/selection-decisions",
+            response_model=OfferSelectionDecision,
+        )
+        def decide_offers(
+            product_id: str,
+            request: OfferDecisionRequest,
+        ) -> OfferSelectionDecision:
+            assert program2_decision_service is not None
+            try:
+                return program2_decision_service.evaluate_and_select(
+                    product_id=product_id,
+                    affiliate_account_id=request.affiliate_account_id,
+                    source_job_id=request.source_job_id,
+                    evaluated_at=request.evaluated_at,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.get(
+            "/api/v1/program2/products/{product_id}/accounts/{affiliate_account_id}/selection-decision",
+            response_model=OfferSelectionDecision,
+        )
+        def latest_offer_decision(
+            product_id: str,
+            affiliate_account_id: str,
+        ) -> OfferSelectionDecision:
+            assert program2_decision_service is not None
+            decision = program2_decision_service.decisions.latest_for_product_account(
+                product_id,
+                affiliate_account_id,
+            )
+            if decision is None:
+                raise HTTPException(status_code=404, detail="selection decision not found")
+            return decision
 
     if "program3" in enabled:
 
