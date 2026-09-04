@@ -10,6 +10,7 @@ from mtaffiliate.domain.program1.models import (
     SignalRequirement,
 )
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
+from mtaffiliate.ports.repositories.program1_strategy import Program1StrategyRepository
 
 
 class Program1DiscoveryJobService:
@@ -21,9 +22,11 @@ class Program1DiscoveryJobService:
     def __init__(
         self,
         strategy_planner: Program1StrategyPlanner,
+        strategy_repository: Program1StrategyRepository,
         jobs: SharedJobEngine,
     ) -> None:
         self.strategy_planner = strategy_planner
+        self.strategy_repository = strategy_repository
         self.jobs = jobs
 
     def create_discovery_job(
@@ -46,6 +49,7 @@ class Program1DiscoveryJobService:
             signals=signals,
             discovery_plan=discovery_plan,
         )
+        self.strategy_repository.put(discovery_plan_ref, approved)
         created = self.jobs.create_job(
             job_id=job_id,
             job_type=self.JOB_TYPE,
