@@ -14,7 +14,7 @@ from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from playwright.async_api import async_playwright
 
-from program1_evidence_support import classify_capture_result, sanitize_evidence_url
+from mtaffiliate.common.evidence import classify_capture_result, sanitize_evidence_url
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PROFILE = ROOT / ".browser-profiles" / "shopee-program1"
