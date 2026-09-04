@@ -12,6 +12,10 @@ from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 from mtaffiliate.ports.repositories.program2_work import Program2WorkRepository
 
 
+def canonical_product_id(product_key: tuple[str, str, str]) -> str:
+    return ":".join(product_key)
+
+
 class Program2OfferDiscoveryJobService:
     JOB_TYPE = "DISCOVER_AFFILIATE_OFFERS"
     DOMAIN = "program2"
@@ -57,6 +61,7 @@ class Program2OfferDiscoveryJobService:
             campaign_id=handoff.campaign_id,
             hypothesis_id=handoff.hypothesis_id,
             product_key=handoff.product_key,
+            product_id=canonical_product_id(handoff.product_key),
             product_name=handoff.product_name,
             affiliate_account_id=discovery_plan.affiliate_account_id,
             discovery_plan=discovery_plan,
