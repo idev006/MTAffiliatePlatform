@@ -68,8 +68,6 @@ def test_job_checkpoint_and_events_survive_runtime_recomposition(tmp_path) -> No
         project_root=tmp_path,
     )
     restarted_repo = SQLAlchemyJobRepository(build_session_factory(restarted_engine))
-    restarted = SharedJobEngine(restarted_repo, token_factory=lambda: "lease-2")
-
     job = restarted_repo.get("job-1")
     assert job is not None
     assert job.state is JobState.IN_PROGRESS
