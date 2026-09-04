@@ -107,7 +107,7 @@ def observation(
         item_id="item-1",
         collected_at=at,
         product_name="Synthetic SSD",
-        price_current=Decimal("1590"),
+        price_current=Decimal(1590),
         sold_signal=sold,
         rating=rating,
         review_count=reviews,
