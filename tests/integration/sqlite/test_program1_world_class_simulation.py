@@ -190,7 +190,7 @@ def register_worker(registry: WorkerRegistryService) -> None:
 
 
 def test_program1_complete_headless_business_flow_survives_restart(tmp_path) -> None:
-    engine, jobs, discovery_jobs, registry, program1, strategy_repo = compose(tmp_path)
+    engine, jobs, discovery_jobs, registry, program1, _strategy_repo = compose(tmp_path)
     register_worker(registry)
 
     queued = discovery_jobs.create_discovery_job(
