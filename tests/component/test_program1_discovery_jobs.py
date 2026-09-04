@@ -16,7 +16,6 @@ from mtaffiliate.domain.program1.models import (
 )
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 
-
 NOW = datetime(2026, 9, 4, tzinfo=UTC)
 
 
