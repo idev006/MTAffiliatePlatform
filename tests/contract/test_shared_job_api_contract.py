@@ -4,6 +4,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
+from mtaffiliate.adapters.persistence.inmemory.program1_strategy import (
+    InMemoryProgram1StrategyRepository,
+)
 from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
     InMemoryWorkerRegistryRepository,
 )
@@ -34,7 +37,11 @@ class TestClock:
 def client() -> TestClient:
     repo = InMemoryJobRepository()
     engine = SharedJobEngine(repo, token_factory=lambda: "lease-1")
-    program1 = Program1DiscoveryJobService(Program1StrategyPlanner(), engine)
+    program1 = Program1DiscoveryJobService(
+        Program1StrategyPlanner(),
+        InMemoryProgram1StrategyRepository(),
+        engine,
+    )
     clock = TestClock()
     registry = WorkerRegistryService(
         InMemoryWorkerRegistryRepository(),
