@@ -4,7 +4,7 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-from mtaffiliate.domain.job.models import JobCheckpoint, JobRecord, JobState
+from mtaffiliate.domain.job.models import JobCheckpoint, JobEvent, JobRecord, JobState
 from mtaffiliate.ports.repositories.job import JobRepository
 
 
@@ -71,12 +71,22 @@ class SharedJobEngine:
             updated_at=created_at,
         )
         self.repository.add(job)
+        self.repository.append_event(
+            JobEvent(
+                event_type="JOB_CREATED",
+                job_id=job.job_id,
+                job_version=job.job_version,
+                emitted_at=created_at,
+            )
+        )
         return job
 
     def queue_job(self, job_id: str, *, at: datetime) -> JobRecord:
         job = self._require(job_id)
         self._require_state(job, {JobState.CREATED})
-        return self._replace(job, at=at, state=JobState.QUEUED)
+        return self._replace(
+            job, at=at, event_type="JOB_QUEUED", state=JobState.QUEUED
+        )
 
     def lease_job(
         self,
@@ -104,6 +114,8 @@ class SharedJobEngine:
             lease_token=self._token_factory(),
             lease_until=at + lease_for,
             attempt_no=job.attempt_no + 1,
+            event_type="JOB_LEASED",
+            event_worker_id=worker_id,
         )
 
     def start_job(
@@ -118,7 +130,13 @@ class SharedJobEngine:
             job_id, worker_id=worker_id, lease_token=lease_token, at=at
         )
         self._require_state(job, {JobState.LEASED})
-        return self._replace(job, at=at, state=JobState.IN_PROGRESS)
+        return self._replace(
+            job,
+            at=at,
+            event_type="JOB_STARTED",
+            event_worker_id=worker_id,
+            state=JobState.IN_PROGRESS,
+        )
 
     def renew_lease(
         self,
@@ -137,7 +155,13 @@ class SharedJobEngine:
         self._require_state(
             job, {JobState.LEASED, JobState.IN_PROGRESS, JobState.VERIFYING}
         )
-        return self._replace(job, at=at, lease_until=at + lease_for)
+        return self._replace(
+            job,
+            at=at,
+            event_type="LEASE_RENEWED",
+            event_worker_id=worker_id,
+            lease_until=at + lease_for,
+        )
 
     def record_checkpoint(
         self,
@@ -160,7 +184,13 @@ class SharedJobEngine:
             created_at=at,
             job_version=job.job_version + 1,
         )
-        return self._replace(job, at=at, checkpoint=checkpoint)
+        return self._replace(
+            job,
+            at=at,
+            event_type="CHECKPOINT_RECORDED",
+            event_worker_id=worker_id,
+            checkpoint=checkpoint,
+        )
 
     def pause_job(self, job_id: str, *, at: datetime) -> JobRecord:
         job = self._require(job_id)
@@ -168,6 +198,7 @@ class SharedJobEngine:
         return self._replace(
             job,
             at=at,
+            event_type="JOB_PAUSED",
             state=JobState.PAUSED,
             assigned_worker_id=None,
             lease_token=None,
@@ -177,7 +208,9 @@ class SharedJobEngine:
     def resume_job(self, job_id: str, *, at: datetime) -> JobRecord:
         job = self._require(job_id)
         self._require_state(job, {JobState.PAUSED})
-        return self._replace(job, at=at, state=JobState.QUEUED)
+        return self._replace(
+            job, at=at, event_type="JOB_RESUMED", state=JobState.QUEUED
+        )
 
     def begin_verification(
         self,
@@ -191,7 +224,13 @@ class SharedJobEngine:
             job_id, worker_id=worker_id, lease_token=lease_token, at=at
         )
         self._require_state(job, {JobState.IN_PROGRESS})
-        return self._replace(job, at=at, state=JobState.VERIFYING)
+        return self._replace(
+            job,
+            at=at,
+            event_type="JOB_VERIFYING",
+            event_worker_id=worker_id,
+            state=JobState.VERIFYING,
+        )
 
     def complete_job(
         self,
@@ -208,6 +247,8 @@ class SharedJobEngine:
         return self._replace(
             job,
             at=at,
+            event_type="JOB_COMPLETED",
+            event_worker_id=worker_id,
             state=JobState.COMPLETED,
             assigned_worker_id=None,
             lease_token=None,
@@ -236,6 +277,8 @@ class SharedJobEngine:
         return self._replace(
             job,
             at=at,
+            event_type="JOB_NEEDS_HUMAN",
+            event_detail=failure_code,
             state=JobState.NEEDS_HUMAN,
             assigned_worker_id=None,
             lease_token=None,
@@ -250,7 +293,9 @@ class SharedJobEngine:
             job,
             {JobState.CREATED, JobState.QUEUED, JobState.PAUSED},
         )
-        return self._replace(job, at=at, state=JobState.CANCELLED)
+        return self._replace(
+            job, at=at, event_type="JOB_CANCELLED", state=JobState.CANCELLED
+        )
 
     def requeue_expired(
         self,
@@ -263,7 +308,7 @@ class SharedJobEngine:
         self._require_state(
             job, {JobState.LEASED, JobState.IN_PROGRESS, JobState.VERIFYING}
         )
-        if job.lease_until is None or at <= job.lease_until:
+        if job.lease_until is None or at < job.lease_until:
             raise InvalidJobTransitionError("job lease has not expired")
         if not safe_to_reassign:
             return self.mark_needs_human(
@@ -275,6 +320,7 @@ class SharedJobEngine:
         return self._replace(
             job,
             at=at,
+            event_type="LEASE_EXPIRED_REQUEUED",
             state=JobState.QUEUED,
             assigned_worker_id=None,
             lease_token=None,
@@ -306,11 +352,20 @@ class SharedJobEngine:
         job = self._require(job_id)
         if job.assigned_worker_id != worker_id or job.lease_token != lease_token:
             raise StaleLeaseError("worker or lease token does not own this job")
-        if job.lease_until is None or at > job.lease_until:
+        if job.lease_until is None or at >= job.lease_until:
             raise StaleLeaseError("job lease has expired")
         return job
 
-    def _replace(self, job: JobRecord, *, at: datetime, **changes: object) -> JobRecord:
+    def _replace(
+        self,
+        job: JobRecord,
+        *,
+        at: datetime,
+        event_type: str,
+        event_worker_id: str | None = None,
+        event_detail: str | None = None,
+        **changes: object,
+    ) -> JobRecord:
         updated = job.model_copy(
             update={
                 **changes,
@@ -319,4 +374,14 @@ class SharedJobEngine:
             }
         )
         self.repository.replace(updated, expected_version=job.job_version)
+        self.repository.append_event(
+            JobEvent(
+                event_type=event_type,
+                job_id=updated.job_id,
+                job_version=updated.job_version,
+                emitted_at=at,
+                worker_id=event_worker_id,
+                detail=event_detail,
+            )
+        )
         return updated
