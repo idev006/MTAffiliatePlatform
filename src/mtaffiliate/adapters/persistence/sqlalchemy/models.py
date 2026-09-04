@@ -220,6 +220,36 @@ class AffiliateOfferSelectionRow(Base):
     model_version: Mapped[str] = mapped_column(String(128), nullable=False)
 
 
+class Program3PlanRow(Base):
+    __tablename__ = "program3_plans"
+
+    plan_ref: Mapped[str] = mapped_column(String(1024), primary_key=True)
+    publish_job_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    package_json: Mapped[str] = mapped_column(String(32768), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class Program3SubmissionRow(Base):
+    __tablename__ = "program3_submissions"
+
+    submission_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    publish_job_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    record_json: Mapped[str] = mapped_column(String(16384), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class Program3ReconciliationRow(Base):
+    __tablename__ = "program3_reconciliations"
+
+    reconciliation_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    submission_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    decision_json: Mapped[str] = mapped_column(String(16384), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+
+
 class PublishingLedgerRow(Base):
     __tablename__ = "publishing_ledger"
 
