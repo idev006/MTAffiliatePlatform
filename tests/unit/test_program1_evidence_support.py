@@ -1,4 +1,4 @@
-from tools.program1_evidence_support import classify_capture_result, sanitize_evidence_url
+from mtaffiliate.common.evidence import classify_capture_result, sanitize_evidence_url
 
 
 def test_sanitize_evidence_url_keeps_only_evidence_relevant_query_fields() -> None:
