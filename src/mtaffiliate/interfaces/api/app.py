@@ -16,6 +16,9 @@ from mtaffiliate.adapters.persistence.inmemory.program1_opportunity import (
 from mtaffiliate.adapters.persistence.inmemory.program1_strategy import (
     InMemoryProgram1StrategyRepository,
 )
+from mtaffiliate.adapters.persistence.inmemory.program2_artifact import (
+    InMemoryProgram2ArtifactRepository,
+)
 from mtaffiliate.adapters.persistence.inmemory.program2_decision import (
     InMemoryProgram2DecisionRepository,
 )
@@ -31,6 +34,7 @@ from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_opportunity import Program1OpportunityService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.application.program2 import Program2Service
+from mtaffiliate.application.program2_artifacts import Program2ArtifactService
 from mtaffiliate.application.program2_intelligence import Program2OfferDecisionService
 from mtaffiliate.application.program2_jobs import Program2OfferDiscoveryJobService
 from mtaffiliate.application.program3 import Program3Service
@@ -42,10 +46,12 @@ from mtaffiliate.application.worker_registry import (
 from mtaffiliate.bootstrap.config import Settings
 from mtaffiliate.domain.affiliate_offer.models import (
     AffiliateOfferObservation,
+    AffiliateLinkArtifact,
     OfferDiscoveryPlan,
     OfferScore,
     OfferSelection,
     OfferSelectionDecision,
+    Program3OfferHandoff,
 )
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
 from mtaffiliate.domain.program1.opportunity import (
@@ -110,6 +116,10 @@ class OfferDecisionRequest(BaseModel):
     affiliate_account_id: str = Field(min_length=1)
     source_job_id: str = Field(min_length=1)
     evaluated_at: datetime
+
+
+class Program3HandoffRequest(BaseModel):
+    as_of: datetime
 
 
 class PublishStatusRequest(BaseModel):
@@ -188,6 +198,7 @@ def create_app(
     program1_opportunities: Program1OpportunityService | None = None,
     program2_jobs: Program2OfferDiscoveryJobService | None = None,
     program2_intelligence: Program2OfferDecisionService | None = None,
+    program2_artifacts: Program2ArtifactService | None = None,
     enabled_programs: set[str] | None = None,
 ) -> FastAPI:
     enabled = enabled_programs or {"program1", "program2", "program3"}
@@ -228,6 +239,13 @@ def create_app(
             offers=service2.repository,
             decisions=InMemoryProgram2DecisionRepository(),
             intelligence=EvidenceFirstOfferIntelligence(),
+        )
+    program2_artifact_service = program2_artifacts
+    if program2_artifact_service is None and "program2" in enabled:
+        assert program2_decision_service is not None
+        program2_artifact_service = Program2ArtifactService(
+            decisions=program2_decision_service.decisions,
+            artifacts=InMemoryProgram2ArtifactRepository(),
         )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
 
@@ -501,6 +519,36 @@ def create_app(
             if decision is None:
                 raise HTTPException(status_code=404, detail="selection decision not found")
             return decision
+
+        @app.post(
+            "/api/v1/program2/link-artifacts",
+            response_model=AffiliateLinkArtifact,
+        )
+        def register_link_artifact(
+            artifact: AffiliateLinkArtifact,
+        ) -> AffiliateLinkArtifact:
+            assert program2_artifact_service is not None
+            try:
+                return program2_artifact_service.register_artifact(artifact)
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program2/selection-decisions/{decision_id}/program3-handoff",
+            response_model=Program3OfferHandoff,
+        )
+        def build_program3_handoff(
+            decision_id: str,
+            request: Program3HandoffRequest,
+        ) -> Program3OfferHandoff:
+            assert program2_artifact_service is not None
+            try:
+                return program2_artifact_service.build_program3_handoff(
+                    decision_id,
+                    as_of=request.as_of,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     if "program3" in enabled:
 
