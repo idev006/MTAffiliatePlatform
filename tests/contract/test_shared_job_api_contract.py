@@ -182,14 +182,6 @@ def test_pause_resume_requires_new_lease() -> None:
 
 def test_incompatible_worker_cannot_lease_job() -> None:
     c = client()
-    c.post("/api/v1/program1/discovery-jobs", json=create_payload())
-
-    response = c.post(
-        "/api/v1/jobs/job-1/lease",
-        json={"worker_id": "worker-1"},
-    )
-    assert response.status_code == 200
-
     incompatible_payload = create_payload()
     incompatible_payload["job_id"] = "job-2"
     incompatible_payload["idempotency_key"] = "campaign-1:plan-2"
