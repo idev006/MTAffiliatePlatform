@@ -27,6 +27,11 @@ Before changing core behavior, read at minimum:
 13. `docs/affiliate-platform/IMPLEMENTATION_READINESS_AND_DEFINITION_OF_READY.md`
 14. the relevant Program/Step specification and Kanban card.
 
+For Program 1 work, also read before changing business behavior:
+- `docs/affiliate-platform/PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`
+- `docs/affiliate-platform/PROGRAM1_IMPLEMENTATION_READINESS.md`
+- `docs/affiliate-platform/PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`
+
 For Program 2/3 continuation also read:
 - `docs/affiliate-platform/PROGRAM2_AFFILIATE_OFFER_DESIGN_AND_READINESS.md`
 - `docs/affiliate-platform/PROGRAM3_CONTENT_PUBLISHING_DESIGN_AND_READINESS.md`
