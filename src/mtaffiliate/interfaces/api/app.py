@@ -10,6 +10,9 @@ from mtaffiliate.adapters.persistence.inmemory.affiliate_offer import (
 )
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.product import InMemoryProductRepository
+from mtaffiliate.adapters.persistence.inmemory.program1_strategy import (
+    InMemoryProgram1StrategyRepository,
+)
 from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
 )
@@ -158,6 +161,7 @@ def create_app(
     shared_job_engine = shared_jobs or SharedJobEngine(InMemoryJobRepository())
     program1_job_service = program1_jobs or Program1DiscoveryJobService(
         Program1StrategyPlanner(),
+        InMemoryProgram1StrategyRepository(),
         shared_job_engine,
     )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
