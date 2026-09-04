@@ -12,11 +12,13 @@ from mtaffiliate.application.worker_registry import WorkerRegistryService
 from mtaffiliate.bootstrap.config import load_settings
 from mtaffiliate.bootstrap.migrations import upgrade_database_to_head
 from mtaffiliate.bootstrap.program1 import build_durable_program1
+from mtaffiliate.bootstrap.program1_jobs import build_durable_program1_job_service
 from mtaffiliate.bootstrap.program2 import build_durable_program2
 from mtaffiliate.bootstrap.program3 import build_durable_program3
 from mtaffiliate.bootstrap.shared_job import build_durable_shared_job_engine
 from mtaffiliate.bootstrap.worker_registry import build_durable_worker_registry
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
+from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.interfaces.api.app import create_app
 
 VALID_PROGRAMS = frozenset({"program1", "program2", "program3"})
@@ -52,6 +54,7 @@ def create_runtime_app(
     program3: Program3Service | None = None
     registry: WorkerRegistryService | None = None
     shared_jobs: SharedJobEngine | None = None
+    program1_jobs: Program1DiscoveryJobService | None = None
     if "program1" in enabled_programs:
         program1 = build_durable_program1(settings, project_root=root)
     if "program2" in enabled_programs:
@@ -60,6 +63,12 @@ def create_runtime_app(
         program3 = build_durable_program3(settings, project_root=root)
     registry = build_durable_worker_registry(settings, project_root=root)
     shared_jobs = build_durable_shared_job_engine(settings, project_root=root)
+    if "program1" in enabled_programs:
+        program1_jobs = build_durable_program1_job_service(
+            settings,
+            project_root=root,
+            jobs=shared_jobs,
+        )
 
     return create_app(
         settings,
@@ -68,5 +77,6 @@ def create_runtime_app(
         program3=program3,
         registry=registry,
         shared_jobs=shared_jobs,
+        program1_jobs=program1_jobs,
         enabled_programs=enabled_programs,
     )
