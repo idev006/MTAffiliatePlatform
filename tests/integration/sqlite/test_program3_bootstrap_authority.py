@@ -25,3 +25,4 @@ def test_program3_authority_bootstrap_composes_sql_adapters(tmp_path: Path) -> N
     assert service.artifacts.__class__.__name__ == "SQLAlchemyProgram2ArtifactRepository"
     assert service.execution.__class__.__name__ == "SQLAlchemyProgram3ExecutionRepository"
     assert service.ledger.__class__.__name__ == "SQLAlchemyPublishingLedgerRepository"
+    assert service.devices.repository.__class__.__name__ == "SQLAlchemyDeviceRepository"
