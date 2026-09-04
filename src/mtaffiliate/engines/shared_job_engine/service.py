@@ -173,10 +173,11 @@ class SharedJobEngine:
         lease_token: str,
         at: datetime,
     ) -> JobRecord:
-        job = self._require_active_lease(
-            job_id, worker_id=worker_id, lease_token=lease_token, at=at
-        )
+        job = self._require(job_id)
         self._require_state(job, {JobState.LEASED})
+        self._validate_active_lease(
+            job, worker_id=worker_id, lease_token=lease_token, at=at
+        )
         return self._replace(
             job,
             at=at,
@@ -196,11 +197,12 @@ class SharedJobEngine:
     ) -> JobRecord:
         if lease_for <= timedelta(0):
             raise ValueError("lease_for must be positive")
-        job = self._require_active_lease(
-            job_id, worker_id=worker_id, lease_token=lease_token, at=at
-        )
+        job = self._require(job_id)
         self._require_state(
             job, {JobState.LEASED, JobState.IN_PROGRESS, JobState.VERIFYING}
+        )
+        self._validate_active_lease(
+            job, worker_id=worker_id, lease_token=lease_token, at=at
         )
         return self._replace(
             job,
@@ -220,10 +222,11 @@ class SharedJobEngine:
         payload: dict[str, object],
         at: datetime,
     ) -> JobRecord:
-        job = self._require_active_lease(
-            job_id, worker_id=worker_id, lease_token=lease_token, at=at
-        )
+        job = self._require(job_id)
         self._require_state(job, {JobState.IN_PROGRESS})
+        self._validate_active_lease(
+            job, worker_id=worker_id, lease_token=lease_token, at=at
+        )
         checkpoint = JobCheckpoint(
             checkpoint_type=checkpoint_type,
             payload=payload,
@@ -267,10 +270,11 @@ class SharedJobEngine:
         lease_token: str,
         at: datetime,
     ) -> JobRecord:
-        job = self._require_active_lease(
-            job_id, worker_id=worker_id, lease_token=lease_token, at=at
-        )
+        job = self._require(job_id)
         self._require_state(job, {JobState.IN_PROGRESS})
+        self._validate_active_lease(
+            job, worker_id=worker_id, lease_token=lease_token, at=at
+        )
         return self._replace(
             job,
             at=at,
@@ -287,10 +291,11 @@ class SharedJobEngine:
         lease_token: str,
         at: datetime,
     ) -> JobRecord:
-        job = self._require_active_lease(
-            job_id, worker_id=worker_id, lease_token=lease_token, at=at
-        )
+        job = self._require(job_id)
         self._require_state(job, {JobState.VERIFYING})
+        self._validate_active_lease(
+            job, worker_id=worker_id, lease_token=lease_token, at=at
+        )
         return self._replace(
             job,
             at=at,
@@ -434,20 +439,18 @@ class SharedJobEngine:
                 f"{sorted(state.value for state in allowed)}"
             )
 
-    def _require_active_lease(
-        self,
-        job_id: str,
+    @staticmethod
+    def _validate_active_lease(
+        job: JobRecord,
         *,
         worker_id: str,
         lease_token: str,
         at: datetime,
-    ) -> JobRecord:
-        job = self._require(job_id)
+    ) -> None:
         if job.assigned_worker_id != worker_id or job.lease_token != lease_token:
             raise StaleLeaseError("worker or lease token does not own this job")
         if job.lease_until is None or at >= job.lease_until:
             raise StaleLeaseError("job lease has expired")
-        return job
 
     def _replace(
         self,
