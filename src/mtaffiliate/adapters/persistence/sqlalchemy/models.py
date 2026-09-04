@@ -24,6 +24,49 @@ class WorkersRow(Base):
     version_no: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
+class JobsRow(Base):
+    """Shared Job Engine current projection."""
+
+    __tablename__ = "jobs"
+    __table_args__ = (UniqueConstraint("idempotency_key", name="uq_jobs_idempotency_key"),)
+
+    job_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    job_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    domain: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    payload_ref: Mapped[str] = mapped_column(String(1024), nullable=False)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    capability_requirements: Mapped[str] = mapped_column(String(4096), nullable=False)
+    state: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    job_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    assigned_worker_id: Mapped[str | None] = mapped_column(String(128), index=True)
+    lease_token: Mapped[str | None] = mapped_column(String(256))
+    lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    attempt_no: Mapped[int] = mapped_column(Integer, nullable=False)
+    checkpoint_json: Mapped[str | None] = mapped_column(String(16384))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    failure_code: Mapped[str | None] = mapped_column(String(128))
+    failure_detail: Mapped[str | None] = mapped_column(String(4096))
+
+
+class JobEventsRow(Base):
+    """Append-oriented audit events; one event corresponds to one job version."""
+
+    __tablename__ = "job_events"
+    __table_args__ = (
+        UniqueConstraint("job_id", "job_version", name="uq_job_events_job_version"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    job_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    job_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    emitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    worker_id: Mapped[str | None] = mapped_column(String(128), index=True)
+    detail: Mapped[str | None] = mapped_column(String(4096))
+
+
 class ProductObservationRow(Base):
     __tablename__ = "product_observations"
     __table_args__ = (UniqueConstraint("observation_id", name="uq_product_observation_id"),)
