@@ -45,6 +45,9 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
           async set(values) {
             Object.assign(storage, values);
           },
+          async remove(key) {
+            delete storage[key];
+          },
         },
       },
     },
@@ -67,12 +70,34 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
         (message) => message.message_id !== messageId,
       );
     },
+    createProgram1JobLifecycle: () => ({
+      async activeState() {
+        return storage.program1_active_job_v1 || null;
+      },
+      async leaseAndStart() {
+        return { ok: true, leased: false, reason: "NO_COMPATIBLE_JOB", active_job: null };
+      },
+      async renew() {
+        return { ok: true, renewed: false, reason: "NO_ACTIVE_JOB", active_job: null };
+      },
+      async checkpoint() {
+        return { ok: true, active_job: storage.program1_active_job_v1 || null };
+      },
+      async verifyAndComplete() {
+        delete storage.program1_active_job_v1;
+        return { ok: true, active_job: null };
+      },
+      async reconcile() {
+        return { ok: true, reconciled: false, reason: "NO_ACTIVE_JOB", active_job: null };
+      },
+    }),
   };
   vm.createContext(context);
 
   const filePath = path.join(__dirname, "..", "src", "background.js");
   const source = fs
     .readFileSync(filePath, "utf8")
+    .replace('import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";', "")
     .replace('import { enqueue, readOutbox, removeByMessageId } from "./outbox.js";', "");
   new vm.Script(source, { filename: filePath }).runInContext(context);
 
