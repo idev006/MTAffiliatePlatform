@@ -252,6 +252,9 @@ export function createBackgroundExecutionController({
       const delivery = await deliverBatch({
         batch_id: batchId,
         observations,
+        job_id: active.job_id,
+        worker_id: settings.worker_id,
+        lease_token: active.lease_token,
       });
       if (!delivery?.ok) {
         const stopped = await stop("Background run paused: delivery blocked", {
