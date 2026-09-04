@@ -107,3 +107,23 @@ class SQLAlchemyProductRepository:
             item = self._to_domain(row)
             latest.setdefault(item.canonical_key, item)
         return list(latest.values())
+
+    def observation_history(
+        self,
+        product_key: tuple[str, str, str],
+    ) -> list[ProductObservation]:
+        platform, shop_id, item_id = product_key
+        with self._session_factory() as session:
+            rows = session.scalars(
+                select(ProductObservationRow)
+                .where(
+                    ProductObservationRow.platform == platform,
+                    ProductObservationRow.shop_id == shop_id,
+                    ProductObservationRow.item_id == item_id,
+                )
+                .order_by(
+                    ProductObservationRow.collected_at,
+                    ProductObservationRow.observation_id,
+                )
+            ).all()
+        return [self._to_domain(row) for row in rows]
