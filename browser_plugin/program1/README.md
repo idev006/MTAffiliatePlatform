@@ -154,10 +154,10 @@ Background execution ownership (0.1.24):
 - delivery blocks, permission gaps and ambiguous pagination fail closed.
 
 Next gated work:
-- real-browser MV3 kill/restart/reconcile E2E while Side Panel is closed;
+- fresh independent Search-surface evidence under ADR-047;
 - saved sanitized real-page fixtures for observed search/category/shop/product-detail surfaces;
-- versioned Shopee collection profiles after observation/validation;
-- complete OpportunityFeatureSnapshot / Qualification / OpportunityThesis implementation.
+- promotion of individual Shopee profiles only after their evidence gates pass;
+- downstream attribution/learning only when real outcome data is sufficient.
 
 Delivery reliability hardening (0.1.25):
 - clearly permanent payload errors (`400/409/413/415/422`) are moved atomically from the active outbox to a durable quarantine record and later valid messages may continue;
@@ -182,3 +182,12 @@ Collection Router + Versioned Profile Registry (0.1.26):
 - equal-priority multiple matches fail as `PROFILE_AMBIGUOUS`; unsupported pages do not fall back to a generic guessed parser;
 - worker registration advertises the router and individual surface-profile capabilities;
 - search/category/shop/PDP remain `LAB_VALIDATED` pending fresh independent evidence under ADR-047.
+
+Real Chromium restart/reconcile CI (2026-09-05):
+- dedicated `program1-browser-e2e` GitHub Actions job uses Playwright Chromium under Xvfb;
+- no Shopee, login, Side Panel click or external network target is required for runtime correctness;
+- page 1 is collected, ACKed and checkpointed before the persistent Chromium context is closed;
+- reopening the same profile proves `onStartup` registration + Shared Job reconcile/renew and recovery of the same active job/run state;
+- a stale tab id is safely replaced, page 2 is collected and ACKed, and the same job reaches verify/complete;
+- the harness asserts exactly two observation batches, two checkpoints, one lease lineage, cleared active-job state, terminal run state and empty outbox;
+- Chromium alarm delivery timing is not used as the sole correctness oracle after restart; startup reconciliation is proven first and the same bounded background-cycle command used by alarm wakes is then driven deterministically in CI.
