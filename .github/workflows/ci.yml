@@ -20,6 +20,8 @@ jobs:
         run: ruff check --diff src tests migrations
       - name: Program 1 process conformance
         run: python tools/program1_conformance_check.py
+      - name: Program 2 process conformance
+        run: python tools/program2_conformance_check.py
       - name: Core and contract tests with branch coverage
         run: >-
           pytest -m 'not stress and not integration'
@@ -44,6 +46,9 @@ jobs:
           --cov=mtaffiliate.engines.shared_job_engine
           --cov=mtaffiliate.adapters.persistence.inmemory.job
           --cov=mtaffiliate.application.program2
+          --cov=mtaffiliate.application.program2_jobs
+          --cov=mtaffiliate.application.program2_intelligence
+          --cov=mtaffiliate.application.program2_artifacts
           --cov=mtaffiliate.application.program3
           --cov=mtaffiliate.application.program3_worker
           --cov=mtaffiliate.application.program3_workflow
@@ -76,6 +81,9 @@ jobs:
           --cov=mtaffiliate.bootstrap.migrations
           --cov=mtaffiliate.bootstrap.program1
           --cov=mtaffiliate.bootstrap.program2_program3
+          --cov=mtaffiliate.bootstrap.program2_jobs
+          --cov=mtaffiliate.bootstrap.program2_intelligence
+          --cov=mtaffiliate.bootstrap.program2_artifacts
           --cov=mtaffiliate.bootstrap.worker_registry
           --cov=mtaffiliate.bootstrap.shared_job
           --cov=mtaffiliate.bootstrap.program1_opportunity
