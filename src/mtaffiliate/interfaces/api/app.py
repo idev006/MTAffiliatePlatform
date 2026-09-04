@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -10,6 +10,9 @@ from mtaffiliate.adapters.persistence.inmemory.affiliate_offer import (
 )
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.product import InMemoryProductRepository
+from mtaffiliate.adapters.persistence.inmemory.program1_opportunity import (
+    InMemoryProgram1OpportunityRepository,
+)
 from mtaffiliate.adapters.persistence.inmemory.program1_strategy import (
     InMemoryProgram1StrategyRepository,
 )
@@ -21,6 +24,7 @@ from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
 )
 from mtaffiliate.application.program1 import IngestionBatchConflictError, Program1Service
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
+from mtaffiliate.application.program1_opportunity import Program1OpportunityService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.application.program2 import Program2Service
 from mtaffiliate.application.program3 import Program3Service
@@ -36,6 +40,10 @@ from mtaffiliate.domain.affiliate_offer.models import (
     OfferSelection,
 )
 from mtaffiliate.domain.product.models import ProductObservation, ShortlistEntry
+from mtaffiliate.domain.program1.opportunity import (
+    OpportunityDecisionRecord,
+    QualifiedOpportunityHandoff,
+)
 from mtaffiliate.domain.publishing.models import (
     DuplicateDecision,
     PublishingLedgerEntry,
@@ -50,6 +58,9 @@ from mtaffiliate.domain.worker_registry.models import (
 from mtaffiliate.engines.affiliate_offer_engine.service import (
     AffiliateOfferEngine,
     OfferScoringPolicy,
+)
+from mtaffiliate.engines.opportunity_intelligence_engine.service import (
+    OpportunityIntelligenceEngine,
 )
 from mtaffiliate.engines.product_intelligence_engine.service import (
     ProductIntelligenceEngine,
@@ -87,6 +98,11 @@ class PublishStatusRequest(BaseModel):
 class WorkerHeartbeatRequest(BaseModel):
     schema_version: str = Field(default="worker-heartbeat-v1", min_length=1)
     health_state: WorkerHealthState
+
+
+class OpportunityEvaluationRequest(BaseModel):
+    campaign_id: str = Field(min_length=1)
+    evaluated_at: datetime
 
 
 def build_inmemory_program1(settings: Settings) -> Program1Service:
@@ -147,6 +163,7 @@ def create_app(
     registry: WorkerRegistryService | None = None,
     shared_jobs: SharedJobEngine | None = None,
     program1_jobs: Program1DiscoveryJobService | None = None,
+    program1_opportunities: Program1OpportunityService | None = None,
     enabled_programs: set[str] | None = None,
 ) -> FastAPI:
     enabled = enabled_programs or {"program1", "program2", "program3"}
@@ -164,6 +181,16 @@ def create_app(
         InMemoryProgram1StrategyRepository(),
         shared_job_engine,
     )
+    program1_opportunity_service = program1_opportunities
+    if program1_opportunity_service is None and "program1" in enabled:
+        assert service1 is not None
+        program1_opportunity_service = Program1OpportunityService(
+            products=service1.repository,
+            jobs=shared_job_engine.repository,
+            strategies=program1_job_service.strategy_repository,
+            decisions=InMemoryProgram1OpportunityRepository(),
+            intelligence=OpportunityIntelligenceEngine(),
+        )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
 
     @app.get("/")
@@ -240,6 +267,38 @@ def create_app(
         def shortlist() -> list[ShortlistEntry]:
             assert service1 is not None
             return service1.build_shortlist()
+
+        @app.post(
+            "/api/v1/program1/opportunities/evaluate",
+            response_model=list[OpportunityDecisionRecord],
+        )
+        def evaluate_opportunities(
+            request: OpportunityEvaluationRequest,
+        ) -> list[OpportunityDecisionRecord]:
+            assert program1_opportunity_service is not None
+            try:
+                return program1_opportunity_service.evaluate_campaign(
+                    request.campaign_id,
+                    evaluated_at=request.evaluated_at,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        @app.get(
+            "/api/v1/program1/campaigns/{campaign_id}/opportunities",
+            response_model=list[OpportunityDecisionRecord],
+        )
+        def list_opportunities(campaign_id: str) -> list[OpportunityDecisionRecord]:
+            assert program1_opportunity_service is not None
+            return program1_opportunity_service.decisions.list_for_campaign(campaign_id)
+
+        @app.get(
+            "/api/v1/program1/campaigns/{campaign_id}/qualified-handoffs",
+            response_model=list[QualifiedOpportunityHandoff],
+        )
+        def qualified_handoffs(campaign_id: str) -> list[QualifiedOpportunityHandoff]:
+            assert program1_opportunity_service is not None
+            return program1_opportunity_service.qualified_handoffs(campaign_id)
 
     if "program2" in enabled:
 
