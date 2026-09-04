@@ -17,6 +17,14 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.create_table(
+        "program1_strategy_work",
+        sa.Column("reference", sa.String(length=1024), primary_key=True),
+        sa.Column("fingerprint", sa.String(length=64), nullable=False),
+        sa.Column("package_json", sa.String(length=32768), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    )
+
+    op.create_table(
         "jobs",
         sa.Column("job_id", sa.String(length=128), primary_key=True),
         sa.Column("job_type", sa.String(length=128), nullable=False),
@@ -81,3 +89,4 @@ def downgrade() -> None:
     op.drop_index("ix_jobs_domain", table_name="jobs")
     op.drop_index("ix_jobs_job_type", table_name="jobs")
     op.drop_table("jobs")
+    op.drop_table("program1_strategy_work")
