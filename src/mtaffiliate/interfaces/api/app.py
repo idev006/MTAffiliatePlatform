@@ -45,9 +45,8 @@ from mtaffiliate.application.worker_registry import (
 )
 from mtaffiliate.bootstrap.config import Settings
 from mtaffiliate.domain.affiliate_offer.models import (
-    AffiliateOfferObservation,
     AffiliateLinkArtifact,
-    OfferDiscoveryPlan,
+    AffiliateOfferObservation,
     OfferScore,
     OfferSelection,
     OfferSelectionDecision,
