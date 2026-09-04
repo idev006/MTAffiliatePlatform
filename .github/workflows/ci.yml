@@ -53,6 +53,7 @@ jobs:
           --cov=mtaffiliate.application.program2_artifacts
           --cov=mtaffiliate.application.program3
           --cov=mtaffiliate.application.program3_authority
+          --cov=mtaffiliate.application.program3_device
           --cov=mtaffiliate.application.program3_worker
           --cov=mtaffiliate.application.program3_workflow
           --cov=mtaffiliate.application.worker_registry
