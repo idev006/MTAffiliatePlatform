@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
@@ -12,6 +12,8 @@ def resolve_database_url(database_url: str, project_root: Path) -> str:
         return database_url
     relative = database_url.removeprefix(prefix)
     if not relative or relative == ":memory:":
+        return database_url
+    if PureWindowsPath(relative).is_absolute():
         return database_url
     candidate = Path(relative)
     if candidate.is_absolute() or ".." in candidate.parts:

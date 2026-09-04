@@ -45,6 +45,8 @@ def test_database_url_resolution_boundary_cases(tmp_path) -> None:
 
     absolute = f"sqlite:////{(tmp_path / 'absolute.db').as_posix().lstrip('/')}"
     assert resolve_database_url(absolute, tmp_path) == absolute
+    windows_absolute = "sqlite:///C:/runtime/program1.db"
+    assert resolve_database_url(windows_absolute, tmp_path) == windows_absolute
 
 
 def test_symlink_escape_from_managed_sqlite_path_is_rejected(tmp_path) -> None:
