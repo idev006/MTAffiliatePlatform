@@ -83,17 +83,20 @@ Verified baseline:
 - ProductObservation persistence and worker provenance;
 - Opportunity Feature/Qualification/Thesis/Decision flow;
 - typed QualifiedOpportunityHandoff to Program 2;
-- Program 1 conformance;
-- Program 1 extension 82/82 test baseline;
-- deterministic Program 1 -> Program 2 -> Program 3 closed-loop contract.
+- durable outbox delivery classification + poison-message quarantine;
+- Collection Router + versioned fixture/search/category/shop/PDP profiles with evidence-stage gating;
+- Program 1 extension **0.1.26** with current CI-authoritative Node suite;
+- real Playwright Chromium MV3 restart/reconcile CI: page-1 ACK/checkpoint -> browser restart -> startup reconcile/renew -> stale-tab recovery -> page-2 ACK/checkpoint -> verify/complete;
+- deterministic Program 1 -> Program 2 -> Program 3 closed-loop contract;
+- Program 1/2/3 conformance gates.
 
-Current engineering maturity score: **93.0 / 100**. See `PROGRAMS_1_2_3_ENGINEERING_MATURITY_SCORECARD_2026-09-05.md`.
+Current engineering maturity score remains **93.0 / 100** in the frozen scorecard. Engineering resilience has improved since that score, but the score is intentionally not raised until the formal scoring baseline is recalculated; live Shopee evidence remains the limiting production-readiness factor.
 
-Next work is evidence/product hardening rather than missing core authority:
-- stronger quarantine/ambiguous-ACK operator visibility;
-- collection profile promotion from repeated live evidence;
-- Chromium-hosted browser fixture E2E;
-- attribution/learning once downstream outcome data exists.
+Next work is controlled evidence/product learning rather than missing browser-runtime authority:
+- P1-I fresh independent Search-profile evidence and promotion review;
+- P1-J/K/L Category/Shop/PDP evidence only after Search evidence process is proven;
+- P1-M outcome-attribution inputs when downstream analytics are available;
+- P1-N learned opportunity policy only after sufficient outcome evidence.
 
 ## 7. One-Card Rule
 
