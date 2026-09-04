@@ -312,11 +312,20 @@ def test_submission_and_reconciliation_missing_state_fail_closed() -> None:
         state=PreSubmitDecisionState.REJECT,
         policy_version="p3",
     )
+    svc.execution.put_pre_submit(denied)
     with pytest.raises(ValueError, match="requires ALLOW_SUBMIT"):
         svc.record_post_submitted(
-            decision=denied,
+            decision_id=denied.decision_id,
+            lease_token="irrelevant-for-denied-decision",
             submitted_at=NOW,
             idempotency_key="submit",
+        )
+    with pytest.raises(ValueError, match="pre-submit decision does not exist"):
+        svc.record_post_submitted(
+            decision_id="forged-allow-submit",
+            lease_token="forged-token",
+            submitted_at=NOW,
+            idempotency_key="forged-submit",
         )
     with pytest.raises(ValueError, match="submission does not exist"):
         svc.reconcile(
