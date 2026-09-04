@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
+from mtaffiliate.application.program1_strategy import StrategyToWorkResult
 from mtaffiliate.application.worker_registry import WorkerRegistryService
 from mtaffiliate.domain.job.models import JobRecord
 from mtaffiliate.domain.program1.models import (
@@ -99,6 +100,30 @@ def build_shared_job_router(
         if job is None:
             raise HTTPException(status_code=404, detail=f"unknown job: {job_id}")
         return job
+
+    @router.get(
+        "/program1/discovery-jobs/{job_id}/work-package",
+        response_model=StrategyToWorkResult,
+    )
+    def get_program1_discovery_work_package(job_id: str) -> StrategyToWorkResult:
+        job = jobs.repository.get(job_id)
+        if job is None:
+            raise HTTPException(status_code=404, detail=f"unknown job: {job_id}")
+        if (
+            job.domain != Program1DiscoveryJobService.DOMAIN
+            or job.job_type != Program1DiscoveryJobService.JOB_TYPE
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail=f"job {job_id} is not a Program 1 discovery job",
+            )
+        package = program1_jobs.strategy_repository.get(job.payload_ref)
+        if package is None:
+            raise HTTPException(
+                status_code=409,
+                detail=f"missing durable strategy work package: {job.payload_ref}",
+            )
+        return package
 
     def authoritative_worker(worker_id: str, *, at: datetime):
         try:
