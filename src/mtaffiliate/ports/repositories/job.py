@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from mtaffiliate.domain.job.models import JobRecord
+from mtaffiliate.domain.job.models import JobEvent, JobRecord
 
 
 class JobRepository(Protocol):
@@ -15,3 +15,7 @@ class JobRepository(Protocol):
     def replace(self, job: JobRecord, *, expected_version: int) -> None: ...
 
     def list_jobs(self) -> list[JobRecord]: ...
+
+    def append_event(self, event: JobEvent) -> None: ...
+
+    def list_events(self, job_id: str) -> list[JobEvent]: ...
