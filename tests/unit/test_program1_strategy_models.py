@@ -54,3 +54,34 @@ def test_discovery_plan_rejects_duplicate_traceability_entries() -> None:
             collection_policy_version="collection-v1",
             created_at=NOW,
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("surface_scope", ("search", "search"), "surface_scope must be unique"),
+        (
+            "capability_requirements",
+            ("collector:identity", "collector:identity"),
+            "capability_requirements must be unique",
+        ),
+    ],
+)
+def test_discovery_plan_rejects_duplicate_scope_values(
+    field: str, value: tuple[str, ...], message: str
+) -> None:
+    payload = {
+        "plan_id": "plan-1",
+        "campaign_id": "campaign-1",
+        "hypothesis_id": "hyp-1",
+        "required_signal_ids": ("signal-1",),
+        "source_scope": "shopee",
+        "surface_scope": ("search",),
+        "capability_requirements": (),
+        "evidence_policy_version": "evidence-v1",
+        "collection_policy_version": "collection-v1",
+        "created_at": NOW,
+    }
+    payload[field] = value
+    with pytest.raises(ValidationError, match=message):
+        DiscoveryPlan(**payload)
