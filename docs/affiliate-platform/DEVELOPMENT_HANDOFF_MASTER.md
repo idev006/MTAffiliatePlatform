@@ -76,7 +76,12 @@ Accepted direction:
 - Product 1:N Offers;
 - affiliate account/session provenance is mandatory where offer facts depend on account context;
 - Offer Engine owns eligibility/ranking/preferred/backup/freshness policy;
-- Shared Core `jobs` is the sole lifecycle SSOT.
+- Shared Core `jobs` is the sole lifecycle SSOT;
+- Program 1 `QualifiedOpportunityHandoff` is the normal admission authority for commercial work;
+- Program 2 separates observed facts -> feature snapshot -> qualification -> durable selection decision -> validated link artifact;
+- Program 3 consumes only typed, fresh, durable Program 2 handoffs.
+
+Program 2 developer entrypoint: `PROGRAM2_DEVELOPER_HANDOFF.md`.
 
 ### Step 3 — Content Publishing / Android Device Farm
 Accepted direction:
@@ -271,6 +276,21 @@ For Program 1 specifically, developers must also read:
 - `PROGRAM1_AUTOMATED_TEST_ARCHITECTURE.md`.
 
 This pack is the implementation-ready Program 1 handoff and takes precedence over older generic Step 1 wording where the newer strategy-led design is more specific.
+
+## 12.2 Program 2 Developer Pack
+
+For Program 2 specifically, developers must also read:
+- `PROGRAM2_AFFILIATE_SUCCESS_STRATEGY.md`;
+- `PROGRAM2_SYSTEM_ARCHITECTURE.md`;
+- `PROGRAM2_UML_AND_RUNTIME_DIAGRAMS.md`;
+- `PROGRAM2_TRACEABILITY_MATRIX.md`;
+- `PROGRAM2_DEVELOPER_HANDOFF.md`;
+- `PROGRAM2_KANBAN.md`;
+- `PROGRAM2_IMPLEMENTATION_CARDS.md`;
+- `PROGRAM2_UX_AND_OPERATOR_EXPERIENCE.md`;
+- `PROGRAM2_AUTOMATED_TEST_ARCHITECTURE.md`.
+
+This pack is the implementation-ready Program 2 handoff and takes precedence over older generic Step 2 wording where more specific.
 
 ## 13. Required Reading Before Coding
 
