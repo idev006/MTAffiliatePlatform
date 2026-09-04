@@ -100,7 +100,7 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
           sentMessageIds.push(message.message_id);
           acceptedObservationCount += ack.accepted_count;
         } catch (error) {
-          const detail = error instanceof Error ? error.message : String(error);
+          const detail = error && typeof error.message === "string" ? error.message : String(error);
           const permanent = ["HTTP_400", "HTTP_409", "HTTP_413", "HTTP_415", "HTTP_422"].includes(detail);
           lastFailure = {
             category: permanent ? "PERMANENT_PAYLOAD" : detail.startsWith("ACK_")
