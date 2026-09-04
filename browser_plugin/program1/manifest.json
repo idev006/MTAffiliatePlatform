@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MTAffiliate Program 1 Discovery Worker",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "description": "Product Discovery Worker for MTAffiliatePlatform Program 1",
   "permissions": ["storage", "activeTab", "scripting", "sidePanel", "tabs", "alarms"],
   "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
