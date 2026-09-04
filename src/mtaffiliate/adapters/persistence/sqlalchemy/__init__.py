@@ -2,10 +2,12 @@ from .factory import build_engine, build_session_factory, resolve_database_url
 from .ingestion import SQLAlchemyProgram1BatchIngestor
 from .job import SQLAlchemyJobRepository
 from .product import SQLAlchemyProductRepository
+from .program1_strategy import SQLAlchemyProgram1StrategyRepository
 from .worker_registry import SQLAlchemyWorkerRegistryRepository
 
 __all__ = [
     "SQLAlchemyProductRepository",
+    "SQLAlchemyProgram1StrategyRepository",
     "SQLAlchemyProgram1BatchIngestor",
     "SQLAlchemyJobRepository",
     "SQLAlchemyWorkerRegistryRepository",
