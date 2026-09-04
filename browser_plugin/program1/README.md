@@ -1,7 +1,7 @@
 # Program 1 Browser Plugin
 
 Status: laboratory / evidence-gated implementation.
-Current extension version: `0.1.22`.
+Current extension version: `0.1.23`.
 
 This Manifest V3 extension is the Product Discovery Worker for Program 1. It intentionally does **not** contain production Shopee selectors yet. Real collection profiles remain a validation gate in the governing documents.
 
@@ -129,7 +129,15 @@ Observed supported lab surfaces after human CAPTCHA completion:
 
 Unsupported/CAPTCHA/schema-drift pages must fail closed and must not be reported as a successful empty harvest.
 
+Shared Job integration (0.1.23):
+- the MV3 background service worker now owns durable active-job lifecycle state;
+- workers can lease the next compatible Program 1 job, fetch its durable strategy/work package, start it, renew the lease, checkpoint acknowledged observation batches, reconcile after service-worker restart, and verify/complete bounded work;
+- an existing durable active job blocks a second lease;
+- restart reconciliation fails closed when authoritative Back Office state is no longer an active lease;
+- Side Panel remains an operator shell; remaining work is to move the full multi-page auto-run trigger/scheduling loop behind this background-owned job lifecycle and prove kill/restart recovery in a real Chromium-family browser.
+
 Next gated work:
-- job lease/pause/resume protocol;
-- saved sanitized real-page fixtures for the observed search/category/shop/product-detail surfaces;
+- real-browser MV3 kill/restart/reconcile E2E while Side Panel is closed;
+- background-owned multi-page execution orchestration using DiscoveryPlan scope;
+- saved sanitized real-page fixtures for observed search/category/shop/product-detail surfaces;
 - versioned Shopee collection profiles after observation/validation.
