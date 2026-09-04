@@ -1,7 +1,7 @@
 # Program 1 — Agile Kanban Board
 
-Status: ACTIVE
-Date: 2026-09-04
+Status: ENGINEERING MATURITY TARGET ACHIEVED / CONTINUOUS EVIDENCE IMPROVEMENT
+Date: 2026-09-05
 Method: DOCUMENT-DRIVEN / AGILE KANBAN / SMALL VERTICAL SLICES
 
 ## 1. Flow
@@ -47,118 +47,35 @@ No fixed "final architecture" is assumed. Architecture evolves through versioned
 
 ## 4. Current Board
 
-### VERIFY
+### DONE / VERIFIED FOUNDATION
 
-#### P1-A — Strategy-to-Work Contract
-Outcome:
-- affiliate hypothesis, signal requirement and discovery plan contracts exist;
-- planner rejects undeclared signals.
+- [x] P1-A Strategy-to-Work contracts and undeclared-signal rejection
+- [x] P1-B Shared Job lifecycle: lease/renew/checkpoint/pause/resume/complete
+- [x] P1-E Opportunity Feature Snapshot / evidence sufficiency
+- [x] P1-F Opportunity Decision / Thesis / TEST_NOW-NEEDS_EVIDENCE behavior
+- [x] P1-G typed QualifiedOpportunityHandoff into Program 2
+- [x] Program 1 conformance gate
+- [x] Program 1 browser extension build/test suite (82/82)
+- [x] deterministic platform closed-loop contract through Programs 1 -> 2 -> 3
 
-Evidence:
-- source/tests added;
-- CI coverage scope added.
+### ENGINEERING / PRODUCT FOLLOW-UP
 
-Verification state:
-- isolated smoke PASS;
-- repository CI evidence still requires current GitHub run confirmation;
-- move to DONE only after authoritative repository gates are confirmed and recorded.
+- [ ] P1-C continue hardening worker delivery quarantine/ambiguous ACK observability
+- [ ] P1-D continue splitting/promoting collection profiles as live evidence accumulates
+- [ ] P1-H full Chromium-hosted deterministic browser fixture E2E beyond extension unit/component suites
+- [ ] P1-M Outcome Attribution Input when downstream analytics is available
+- [ ] P1-N Learned Opportunity Policy after sufficient outcome evidence
 
-### READY / NEXT
+These follow-ups do not move business authority into the browser/UI and do not invalidate the current >=90 engineering maturity baseline.
 
-#### P1-B — Shared Job Lifecycle for Program 1
-Goal:
-Back Office + Shared Job Engine own Program 1 long-running lifecycle.
+### PRODUCTION EVIDENCE-GATED
 
-Acceptance:
-- lease/renew/checkpoint/complete;
-- pause/resume;
-- UI close does not stop durable job;
-- MV3 restart can reconcile canonical job state;
-- stale lease result rejected;
-- deterministic tests.
+- [ ] P1-I Search profile promotion from repeated independent Shopee evidence
+- [ ] P1-J Category profile promotion
+- [ ] P1-K Shop profile promotion
+- [ ] P1-L PDP profile promotion
 
-#### P1-C — Worker Delivery Reliability
-Goal:
-Make outbox and ACK semantics robust.
-
-Acceptance:
-- structured error categories;
-- duplicate/replay ACK semantics explicit;
-- lost ACK replay safe;
-- permanent invalid message cannot block valid queue forever without explicit quarantine policy;
-- ambiguous ACK preserved for reconciliation;
-- tests.
-
-#### P1-D — Collection Router and Profile Contract
-Goal:
-Separate collection profiles from monolithic content logic.
-
-Acceptance:
-- router interface;
-- profile metadata/version/evidence state;
-- fixture profile;
-- Shopee lab profiles remain evidence-gated;
-- unsupported/ambiguous selection fails closed;
-- fixture contract tests.
-
-### READY IN PARALLEL AFTER P1-A
-
-#### P1-E — Opportunity Feature Snapshot
-Goal:
-Create versioned derived features independent of browser worker.
-
-Acceptance:
-- feature snapshot domain model;
-- evidence refs;
-- unknown/data-sufficiency semantics;
-- fake deterministic features;
-- repository port/in-memory implementation;
-- tests;
-- no production weights.
-
-#### P1-F — Opportunity Decision / Thesis
-Depends: P1-E.
-
-Acceptance:
-- qualification;
-- Opportunity Thesis;
-- risk/uncertainty;
-- action vocabulary;
-- versioned decision;
-- deterministic tests;
-- NEEDS_EVIDENCE path.
-
-#### P1-G — Program 1 -> Program 2 v1.1
-Depends: P1-F.
-
-Acceptance:
-- qualified opportunity DTO;
-- rationale/freshness/provenance;
-- idempotency/conflict contract;
-- contract tests.
-
-### BACKLOG
-
-#### P1-H — Deterministic Browser E2E in CI
-Depends: P1-B/C/D.
-
-#### P1-I — Evidence-Gated Search Profile Promotion
-Depends: repeated real evidence.
-
-#### P1-J — Category Profile Promotion
-Depends: repeated real evidence.
-
-#### P1-K — Shop Profile Promotion
-Depends: repeated real evidence.
-
-#### P1-L — PDP Profile Promotion
-Depends: repeated real evidence.
-
-#### P1-M — Outcome Attribution Input
-Depends: downstream analytics availability.
-
-#### P1-N — Learned Opportunity Policy
-Depends: sufficient outcome evidence.
+Live evidence promotion must remain fail closed and must not bypass anti-bot/access controls.
 
 ## 5. Card Template
 
