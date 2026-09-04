@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from mtaffiliate.adapters.persistence.inmemory.device import InMemoryDeviceRepository
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.program2_artifact import (
     InMemoryProgram2ArtifactRepository,
@@ -19,6 +20,7 @@ from mtaffiliate.application.program3_authority import (
     Program3AuthoritativeService,
     Program3AuthorityPolicy,
 )
+from mtaffiliate.application.program3_device import Program3DeviceService
 from mtaffiliate.domain.affiliate_offer.models import (
     AffiliateLinkArtifact,
     LinkArtifactValidationState,
@@ -30,6 +32,7 @@ from mtaffiliate.domain.publishing.models import (
     PublishingLedgerEntry,
     ReconciliationOutcome,
 )
+from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 
@@ -105,6 +108,19 @@ def build(
     jobs = SharedJobEngine(jobs_repo, token_factory=lambda: "lease-token")
     decisions.put(selected())
     artifacts.put(artifact(artifact_state))
+    devices = Program3DeviceService(InMemoryDeviceRepository(), DeviceHostEngine())
+    devices.register(
+        device_id="device-1",
+        adb_serial="adb-device-1",
+        host_id="host-1",
+        status="ONLINE",
+    )
+    devices.claim(
+        "device-1",
+        worker_id="worker-1",
+        at=NOW,
+        lease_for=timedelta(minutes=30),
+    )
     service = Program3AuthoritativeService(
         decisions=decisions,
         artifacts=artifacts,
@@ -112,6 +128,7 @@ def build(
         ledger=ledger,
         jobs=jobs,
         guard=PublishingGuardEngine(),
+        devices=devices,
         policy=Program3AuthorityPolicy(max_program2_handoff_age=handoff_age),
     )
     return service, ledger, jobs
