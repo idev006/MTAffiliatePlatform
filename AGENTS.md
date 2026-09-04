@@ -29,6 +29,10 @@ Before changing core behavior, read at minimum:
 
 For Program 1 work, also read before changing business behavior:
 - `docs/affiliate-platform/PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`
+- `docs/affiliate-platform/PROGRAM1_SYSTEM_ARCHITECTURE.md`
+- `docs/affiliate-platform/PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md`
+- `docs/affiliate-platform/PROGRAM1_ARCHITECTURE_REVIEW_AND_IMPLEMENTATION_PLAN.md`
+- `docs/affiliate-platform/PROGRAM1_TRACEABILITY_MATRIX.md`
 - `docs/affiliate-platform/PROGRAM1_IMPLEMENTATION_READINESS.md`
 - `docs/affiliate-platform/PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`
 
