@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from mtaffiliate.adapters.android.scripted import ScriptedAndroidAdapter
+from mtaffiliate.adapters.persistence.inmemory.device import InMemoryDeviceRepository
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.program2_artifact import (
     InMemoryProgram2ArtifactRepository,
@@ -15,6 +16,7 @@ from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
 )
 from mtaffiliate.application.program3_authority import Program3AuthoritativeService
+from mtaffiliate.application.program3_device import Program3DeviceService
 from mtaffiliate.application.program3_worker import Program3WorkerExecutor
 from mtaffiliate.application.program3_workflow import Program3WorkflowRunner
 from mtaffiliate.domain.affiliate_offer.models import (
@@ -29,6 +31,7 @@ from mtaffiliate.domain.publishing.models import (
 )
 from mtaffiliate.domain.scene.models import SceneEvidence, SceneSignature
 from mtaffiliate.domain.scene.workflow import SceneTransition, SceneWorkflow
+from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
 from mtaffiliate.engines.scene_engine.service import SceneEngine
 from mtaffiliate.engines.scene_engine.workflow import SceneWorkflowEngine
@@ -95,6 +98,19 @@ def authoritative_service() -> Program3AuthoritativeService:
             evidence_refs=("link-evidence-e2e",),
         )
     )
+    devices = Program3DeviceService(InMemoryDeviceRepository(), DeviceHostEngine())
+    devices.register(
+        device_id="device-e2e",
+        adb_serial="adb-device-e2e",
+        host_id="host-e2e",
+        status="ONLINE",
+    )
+    devices.claim(
+        "device-e2e",
+        worker_id="android-worker-e2e",
+        at=NOW,
+        lease_for=timedelta(minutes=30),
+    )
     return Program3AuthoritativeService(
         decisions=decisions,
         artifacts=artifacts,
@@ -102,6 +118,7 @@ def authoritative_service() -> Program3AuthoritativeService:
         ledger=InMemoryPublishingLedgerRepository(),
         jobs=jobs,
         guard=PublishingGuardEngine(),
+        devices=devices,
     )
 
 
