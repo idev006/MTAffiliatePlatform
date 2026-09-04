@@ -45,6 +45,37 @@ Need / Problem / Goal
 
 This loop is recursive. Learning changes the documents, tests and design before the next similar implementation proceeds.
 
+## 2.1 Commit / Push Safety Discipline
+
+The repository is the recoverable project SSOT. Development must not leave substantial completed work only on one local machine.
+
+Rules:
+- commit at small, coherent, reviewable checkpoints;
+- push to GitHub frequently after meaningful recoverable checkpoints;
+- prefer buildable/tested commits; if a temporary WIP push is necessary, label it clearly and do not represent it as verified;
+- documentation/contract changes should be pushed before or with the implementation they govern;
+- after a verified vertical slice, push code, tests and documentation/status evidence before starting unrelated work;
+- avoid large uncommitted batches that make rollback/RCA difficult.
+
+Useful checkpoints include:
+`docs/contract -> domain/tests -> application/tests -> adapter/fixtures -> integration/resilience -> verification/handoff`.
+
+Commit count is not a quality metric. The goal is recoverability, traceability, reviewability and reduced work-loss risk.
+
+## 2.2 Usability as a Development Constraint
+
+Operator-facing features must be understandable to users with limited technical knowledge.
+
+Engineering should:
+- provide safe defaults;
+- use task-oriented language;
+- expose a clear next action on errors;
+- hide internal identifiers/protocol details from ordinary workflows;
+- preserve advanced diagnostics through progressive disclosure;
+- avoid making manual config-file editing a normal-user requirement.
+
+Ease of use is evaluated alongside correctness and reliability.
+
 ## 3. Kanban States
 
 `BACKLOG -> ANALYSIS -> DESIGN/CONTRACT -> READY -> IN DEV -> CODE REVIEW -> VERIFY -> DONE`
