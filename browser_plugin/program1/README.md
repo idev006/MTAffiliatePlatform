@@ -1,7 +1,7 @@
 # Program 1 Browser Plugin
 
 Status: laboratory / evidence-gated implementation.
-Current extension version: `0.1.25`.
+Current extension version: `0.1.26`.
 
 This Manifest V3 extension is the Product Discovery Worker for Program 1. It intentionally does **not** contain production Shopee selectors yet. Real collection profiles remain a validation gate in the governing documents.
 
@@ -26,11 +26,17 @@ Current implemented capabilities:
 - automatic register + heartbeat when the side panel opens or after settings are saved;
 - side panel registry status line showing the registered worker id or the last registration error; registration/heartbeat transport failures remain visible as process errors.
 
-Implemented extractor profiles:
+Implemented collection router/profile registry:
+- `collector:profile-router-v1` deterministically selects one compatible profile;
 - `fixture-profile-v1` for deterministic fixture markup;
-- `shopee-current-page-lab-v2` for logged-in/manual current-page capture where product links expose a candidate Shopee identity.
+- `shopee-search-lab-v1`;
+- `shopee-category-lab-v1`;
+- `shopee-shop-lab-v1`;
+- `shopee-pdp-lab-v1`.
 
-The Shopee current-page profile intentionally extracts only candidate product facts that are visible and identity-backed:
+All Shopee profiles remain `LAB_VALIDATED`; their presence in the registry does not mean production approval. The router fails closed on unsupported, ambiguous or evidence-stage-incompatible profile selection.
+
+The Shopee laboratory profiles intentionally extract only candidate product facts that are visible and identity-backed:
 - `(platform, shop_id, item_id)` from URL shapes such as `-i.<shop_id>.<item_id>`, `/product/<shop_id>/<item_id>` or `shopid`/`itemid` query parameters;
 - product name from nearby visible card text, or PDP-first title sources such as `h1` on product detail pages;
 - product URL without query parameters;
@@ -138,7 +144,7 @@ Shared Job integration (0.1.23):
 - restart reconciliation fails closed when authoritative Back Office state is no longer an active lease;
 - Side Panel remains an operator shell; remaining work is to move the full multi-page auto-run trigger/scheduling loop behind this background-owned job lifecycle and prove kill/restart recovery in a real Chromium-family browser.
 
-Background execution ownership (0.1.25):
+Background execution ownership (0.1.24):
 - Start/Stop Auto Run is now a Side Panel command to the MV3 background runtime rather than a panel-owned timer loop;
 - the background runtime executes one bounded cycle per alarm wake-up and persists phase/run state before yielding;
 - DiscoveryPlan may carry bounded `collection_targets`, so executable work can survive UI closure and browser/service-worker restart without relying on panel-only target state;
@@ -167,3 +173,12 @@ Controlled evidence capture (2026-09-05):
 - evidence URLs retain only route plus approved evidence query keys;
 - each capture writes an evidence manifest with classification, blocked state, promotion decision, browser/session category, code version and SHA-256;
 - a successful capture is still `HOLD`; profile promotion requires repeated independent live evidence under `CONTROLLED_PRODUCTION_EVIDENCE_VALIDATION_STANDARD.md`.
+
+Collection Router + Versioned Profile Registry (0.1.26):
+- `content.js` is now only the message bridge/bootstrap; parsing responsibilities live under `src/collectors/`;
+- background injection order is core -> fixture/Shopee helpers -> search/category/shop/PDP profiles -> router -> bridge;
+- each profile declares profile id/version, surface, evidence stage, required/optional indicators, extracted/unknown fields, compatibility scope, evidence refs and failure modes;
+- the router enforces deterministic single-profile selection and a configurable minimum evidence stage;
+- equal-priority multiple matches fail as `PROFILE_AMBIGUOUS`; unsupported pages do not fall back to a generic guessed parser;
+- worker registration advertises the router and individual surface-profile capabilities;
+- search/category/shop/PDP remain `LAB_VALIDATED` pending fresh independent evidence under ADR-047.
