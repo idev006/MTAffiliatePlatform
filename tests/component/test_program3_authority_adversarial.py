@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+from mtaffiliate.adapters.persistence.inmemory.device import InMemoryDeviceRepository
 from mtaffiliate.adapters.persistence.inmemory.job import InMemoryJobRepository
 from mtaffiliate.adapters.persistence.inmemory.program2_artifact import (
     InMemoryProgram2ArtifactRepository,
@@ -16,6 +17,7 @@ from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
 )
 from mtaffiliate.application.program3_authority import Program3AuthoritativeService
+from mtaffiliate.application.program3_device import Program3DeviceService
 from mtaffiliate.domain.affiliate_offer.models import (
     AffiliateLinkArtifact,
     LinkArtifactValidationState,
@@ -30,6 +32,7 @@ from mtaffiliate.domain.publishing.models import (
     ReconciliationOutcome,
     SubmissionRecord,
 )
+from mtaffiliate.engines.device_host_engine.service import DeviceHostEngine
 from mtaffiliate.engines.publishing_guard_engine.service import PublishingGuardEngine
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 from mtaffiliate.ports.repositories.program3_execution import Program3ExecutionConflictError
@@ -106,6 +109,19 @@ def service():
     jobs = SharedJobEngine(InMemoryJobRepository(), token_factory=lambda: "lease-adv")
     decisions.put(decision())
     artifacts.put(link())
+    devices = Program3DeviceService(InMemoryDeviceRepository(), DeviceHostEngine())
+    devices.register(
+        device_id="device-1",
+        adb_serial="adb-device-1",
+        host_id="host-1",
+        status="ONLINE",
+    )
+    devices.claim(
+        "device-1",
+        worker_id="worker-1",
+        at=NOW,
+        lease_for=timedelta(minutes=30),
+    )
     return Program3AuthoritativeService(
         decisions=decisions,
         artifacts=artifacts,
@@ -113,6 +129,7 @@ def service():
         ledger=ledger,
         jobs=jobs,
         guard=PublishingGuardEngine(),
+        devices=devices,
     )
 
 
