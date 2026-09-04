@@ -13,7 +13,11 @@ from mtaffiliate.adapters.persistence.inmemory.worker_registry import (
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
 from mtaffiliate.application.worker_registry import WorkerRegistryService
-from mtaffiliate.domain.worker_registry.models import WorkerRegistration, WorkerType
+from mtaffiliate.domain.worker_registry.models import (
+    WorkerHealthState,
+    WorkerRegistration,
+    WorkerType,
+)
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
 from mtaffiliate.interfaces.api.shared_jobs import build_shared_job_router
 
@@ -30,7 +34,7 @@ class FakeClock:
         return current
 
 
-def client() -> TestClient:
+def client(*, worker_health: WorkerHealthState | None = None) -> TestClient:
     repo = InMemoryJobRepository()
     engine = SharedJobEngine(repo, token_factory=lambda: "lease-1")
     program1 = Program1DiscoveryJobService(
@@ -53,6 +57,12 @@ def client() -> TestClient:
         ),
         seen_at=NOW,
     )
+    if worker_health is not None:
+        registry.record_heartbeat(
+            "worker-1",
+            health_state=worker_health,
+            seen_at=NOW,
+        )
     app = FastAPI()
     app.include_router(
         build_shared_job_router(
@@ -297,13 +307,8 @@ def test_invalid_pause_and_unknown_job_paths_return_contract_errors() -> None:
 
 
 def test_bad_worker_state_blocks_new_lease() -> None:
-    c = client()
+    c = client(worker_health=WorkerHealthState.DEGRADED)
     assert c.post("/api/v1/program1/discovery-jobs", json=create_payload()).status_code == 200
-    heartbeat = c.post(
-        "/api/v1/workers/worker-1/heartbeat",
-        json={"health_state": "DEGRADED"},
-    )
-    assert heartbeat.status_code == 200
 
     blocked = c.post("/api/v1/jobs/job-1/lease", json={"worker_id": "worker-1"})
     assert blocked.status_code == 409
