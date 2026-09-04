@@ -32,6 +32,7 @@ jobs:
           --cov=mtaffiliate.domain.device
           --cov=mtaffiliate.domain.worker_registry
           --cov=mtaffiliate.engines.product_intelligence_engine
+          --cov=mtaffiliate.engines.opportunity_intelligence_engine
           --cov=mtaffiliate.engines.affiliate_offer_engine
           --cov=mtaffiliate.engines.publishing_guard_engine
           --cov=mtaffiliate.engines.scene_engine
@@ -39,6 +40,7 @@ jobs:
           --cov=mtaffiliate.application.program1
           --cov=mtaffiliate.application.program1_strategy
           --cov=mtaffiliate.application.program1_jobs
+          --cov=mtaffiliate.application.program1_opportunity
           --cov=mtaffiliate.engines.shared_job_engine
           --cov=mtaffiliate.adapters.persistence.inmemory.job
           --cov=mtaffiliate.application.program2
@@ -76,6 +78,7 @@ jobs:
           --cov=mtaffiliate.bootstrap.program2_program3
           --cov=mtaffiliate.bootstrap.worker_registry
           --cov=mtaffiliate.bootstrap.shared_job
+          --cov=mtaffiliate.bootstrap.program1_opportunity
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=95
