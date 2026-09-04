@@ -28,6 +28,8 @@ def test_empty_sqlite_database_migrates_to_head_and_downgrades(tmp_path) -> None
         "product_observations",
         "ingestion_batches",
         "workers",
+        "jobs",
+        "job_events",
         "alembic_version",
     } <= tables
     engine.dispose()
@@ -38,6 +40,8 @@ def test_empty_sqlite_database_migrates_to_head_and_downgrades(tmp_path) -> None
     assert "product_observations" not in tables
     assert "ingestion_batches" not in tables
     assert "workers" not in tables
+    assert "jobs" not in tables
+    assert "job_events" not in tables
     engine.dispose()
 
 
