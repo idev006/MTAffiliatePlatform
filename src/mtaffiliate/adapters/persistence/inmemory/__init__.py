@@ -1,3 +1,4 @@
+from .device import InMemoryDeviceRepository
 from .job import InMemoryJobRepository
 from .product import InMemoryProductRepository
 from .program1_opportunity import InMemoryProgram1OpportunityRepository
@@ -9,6 +10,7 @@ from .program3_execution import InMemoryProgram3ExecutionRepository
 from .worker_registry import InMemoryWorkerRegistryRepository
 
 __all__ = [
+    "InMemoryDeviceRepository",
     "InMemoryJobRepository",
     "InMemoryProductRepository",
     "InMemoryProgram1OpportunityRepository",
