@@ -104,8 +104,28 @@ class ProductObservationRow(Base):
     rating: Mapped[float | None]
     review_count: Mapped[int | None] = mapped_column(Integer)
     source_worker_id: Mapped[str | None] = mapped_column(String(128))
+    source_job_id: Mapped[str | None] = mapped_column(String(128), index=True)
     source_query: Mapped[str | None] = mapped_column(String(1024))
     extractor_version: Mapped[str | None] = mapped_column(String(128))
+
+
+class Program1OpportunityDecisionRow(Base):
+    __tablename__ = "program1_opportunity_decisions"
+
+    decision_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    hypothesis_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    source_job_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    platform: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    shop_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    evaluated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    recommended_action: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    feature_policy_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    qualification_policy_version: Mapped[str] = mapped_column(String(128), nullable=False)
+    evidence_state: Mapped[str] = mapped_column(String(32), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    thesis_json: Mapped[str] = mapped_column(String(32768), nullable=False)
 
 
 class IngestionBatchRow(Base):
