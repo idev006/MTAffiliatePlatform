@@ -172,7 +172,8 @@ def test_program3_authoritative_api_flow_reaches_confirmed_ledger() -> None:
     submitted = client.post(
         "/api/v1/program3/submissions",
         json={
-            "decision": pre.json(),
+            "decision_id": pre.json()["decision_id"],
+            "lease_token": token,
             "submitted_at": datetime.now(UTC).isoformat(),
             "idempotency_key": "submit-api-1",
             "evidence_refs": ["submit-evidence-api-1"],
@@ -277,7 +278,8 @@ def test_program3_api_blocks_unconfirmed_scene_and_unknown_retry() -> None:
     attempted = client.post(
         "/api/v1/program3/submissions",
         json={
-            "decision": pre.json(),
+            "decision_id": pre.json()["decision_id"],
+            "lease_token": lease["lease_token"],
             "submitted_at": datetime.now(UTC).isoformat(),
             "idempotency_key": "forbidden-submit",
         },
