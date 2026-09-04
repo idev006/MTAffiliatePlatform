@@ -140,7 +140,7 @@ def create_plan_and_started_job(service, jobs, *, valid_at: datetime = NOW):
         worker_id="worker-1",
         worker_capabilities={"android:publish"},
         at=NOW,
-        lease_for=timedelta(minutes=5),
+        lease_for=timedelta(minutes=30),
     )
     jobs.start_job(
         leased.job_id,
