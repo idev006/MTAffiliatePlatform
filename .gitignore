@@ -1,5 +1,7 @@
 __pycache__/
 *.py[cod]
+node_modules/
+browser_plugin/program1/dist/
 .pytest_cache/
 .ruff_cache/
 .hypothesis/

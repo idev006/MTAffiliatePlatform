@@ -267,6 +267,28 @@ Observed outcome:
 
 Consequence: the price/sold boundary candidates remain single-capture evidence. The second independent capture stays an open gate and should be retried only after the suspicion window cools and a human can complete normal verification.
 
+### Live auto-run attempt — block confirmed at network level, not only account level (2026-09-04)
+
+A live validation of the 0.1.13 pagination-aware auto-run was attempted with `tools/program1_paginated_autorun_live.py` using a **fresh guest context** (brand-new profile `.browser-profiles/autorun-guest`, extension 0.1.13, no login), explicitly to avoid touching the flagged logged-in profile.
+
+Observed outcome:
+- the very first request to `https://shopee.co.th/search?keyword=SATA%20SSD%20512GB` was redirected by Shopee to `/verify/traffic/error?home_url=...&is_logged_in=false&next=...&tracking_id=74573583466-4c4b-47c9-800e-980952f7b63f&type=4` — `is_logged_in=false` proves the traffic gate applies to anonymous sessions too, i.e. the suspicion window sits on the network/device fingerprint, not just on login frequency;
+- the 0.1.13 anti-bot classification was validated against this real page: the side panel reported state `PAGE_BLOCKED_BY_ANTIBOT` with the message *"Blocked by Shopee verification/anti-bot; not treated as a harvest (<verify URL>)"* — under pre-0.1.13 code this same page was mislabeled as generic `PAGE_UNSUPPORTED`;
+- the run aborted after the single blocked probe (fail-closed, no repeated hammering);
+- incidental positive: the fresh profile registered with the local Back Office cleanly (`Registry: registered (autorun-live-guest)`), re-confirming the registry flow from a brand-new profile.
+
+Consequence: the **live last-page finish behavior remains unverified** — it is exercised only by the content-parser unit suite (pagination parsing, `has_next: false` finish). The live run should be retried, without further probes until then, after the network-level traffic gate cools; the driver already adapts to whichever keyword listing it finds and walks it to the genuine last page.
+
+### OPERATOR TO-DO — retry the second independent capture after cooldown
+
+> **Blocked since:** 2026-09-04 (network-level traffic gate; guest probe `is_logged_in=false` → `/verify/traffic/error`, type 4).
+> **Revisit on/after:** 2026-09-05 — only after normal Shopee browsing verifies cleanly from this network/device. Do **not** probe earlier; repeated attempts extend the window.
+
+1. Confirm a normal logged-in Shopee session loads listings without the verification page.
+2. Run `D:\dev\MTAffiliatePlatform\.venv\Scripts\python.exe tools\program1_capture_search_evidence.py` (page 2 of `keyword=ssd` + a second keyword) for the second independent price/sold evidence capture.
+3. When the network gate clears, the pagination-aware auto-run can also be live-run via `tools\program1_paginated_autorun_live.py` to record the real last-page finish.
+4. Record outcomes as a dated follow-up section in this file; until step 2 lands, the price/sold boundary candidates stay single-capture evidence.
+
 ## Remaining Evidence Needed
 
 Additional validation still needed before promotion:

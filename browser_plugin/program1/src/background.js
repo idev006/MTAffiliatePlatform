@@ -2,6 +2,7 @@ import { enqueue, readOutbox, removeByMessageId } from "./outbox.js";
 
 const SETTINGS_KEY = "program1_worker_settings_v1";
 const INSTALLATION_KEY = "program1_installation_id_v1";
+const RUN_STATE_KEY = "program1_run_state_v1";
 const HEARTBEAT_ALARM = "program1-heartbeat";
 const HEARTBEAT_PERIOD_MINUTES = 1;
 const WORKER_TYPE = "DISCOVERY_BROWSER_WORKER";
@@ -27,6 +28,31 @@ if (chrome.sidePanel?.setPanelBehavior) {
 async function getSettings() {
   const result = await chrome.storage.local.get(SETTINGS_KEY);
   return result[SETTINGS_KEY] || { backend_url: "", worker_id: "" };
+}
+
+async function getRunState() {
+  const result = await chrome.storage.local.get(RUN_STATE_KEY);
+  return result[RUN_STATE_KEY] || {
+    desired: false,
+    active_target_tab_id: null,
+    cycle_count: 0,
+    session_accepted_count: 0,
+    session_started_at: null,
+    last_step: "Auto run is not active",
+    last_error: null,
+    updated_at: null,
+  };
+}
+
+async function saveRunState(runState) {
+  const current = await getRunState();
+  const next = {
+    ...current,
+    ...runState,
+    updated_at: new Date().toISOString(),
+  };
+  await chrome.storage.local.set({ [RUN_STATE_KEY]: next });
+  return next;
 }
 
 async function postJson(path, payload) {
@@ -248,16 +274,30 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   if (message.type === "PROGRAM1_GET_PROCESS_STATUS") {
     return respondAsync(async () => {
-      const [settings, outbox] = await Promise.all([getSettings(), readOutbox()]);
+      const [settings, outbox, runState] = await Promise.all([
+        getSettings(),
+        readOutbox(),
+        getRunState(),
+      ]);
       return {
         ok: true,
         backend_configured: Boolean(settings.backend_url),
         worker_configured: Boolean(settings.worker_id),
         outbox_remaining_count: outbox.length,
-        state: settings.backend_url ? "IDLE" : "CONFIG_REQUIRED",
+        state: runState.desired ? "RECOVERABLE" : settings.backend_url ? "IDLE" : "CONFIG_REQUIRED",
         registry: { ...registryState },
+        run_state: runState,
       };
     }, sendResponse);
+  }
+  if (message.type === "PROGRAM1_GET_RUN_STATE") {
+    return respondAsync(async () => ({ ok: true, run_state: await getRunState() }), sendResponse);
+  }
+  if (message.type === "PROGRAM1_SAVE_RUN_STATE") {
+    return respondAsync(async () => ({
+      ok: true,
+      run_state: await saveRunState(message.run_state || {}),
+    }), sendResponse);
   }
   if (message.type === "PROGRAM1_QUEUE_BATCH") {
     return respondAsync(async () => {

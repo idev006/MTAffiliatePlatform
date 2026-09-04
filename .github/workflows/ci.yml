@@ -83,3 +83,22 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Stress suite
         run: pytest -m stress --timeout=60
+
+  program1-extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: browser_plugin/program1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: browser_plugin/program1/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Build Vue side panel
+        run: npm run build
+      - name: Extension suites
+        run: npm test

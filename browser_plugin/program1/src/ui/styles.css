@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+  themes: light --default;
+}
+
+/* Panel chrome: the side panel is ~320-400px wide and scrolls as one surface. */
+html,
+body {
+  margin: 0;
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+}
+
+#app {
+  min-height: 100vh;
+}

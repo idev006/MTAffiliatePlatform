@@ -1,0 +1,23 @@
+{
+  "name": "mtaffiliate-program1-extension-ui",
+  "version": "0.1.22",
+  "private": true,
+  "description": "Program 1 Discovery Worker extension UI (Vue 3 + Tailwind + daisyUI), built with Vite into dist/",
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "daisyui": "^5.0.0",
+    "pinia": "^3.0.0",
+    "tailwindcss": "^4.0.0",
+    "vue": "^3.5.0",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "vite": "^7.0.0"
+  }
+}

@@ -76,6 +76,10 @@ async def capture_url(
         await page.goto(url, wait_until="domcontentloaded", timeout=20000)
     except (PlaywrightError, PlaywrightTimeoutError) as error:
         print(f"[{index}] Navigation did not finish cleanly: {error}", flush=True)
+    try:
+        await page.bring_to_front()
+    except PlaywrightError:
+        pass
 
     deadline = asyncio.get_event_loop().time() + wait_seconds
     result: dict[str, object] = {"status": "timeout", "captcha": False, "captured_at": None}
@@ -87,6 +91,9 @@ async def capture_url(
             navigations += 1
             if navigations % 5 == 1:
                 print(f"[{index}] Page is mid-navigation; continuing to watch...", flush=True)
+            if asyncio.get_event_loop().time() >= deadline:
+                print(f"[{index}] Timed out while the page kept navigating.", flush=True)
+                break
             await asyncio.sleep(3)
             continue
         result.update(stats)
@@ -96,12 +103,17 @@ async def capture_url(
             result["status"] = "ok"
             break
         remaining = max(0, int(deadline - asyncio.get_event_loop().time()))
-        if stats["captcha"] and remaining % 15 == 0:
-            print(
-                f"[{index}] CAPTCHA/anti-bot page detected. Solve it in the browser window "
-                f"(waiting up to {remaining}s).",
-                flush=True,
-            )
+        if stats["captcha"]:
+            if remaining % 15 == 0:
+                print(
+                    f"[{index}] CAPTCHA/anti-bot page detected. Solve it in the browser window "
+                    f"(waiting up to {remaining}s).",
+                    flush=True,
+                )
+            try:
+                await page.bring_to_front()
+            except PlaywrightError:
+                pass
         if asyncio.get_event_loop().time() >= deadline:
             print(f"[{index}] Timed out waiting for a clean result page.", flush=True)
             break

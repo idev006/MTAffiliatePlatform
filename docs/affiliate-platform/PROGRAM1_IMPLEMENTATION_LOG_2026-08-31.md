@@ -108,3 +108,47 @@ Verification evidence (local `.venv`):
 Open items unchanged:
 - second independent Shopee capture (page 2 + a second keyword) remains deferred pending the anti-bot suspicion window cooling;
 - job lease/pause/resume protocol; registry pruning; evidence-gated profile promotion remain next.
+
+## Fourth slice — Vue side-panel migration (extension 0.1.14)
+
+The side panel UI moved from a single vanilla-JS page (`src/sidepanel.html` + `src/sidepanel.js`, ~800 lines of imperative DOM code) to a **Vue 3 SPA** built with Vite and styled with Tailwind CSS + daisyUI, using Vue Router and Pinia, per operator direction ("world-class UI/UX; use vuejs tailwindcss daisyUI vuerouter pinia"). Content/background contexts stay framework-free by design.
+
+What changed:
+- new toolchain under `browser_plugin/program1/`: `package.json`, `vite.config.mjs`, Vue app under `src/ui/` (`sidepanel.html` entry, `main.js`, `App.vue`, router with Status/Settings/Activity views, Pinia stores for settings and the worker process machine), output `dist/` (gitignored) referenced by `side_panel.default_path`; manifest bumped to `0.1.14`;
+- all panel decision logic moved into framework-free modules under `src/ui/lib/*.mjs` (URL/pagination rules, delay-range math, process/registry view mapping) plus a chrome-injected `workerBridge` factory — the old imperative file is deleted;
+- every automation-facing element id (`#registryStatus`, `#state`, `#step`, `#startAuto`, `#status`, metric/input ids) is preserved across the routed views so the Playwright tools keep working;
+- the Playwright registry E2E tool was route-aware (Settings for fields, Status for process), and the paginated auto-run live driver now drives the routed panel (it still fails closed at Shopee's network-level traffic gate — see evidence doc 2026-09-04 entry; the guest-context probe confirmed `is_logged_in=false` blocking on `/verify/traffic/error`, i.e. the suspicion window is device/network-level, and the 0.1.13 anti-bot classification was validated against the real block page).
+
+Verification evidence:
+- `npm run build` clean (47 modules; ~46 kB gzip JS, ~10 kB gzip CSS incl. daisyUI);
+- Node suites `59 passed` (content parser + background transport suites unchanged; side-panel suite ported to `.mjs` against the lib modules + fake-chrome bridge);
+- real-browser E2E against the running Back Office (fresh profile): Vue panel booted with **zero console errors**, registered `panel-vue-e2e`, backend row `ONLINE_IDLE`, `version_no 2`, `stale: false`;
+- route screenshots saved under `.browser-profiles/captures/2026-09-04/ui-vue/` (gitignored).
+
+Open items unchanged (see third slice) — plus a new one: the extension build (`npm ci && npm run build`) is now a prerequisite before loading/reloading the extension, documented in the plugin README; the CI extension job was added to `.github/workflows/ci.yml`.
+
+## Fifth slice — mid-listing PAGE_UNSUPPORTED diagnostics (extension 0.1.15)
+
+A real run at ~14:26–14:31 (0.1.13, logged-in profile `w00001`, during the Shopee suspicion window) delivered 40 observations across listing pages 1–5 via the real next links, then stopped with `Auto run stopped: PAGE_UNSUPPORTED` mid-listing (page 5 of 12): the next page load rendered no product anchors and was not recognized by the anti-bot classifier, and the old stop reason did not say which page or why.
+
+Changes:
+- `content.js` now returns a `page_context` probe with every failure result: `listing_shell_present`, hydrated `item_roots` count and the page title — so an empty throttled page is distinguishable from a genuinely unsupported page (evidence-based; no speculative new block classification);
+- auto-run treats a rendered listing shell with zero items as a transient state and retries it twice (5 s then 12 s) before failing closed — bounded, never an unbounded wait, and still never a fake empty harvest;
+- the auto-run stop reason now includes the failing page URL (`Auto run stopped: <error> (<url>)`), and the Vue panel's last-payload pre keeps the full result incl. `page_context`.
+
+Verification: node suites `61 passed` (content parser +2: shell-context on empty listing, no-shell on unrelated pages), Vite build clean, manifest/package bumped to `0.1.15`. Root-cause context unchanged: this is the device/network-level Shopee traffic gate documented in the evidence file — the fix makes the failure say exactly that instead of a bare code.
+
+## Sixth slice — deterministic last-page-finish E2E and host-permission refinement (extension 0.1.16–0.1.17)
+
+Goal: re-verify the pagination-aware auto-run's clean last-page finish end-to-end in a real Brave run without touching Shopee (which remains network-blocked).
+
+Changes:
+- the fixture adapter (`content.js`) now reads and returns pagination context when a fixture page embeds a real `.shopee-page-controller` — fixture pages can therefore drive the genuine advance + finish logic deterministically (0.1.16);
+- `tools/program1_fixture_autorun_check.py`: threaded local server serving a two-page fixture listing AND a mock Back Office (register/heartbeat/observation ACK mirroring the real API shape: `batch_id` + `received_count` + `accepted_count`); drives the real extension 0.1.17 in Brave and asserts the auto-run walks page 1 → 2 via the controller next link and finishes cleanly (0.1.16→0.1.17);
+- the local Back Office moved from optional to **required** `host_permissions` (`http://127.0.0.1/*`, `http://localhost/*`) while `https://shopee.co.th/*` stays optional: loopback is the worker's own control plane and should not need per-profile interactive grants; touching real Shopee pages still always requires explicit operator consent (0.1.17). This also removed the interactive Allow step from every Playwright tool run.
+
+Verification evidence (extension 0.1.17, local `.venv`):
+- `npm test` `63 passed` (content parser +2 fixture-pagination tests; background transport + panel lib suites unchanged);
+- fixture E2E in headed Brave with a fresh profile: transcript `Auto run cycle 1 -> Captured, queued and delivered to Back Office -> Auto run finished: reached the last page (page 2 of 2)`; mock log showed exactly 2 observation batches (6 accepted) covering pages [0, 1], zero requests past the last page; final capture payload on page 2 reported `has_next: false, next_url: null`; metrics cycle 2 / session accepted 6 / outbox 0; zero console or page errors; screenshots + `report.json` under `.browser-profiles/captures/2026-09-04/fixture-autorun/`.
+
+Open items unchanged (see fifth slice); live-Shopee last-page confirmation remains pending the traffic gate, but the exact finish path is now locked by a deterministic browser E2E.

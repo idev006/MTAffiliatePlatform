@@ -65,6 +65,16 @@ def tabs_summary(port: int) -> list[dict[str, object]]:
     ]
 
 
+def extension_worker_id(port: int) -> str | None:
+    for tab in read_json(f"http://127.0.0.1:{port}/json/list"):
+        if not isinstance(tab, dict):
+            continue
+        url = str(tab.get("url") or "")
+        if url.startswith("chrome-extension://") and url.endswith("/src/background.js"):
+            return url.split("/")[2]
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Open Brave directly for Program 1 testing without Playwright."
@@ -101,7 +111,13 @@ def main() -> None:
         raise SystemExit(f"Brave did not expose CDP on port {args.debugging_port}")
 
     if args.open_worker_tab:
-        open_cdp_tab(args.debugging_port, "chrome://extensions/")
+        extension_id = extension_worker_id(args.debugging_port)
+        worker_url = (
+            f"chrome-extension://{extension_id}/dist/sidepanel.html#/status"
+            if extension_id
+            else "chrome://extensions/"
+        )
+        open_cdp_tab(args.debugging_port, worker_url)
 
     print("Browser: brave-direct", flush=True)
     print(f"CDP: http://127.0.0.1:{args.debugging_port}", flush=True)

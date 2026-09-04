@@ -1,12 +1,12 @@
 # Program 1 Browser Plugin
 
 Status: laboratory / evidence-gated implementation.
-Current extension version: `0.1.13`.
+Current extension version: `0.1.17`.
 
 This Manifest V3 extension is the Product Discovery Worker for Program 1. It intentionally does **not** contain production Shopee selectors yet. Real collection profiles remain a validation gate in the governing documents.
 
 Current implemented capabilities:
-- Side Panel settings shell;
+- Vue 3 side panel (Vue Router views + Pinia stores) styled with Tailwind CSS + daisyUI, built with Vite into `dist/`;
 - operator process panel with worker state, current step, captured/sent/queued/outbox counters and latest error;
 - backend URL and worker ID stored in extension local storage;
 - target page URL shortcut for opening a supported Shopee page from the worker UI;
@@ -35,6 +35,34 @@ The Shopee current-page profile intentionally extracts only candidate product fa
 - `source_worker_id` from Side Panel settings when configured;
 - `price_current = null` and `sold_signal = null` until saved fixtures prove stable field boundaries.
 
+## UI stack and build
+
+The side panel is a Vue 3 SPA (`src/ui/`) styled with Tailwind CSS + daisyUI and routed with
+Vue Router (Status / Settings / Activity views) with Pinia stores for worker process and
+settings state. Vite compiles it to static assets under `dist/`, which `manifest.json`
+references via `side_panel.default_path = dist/sidepanel.html`.
+
+Frame rules that keep the extension testable and safe:
+- `src/background.js` (service worker) and `src/content.js` (page context) stay **vanilla and
+  un-bundled** — only the panel UI is a Vue app;
+- all decision logic the panel needs lives in framework-free modules under `src/ui/lib/*.mjs`
+  (URL/pagination rules, delay-range math, process/registry view mapping) plus a
+  chrome-injected `workerBridge` factory, so `node:test` covers them without a DOM or browser;
+- panel element ids used by the Playwright tools (`#registryStatus`, `#state`, `#step`,
+  `#startAuto`, `#status`, …) are preserved across the views.
+
+Build and test:
+
+```powershell
+cd browser_plugin\program1
+npm ci          # first time
+npm run build   # emit dist/ (gitignored)
+npm test        # node --test: content parser, background transport, panel logic
+```
+
+After changing UI sources, rebuild and reload the extension at `chrome://extensions`. There is
+no dev server; `npm run watch` re-emits `dist/` on change if you prefer continuous builds.
+
 Delivery result semantics:
 - `ok: true` means the current queue flush reached the Back Office and acknowledged the queued batch;
 - `ok: false` with `queued: true` means the capture was durably queued locally but has not been delivered yet;
@@ -42,8 +70,11 @@ Delivery result semantics:
 - `Capture Current Page` requests permission for the active page origin before injecting the collector, for example `https://shopee.co.th/*`.
 - `Start Auto Run` opens or reuses the target tab and repeats the same capture/delivery cycle after a randomized delay drawn from the operator's from–to range (`0-600` s); `Stop Auto Run` clears the timer and releases side-panel runtime work.
 - listing captures report pagination context (current page, total, next link read from `.shopee-page-controller`); auto-run advances through the real next-page link and finishes cleanly on the last page instead of advancing past the end (0.1.13); failure and status lines include the page URL.
+- mid-run `PAGE_UNSUPPORTED` is diagnosed, not just reported: the collector returns a `page_context` probe (listing shell present?, hydrated item roots, page title) so an empty throttled page is distinguishable from a genuinely unsupported page; auto-run retries a rendered listing shell twice (5 s then 12 s) before failing closed, and the stop reason carries the failing page URL (0.1.15).
+- fixture pages (`data-program1-fixture-product`) may embed a real `.shopee-page-controller`; the fixture capture then reports pagination context, which lets the **pagination-aware auto-run be exercised end-to-end against deterministic non-Shopee pages** — including the clean last-page finish (0.1.16).
+- the fixture listing E2E is scripted in `tools/program1_fixture_autorun_check.py`: it serves a two-page fixture listing + a mock Back Office on `127.0.0.1`, drives the real extension, and asserts the auto-run walks page 1 → 2 via the controller next link and finishes with `Auto run finished: reached the last page (page 2 of 2)` without requesting a page 3 (0.1.17).
 - worker registration is verified end-to-end with `tools/program1_registry_e2e_check.py` (opens the real side panel and expects `Registry: registered (...)`); Shopee evidence pages can be captured with `tools/program1_capture_search_evidence.py`.
-- host permissions are intentionally limited to Shopee and local Back Office URLs until a remote deployment profile is approved.
+- host permissions are intentionally limited to Shopee and local Back Office URLs until a remote deployment profile is approved; the local Back Office (`http://127.0.0.1/*`, `http://localhost/*`) is a **required** host permission (silent grant — it is the worker's own control plane), while `https://shopee.co.th/*` stays optional so touching real Shopee pages always needs explicit operator consent (0.1.17).
 
 Playwright persistent-profile test mode:
 
@@ -76,7 +107,7 @@ D:\dev\MTAffiliatePlatform\.venv\Scripts\python.exe tools\program1_open_brave_di
 This starts Brave directly with a dedicated persistent profile and loads the Program 1 extension without Playwright. It exposes a local DevTools endpoint for compact structured inspection at `http://127.0.0.1:9223`.
 
 Native Side Panel behavior:
-- `manifest.json` declares `side_panel.default_path = src/sidepanel.html`;
+- `manifest.json` declares `side_panel.default_path = dist/sidepanel.html` (built from `src/ui/`);
 - background startup calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })`;
 - the extension action intentionally has no `default_popup`, so clicking the toolbar icon opens the browser native side panel instead of a popup.
 

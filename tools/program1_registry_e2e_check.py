@@ -73,14 +73,19 @@ async def main() -> None:
         )
         extension_id = await extension_id_from_context(context) or KNOWN_EXTENSION_ID
         page = await context.new_page()
-        await page.goto(f"{EXTENSION_SCHEME}{extension_id}/src/sidepanel.html", wait_until="domcontentloaded")
+        panel_url = f"{EXTENSION_SCHEME}{extension_id}/dist/sidepanel.html"
+        await page.goto(panel_url, wait_until="domcontentloaded")
 
+        # Settings live on the #/settings route; the registry line is in the header
+        # and therefore visible on every route of the routed Vue panel.
+        await page.goto(f"{panel_url}#/settings", wait_until="domcontentloaded")
         await page.fill("#backendUrl", args.backend_url)
         await page.fill("#workerId", args.worker_id)
         print(f"Clicked Save Settings with {args.backend_url} / {args.worker_id}.", flush=True)
         print("If Brave asks to allow access to the Back Office host, click Allow.", flush=True)
         await page.click("#save")
 
+        await page.goto(f"{panel_url}#/status", wait_until="domcontentloaded")
         registry_text = ""
         status_text = ""
         deadline = asyncio.get_event_loop().time() + args.wait_seconds
@@ -89,7 +94,7 @@ async def main() -> None:
             status_text = (await page.text_content("#status")) or ""
             if "registered (" in registry_text:
                 break
-            if "BACKEND_PERMISSION_DENIED" in status_text:
+            if "BACKEND_PERMISSION_DENIED" in status_text or "BACKEND_PERMISSION_DENIED" in registry_text:
                 break
             await asyncio.sleep(1)
 
@@ -100,6 +105,7 @@ async def main() -> None:
             "registry_status": registry_text,
             "status_box": status_text,
             "state": (await page.text_content("#state")) or "",
+            "step": (await page.text_content("#step")) or "",
             "backend_worker": backend_worker(args.backend_url, args.worker_id),
         }
         print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)

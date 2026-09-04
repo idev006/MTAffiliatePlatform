@@ -163,15 +163,24 @@ function isPageBlockedByAntibot() {
   return bodyText.includes("โปรดลองอีกครั้งในภายหลัง") || bodyText.includes("Please verify you are human");
 }
 
+function shopeePaginationController() {
+  return (
+    document.querySelector('nav.shopee-page-controller[role="navigation"]') ||
+    document.querySelector(".shopee-page-controller")
+  );
+}
+
 // Reads the pagination controller observed on Shopee listing pages
 // (`.shopee-page-controller` with numbered links plus prev/next arrows).
 function readPaginationInfo() {
-  const controller = document.querySelector(".shopee-page-controller");
+  const controller = shopeePaginationController();
   if (!controller) return null;
   const anchors = [...controller.querySelectorAll("a[href]")];
-  const currentAnchor = controller.querySelector('a[aria-current="true"]');
-  const nextAnchor = anchors.find((anchor) =>
-    /shopee-icon-button--right/.test(anchor.className || ""),
+  const currentAnchor = controller.querySelector('a[aria-current="true"]') ||
+    anchors.find((anchor) => /shopee-button-solid--primary/.test(anchor.className || ""));
+  const nextAnchor = controller.querySelector("a.shopee-icon-button--right[href]") ||
+    anchors.find((anchor) =>
+      /shopee-icon-button--right/.test(anchor.className || ""),
   );
   const isDisabled = (anchor) =>
     anchor?.getAttribute("aria-disabled") === "true" ||
@@ -271,6 +280,22 @@ function readFixtureProducts() {
   }));
 }
 
+// Describes how much of a Shopee listing surface the page actually rendered, so a
+// mid-run failure can distinguish "listing shell but nothing hydrated" (throttle/
+// slow render, worth a bounded retry) from "not a supported page at all".
+function readPageSurfaceContext() {
+  const roots = document.querySelectorAll('li.shopee-search-item-result__item[data-sqe="item"]');
+  const listingShellPresent = Boolean(
+    document.querySelector("section.shopee-search-item-result") ||
+      document.querySelector(".shopee-page-controller"),
+  );
+  return {
+    listing_shell_present: listingShellPresent,
+    item_roots: roots.length,
+    page_title: (document.title || "").trim().slice(0, 120),
+  };
+}
+
 function captureCurrentPage() {
   const fixtureProducts = readFixtureProducts();
   if (fixtureProducts.length) {
@@ -279,16 +304,22 @@ function captureCurrentPage() {
       error: null,
       profile: FIXTURE_PROFILE,
       observations: fixtureProducts,
+      // Deterministic development/testing: fixture pages may embed a real
+      // `.shopee-page-controller` so the auto-run can be exercised end-to-end
+      // (advance + clean last-page finish) without Shopee. Absent controller => null.
+      pagination: readPaginationInfo(),
       page_url: window.location.href,
     };
   }
 
+  const pageContext = readPageSurfaceContext();
   if (isPageBlockedByAntibot()) {
     return {
       ok: false,
       error: "PAGE_BLOCKED_BY_ANTIBOT",
       profile: SHOPEE_CURRENT_PAGE_PROFILE,
       observations: [],
+      page_context: pageContext,
       page_url: window.location.href,
     };
   }
@@ -312,6 +343,7 @@ function captureCurrentPage() {
     profile: SHOPEE_CURRENT_PAGE_PROFILE,
     observations: [],
     pagination,
+    page_context: pageContext,
     page_url: window.location.href,
   };
 }
@@ -343,6 +375,7 @@ if (typeof module !== "undefined") {
     parseShopeeProductIdentityFromUrl,
     randomObservationId,
     readCurrentProductDetailName,
+    readPageSurfaceContext,
     readPaginationInfo,
     readShopeeProductsFromCurrentPage,
   };

@@ -7,6 +7,7 @@ This directory contains implementation-facing domain/worker specifications. Gove
 
 ## Shared Core
 - `SHARED_CORE_SPEC.md` — control plane, jobs, workers, idempotency, audit, configuration.
+- `JOB_LEASE_PAUSE_RESUME_SPEC.md` — job lease/claim/renew/expiry protocol and worker-admission + job pause/resume, building on the worker registry (DESIGN — READY FOR REVIEW).
 
 ## Step 1 — Product Discovery / Intelligence
 - `PRODUCT_DISCOVERY_WORKER_SPEC.md` — browser acquisition worker boundary, outbox, parser/versioning, fixture-based testing.

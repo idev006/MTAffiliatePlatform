@@ -109,25 +109,51 @@ def shopee_status(port: int) -> dict[str, Any]:
 
 
 def worker_status(port: int) -> dict[str, Any]:
-    target = find_target(port, lambda url, _title: url.endswith("/src/sidepanel.html"))
+    target = find_target(
+        port,
+        lambda url, _title: url.endswith("/src/sidepanel.html")
+        or "/dist/sidepanel.html" in url,
+    )
     if target is None:
         return {"ok": False, "error": "WORKER_UI_NOT_FOUND"}
     value = cdp_evaluate(
         target.websocket_url,
-        """(() => ({
-          state: document.querySelector('#state')?.textContent || null,
-          step: document.querySelector('#step')?.textContent || null,
-          error: document.querySelector('#lastError')?.textContent || null,
-          captured: Number(document.querySelector('#capturedCount')?.textContent || 0),
-          accepted: Number(document.querySelector('#acceptedCount')?.textContent || 0),
-          queued: Number(document.querySelector('#queuedCount')?.textContent || 0),
-          delivered_batches: Number(document.querySelector('#sentCount')?.textContent || 0),
-          outbox: Number(document.querySelector('#outboxCount')?.textContent || 0),
-          backend_url: document.querySelector('#backendUrl')?.value || null,
-          target_url: document.querySelector('#targetUrl')?.value || null,
-          delay_range: document.querySelector('#delayRangeLabel')?.textContent || null,
-          start_disabled: Boolean(document.querySelector('#startAuto')?.disabled),
-          stop_disabled: Boolean(document.querySelector('#stopAuto')?.disabled),
+        """(() => new Promise((resolve) => {
+          const send = (message) => new Promise((done) => {
+            chrome.runtime.sendMessage(message, (response) => {
+              done(response || { ok: false, error: chrome.runtime.lastError?.message || 'NO_RESPONSE' });
+            });
+          });
+          Promise.all([
+            send({ type: 'PROGRAM1_GET_SETTINGS' }),
+            send({ type: 'PROGRAM1_GET_RUN_STATE' }),
+          ]).then(([settingsResponse, runResponse]) => {
+            const settings = settingsResponse?.settings || {};
+            resolve({
+              state: document.querySelector('#state')?.textContent || null,
+              step: document.querySelector('#step')?.textContent || null,
+              error: document.querySelector('#lastError')?.textContent || null,
+              captured: Number(document.querySelector('#capturedCount')?.textContent || 0),
+              accepted: Number(document.querySelector('#acceptedCount')?.textContent || 0),
+              queued: Number(document.querySelector('#queuedCount')?.textContent || 0),
+              delivered_batches: Number(document.querySelector('#sentCount')?.textContent || 0),
+              outbox: Number(document.querySelector('#outboxCount')?.textContent || 0),
+              backend_url: settings.backend_url || document.querySelector('#backendUrl')?.value || null,
+              worker_id: settings.worker_id || document.querySelector('#workerId')?.value || null,
+              target_url: settings.target_url || document.querySelector('#targetUrl')?.value || null,
+              delay_range: settings.delay_min_seconds !== undefined && settings.delay_max_seconds !== undefined
+                ? `${settings.delay_min_seconds}-${settings.delay_max_seconds}`
+                : document.querySelector('#delayRangeLabel')?.textContent || null,
+              page_load_wait_seconds: settings.page_load_wait_seconds ?? null,
+              page_retry_wait_seconds: settings.page_retry_wait_seconds ?? null,
+              max_page_retries: settings.max_page_retries ?? null,
+              auto_resume: settings.auto_resume ?? null,
+              advance_after_delivery: settings.advance_after_delivery ?? null,
+              run_state: runResponse?.run_state || null,
+              start_disabled: Boolean(document.querySelector('#startAuto')?.disabled),
+              stop_disabled: Boolean(document.querySelector('#stopAuto')?.disabled),
+            });
+          });
         }))()""",
     )
     return {"ok": True, **(value if isinstance(value, dict) else {"value": value})}

@@ -4,6 +4,51 @@
     "url": "https://shopee.co.th/search?keyword=ssd",
     "keyword": "ssd",
     "expected_count": 6,
+    "pagination": {
+      "mini_total_text": "12",
+      "controller_anchors": [
+        {
+          "class": "shopee-icon-button shopee-icon-button--left shopee-icon-button--disabled",
+          "href": "/",
+          "aria_disabled": "true"
+        },
+        {
+          "class": "shopee-button-solid shopee-button-solid--primary",
+          "href": "/search?keyword=ssd&page=0",
+          "aria_current": "true"
+        },
+        {
+          "class": "shopee-button-no-outline",
+          "href": "/search?keyword=ssd&page=1"
+        },
+        {
+          "class": "shopee-button-no-outline",
+          "href": "/search?keyword=ssd&page=2"
+        },
+        {
+          "class": "shopee-button-no-outline",
+          "href": "/search?keyword=ssd&page=3"
+        },
+        {
+          "class": "shopee-button-no-outline",
+          "href": "/search?keyword=ssd&page=4"
+        },
+        {
+          "class": "shopee-button-no-outline shopee-button-no-outline--non-click"
+        },
+        {
+          "class": "shopee-icon-button shopee-icon-button--right",
+          "href": "/search?keyword=ssd&page=1",
+          "aria_disabled": "false"
+        }
+      ],
+      "expected": {
+        "current_page": 0,
+        "total_pages": 12,
+        "has_next": true,
+        "next_url": "https://shopee.co.th/search?keyword=ssd&page=1"
+      }
+    },
     "items": [
       {
         "href": "/Fikwot-FS810-2.5-SATA-SSD-i.1228919183.25473237549?extraParams=%7B%7D",

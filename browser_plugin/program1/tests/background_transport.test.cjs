@@ -178,7 +178,49 @@ test("process status reports configuration, outbox and registry state", async ()
       last_error: null,
       last_seen_at: null,
     },
+    run_state: {
+      desired: false,
+      active_target_tab_id: null,
+      cycle_count: 0,
+      session_accepted_count: 0,
+      session_started_at: null,
+      last_step: "Auto run is not active",
+      last_error: null,
+      updated_at: null,
+    },
   });
+});
+
+test("run state is durable and makes process status recoverable", async () => {
+  const { sendMessage, storage } = loadBackground({
+    initialStorage: {
+      program1_worker_settings_v1: { backend_url: "http://127.0.0.1:8000", worker_id: "worker-01" },
+    },
+  });
+
+  const saved = await sendMessage({
+    type: "PROGRAM1_SAVE_RUN_STATE",
+    run_state: {
+      desired: true,
+      active_target_tab_id: 42,
+      cycle_count: 7,
+      session_accepted_count: 120,
+      session_started_at: 1800000000000,
+      last_step: "Next auto cycle scheduled in 30s",
+      last_error: null,
+    },
+  });
+
+  assert.equal(saved.ok, true);
+  assert.equal(saved.run_state.desired, true);
+  assert.equal(saved.run_state.active_target_tab_id, 42);
+  assert.equal(saved.run_state.updated_at.length > 0, true);
+  assert.equal(storage.program1_run_state_v1.cycle_count, 7);
+
+  const status = await sendMessage({ type: "PROGRAM1_GET_PROCESS_STATUS" });
+  assert.equal(status.state, "RECOVERABLE");
+  assert.equal(status.run_state.desired, true);
+  assert.equal(status.run_state.session_accepted_count, 120);
 });
 
 test("background rejection still settles the runtime message response", async () => {
