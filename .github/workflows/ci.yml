@@ -36,6 +36,7 @@ jobs:
           --cov=mtaffiliate.engines.device_host_engine
           --cov=mtaffiliate.application.program1
           --cov=mtaffiliate.application.program1_strategy
+          --cov=mtaffiliate.application.program1_jobs
           --cov=mtaffiliate.engines.shared_job_engine
           --cov=mtaffiliate.adapters.persistence.inmemory.job
           --cov=mtaffiliate.application.program2
@@ -72,6 +73,7 @@ jobs:
           --cov=mtaffiliate.bootstrap.program1
           --cov=mtaffiliate.bootstrap.program2_program3
           --cov=mtaffiliate.bootstrap.worker_registry
+          --cov=mtaffiliate.bootstrap.shared_job
           --cov-branch
           --cov-report=term-missing
           --cov-fail-under=95
