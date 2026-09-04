@@ -6,6 +6,37 @@ Audience: Codex Work Desktop / developers
 
 This queue is ordered for efficient continuation from the current repository state. Re-check current HEAD, CI and Kanban before starting; if the repository moved, preserve the intent but reconcile with the latest evidence.
 
+## P0 — Program 1 Strategy-Aligned Baseline
+
+### Goal
+Make Program 1 implementation follow the newly accepted Affiliate Success Strategy before adding major new behavior.
+
+### Governing docs
+- `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`
+- `PROGRAM1_CURRENT_STATE.md`
+- `PROGRAM1_IMPLEMENTATION_READINESS.md`
+- `PROGRAM1_TO_PROGRAM2_HANDOFF_CONTRACT.md`
+
+### Actions
+1. verify current HEAD CI after documentation updates;
+2. add automated Program 1 version/SSOT conformance checks;
+3. reconcile implementation/Kanban/docs with the strategy-led Program 1 mission;
+4. design/implement Program 1 Shared Job lease/pause/resume integration so Side Panel is not the durable workflow authority;
+5. review ACK duplicate semantics, poison-message/head-of-line blocking, structured retry classification and MV3 restart behavior;
+6. refactor collection toward versioned per-surface profiles behind a router, without promoting unvalidated selectors;
+7. implement Opportunity Feature / Opportunity Thesis / recommendation scaffolding from the governing contracts, without inventing production scoring weights;
+8. preserve traceability from business hypothesis -> signal -> evidence -> feature -> decision -> handoff.
+
+### Exit criteria
+- Program 1 code/Kanban changes cite the governing strategy;
+- UI is not the canonical long-running job authority;
+- reliability semantics are explicit/tested;
+- collector profile boundaries are architecture-conforming;
+- opportunity-intelligence contracts have deterministic tests;
+- no unvalidated Shopee field/selector is promoted to production truth.
+
+---
+
 ## P0 — Restore and Prove Current-Tree Green Baseline
 
 ### Goal
