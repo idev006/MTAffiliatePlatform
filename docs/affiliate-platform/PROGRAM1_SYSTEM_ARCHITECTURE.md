@@ -729,36 +729,38 @@ Recommended vertical slices:
 - move durable auto-run authority out of Side Panel;
 - restart/checkpoint tests.
 
-### P1-B — Worker Delivery Reliability
+### P1-C — Worker Delivery Reliability
 - structured error taxonomy;
 - ACK/accounted-for semantics;
 - quarantine/reconciliation contract;
 - outbox head-of-line behavior tests.
 
-### P1-C — Collection Profile Architecture
+### P1-D — Collection Profile Architecture
+Governing implementation detail: `PROGRAM1_COLLECTION_ROUTER_AND_PROFILE_REGISTRY.md`.
+
 - router interface;
 - profile metadata/evidence lifecycle;
 - split fixture and Shopee laboratory profiles;
 - no production promotion without evidence.
 
-### P1-D — Opportunity Feature Foundation
+### P1-E — Opportunity Feature Foundation
 - feature snapshot domain/application contracts;
 - evidence/data-sufficiency state;
 - deterministic fake feature rules.
 
-### P1-E — Opportunity Decision / Thesis
+### P1-F — Opportunity Decision / Thesis
 - qualification;
 - recommendation action;
 - risks/uncertainty;
 - explanation/provenance;
 - no invented production weights.
 
-### P1-F — Program 2 Handoff v1.1
+### P1-G — Program 2 Handoff v1.1
 - qualified opportunity payload;
 - contract tests;
 - idempotency/conflict compatibility.
 
-### P1-G — Deterministic Browser E2E CI
+### P1-H — Deterministic Browser E2E CI
 - build extension;
 - start mock/local Back Office;
 - load extension;
