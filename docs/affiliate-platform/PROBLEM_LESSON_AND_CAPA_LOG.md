@@ -216,3 +216,27 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Verification evidence: local Node extension tests passed on 2026-08-31: `24 passed, 0 failed`; `node --check` passed for `sidepanel.js` and `background.js`; backend health returned `ok`.
 - Lesson learned: Manifest V3 extension APIs have multiple transport surfaces; reliability policy must cover each browser callback boundary, not just the background service-worker channel.
 - Cross-program applicability: YES — all browser extensions and side-panel workers.
+
+---
+
+## PL-2026-009 — Program 1 outbox poison-message head-of-line blocking and cross-realm error normalization
+- Date: 2026-09-05
+- Program/Component: Program 1 / Browser Worker delivery reliability
+- Severity: HIGH reliability finding
+- Detection source: senior audit + CI CAPA rounds
+- Status: VERIFIED
+- Symptom: the original outbox drain stopped at the first permanent-invalid message, so one poison payload could block every later valid batch. Transport failures were represented only as error strings and there was no durable quarantine.
+- Expected behavior: clearly permanent payload defects are isolated for operator review; transient/auth/network/ACK ambiguity remains fail-closed and retains durable work; current-batch checkpoint occurs only after an authoritative matching ACK.
+- Actual behavior: all errors stopped the queue and the first item remained active indefinitely.
+- Impact: a single permanent-invalid batch could cause persistent delivery head-of-line blocking and degrade worker throughput/recoverability.
+- Root cause: initial durable-outbox slice implemented conservative stop-on-error semantics before failure taxonomy/quarantine ownership was formalized.
+- Corrective action: added pure delivery-reliability policy; durable quarantine storage; conservative HTTP/ACK failure classification; current-message sent/quarantined tracking; process-status quarantine telemetry; worker health remains DEGRADED when quarantine requires attention.
+- Preventive action: delivery policy is framework-free and unit-tested; permanent quarantine is intentionally limited to explicit payload/semantic statuses; ambiguous/transient/auth/config errors never delete the message.
+- Regression test / monitoring: `delivery_reliability.test.mjs`, `background_transport.test.cjs`, full extension CI suite.
+- Additional CI finding: the VM background harness initially failed because it stripped only the old static import shape; CAPA updated the dependency-injection harness instead of hiding the new module boundary.
+- Additional robustness finding: VM/cross-realm errors failed `instanceof Error`; production and harness now use structural `error.message` normalization.
+- Documents/ADR/config updated: Program 1 README, Program 1 Kanban, this CAPA register.
+- Owner: Program 1 Browser Worker
+- Verification evidence: CI run `33929170024` passed Program 1 extension, core/conformance, SQLite and stress after CAPA round 3.
+- Lesson learned: durable delivery needs failure taxonomy and isolation, and JavaScript error normalization at extension/VM boundaries should be structural rather than realm-dependent.
+- Cross-program applicability: YES — browser/worker outboxes and any JavaScript plugin boundary.
