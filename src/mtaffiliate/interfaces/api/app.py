@@ -23,6 +23,9 @@ from mtaffiliate.adapters.persistence.inmemory.program2_decision import (
     InMemoryProgram2DecisionRepository,
 )
 from mtaffiliate.adapters.persistence.inmemory.program2_work import InMemoryProgram2WorkRepository
+from mtaffiliate.adapters.persistence.inmemory.program3_execution import (
+    InMemoryProgram3ExecutionRepository,
+)
 from mtaffiliate.adapters.persistence.inmemory.publishing import (
     InMemoryPublishingLedgerRepository,
 )
@@ -38,6 +41,7 @@ from mtaffiliate.application.program2_artifacts import Program2ArtifactService
 from mtaffiliate.application.program2_intelligence import Program2OfferDecisionService
 from mtaffiliate.application.program2_jobs import Program2OfferDiscoveryJobService
 from mtaffiliate.application.program3 import Program3Service
+from mtaffiliate.application.program3_authority import Program3AuthoritativeService
 from mtaffiliate.application.worker_registry import (
     DEFAULT_STALE_HEARTBEAT_MULTIPLIER,
     WorkerRegistryService,
@@ -59,8 +63,12 @@ from mtaffiliate.domain.program1.opportunity import (
 )
 from mtaffiliate.domain.publishing.models import (
     DuplicateDecision,
+    PreSubmitDecision,
+    Program3PlanPackage,
     PublishingLedgerEntry,
     PublishPlan,
+    ReconciliationDecision,
+    SubmissionRecord,
 )
 from mtaffiliate.domain.worker_registry.models import (
     WorkerHealthState,
@@ -124,6 +132,54 @@ class Program3HandoffRequest(BaseModel):
 class PublishStatusRequest(BaseModel):
     plan: PublishPlan
     status: str = Field(min_length=1)
+
+
+class Program3PlanRequest(BaseModel):
+    handoff: Program3OfferHandoff
+    plan_ref: str = Field(min_length=1)
+    publish_job_id: str = Field(min_length=1)
+    target_account_id: str = Field(min_length=1)
+    video_id: str = Field(min_length=1)
+    video_sha256: str = Field(min_length=64, max_length=64)
+    created_at: datetime
+    caption: str = ""
+    tags: list[str] = Field(default_factory=list)
+
+
+class Program3JobRequest(BaseModel):
+    idempotency_key: str = Field(min_length=1)
+    created_at: datetime
+    priority: int = 0
+
+
+class Program3PreSubmitRequest(BaseModel):
+    worker_id: str = Field(min_length=1)
+    lease_token: str = Field(min_length=1)
+    device_id: str = Field(min_length=1)
+    target_account_id: str = Field(min_length=1)
+    scene_ready: bool
+    evaluated_at: datetime
+    evidence_refs: tuple[str, ...] = ()
+
+
+class Program3SubmittedRequest(BaseModel):
+    decision: PreSubmitDecision
+    submitted_at: datetime
+    idempotency_key: str = Field(min_length=1)
+    evidence_refs: tuple[str, ...] = ()
+
+
+class Program3ReconcileRequest(BaseModel):
+    evaluated_at: datetime
+    success_confirmed: bool = False
+    failure_safe_to_retry_confirmed: bool = False
+    human_required: bool = False
+    evidence_refs: tuple[str, ...] = ()
+
+
+class Program3ConfirmRequest(BaseModel):
+    reconciliation: ReconciliationDecision
+    confirmed_at: datetime
 
 
 class WorkerHeartbeatRequest(BaseModel):
@@ -198,6 +254,7 @@ def create_app(
     program2_jobs: Program2OfferDiscoveryJobService | None = None,
     program2_intelligence: Program2OfferDecisionService | None = None,
     program2_artifacts: Program2ArtifactService | None = None,
+    program3_authority: Program3AuthoritativeService | None = None,
     enabled_programs: set[str] | None = None,
 ) -> FastAPI:
     enabled = enabled_programs or {"program1", "program2", "program3"}
@@ -245,6 +302,27 @@ def create_app(
         program2_artifact_service = Program2ArtifactService(
             decisions=program2_decision_service.decisions,
             artifacts=InMemoryProgram2ArtifactRepository(),
+        )
+    program3_authority_service = program3_authority
+    if program3_authority_service is None and "program3" in enabled:
+        program3_decisions = (
+            program2_decision_service.decisions
+            if program2_decision_service is not None
+            else InMemoryProgram2DecisionRepository()
+        )
+        program3_artifacts = (
+            program2_artifact_service.artifacts
+            if program2_artifact_service is not None
+            else InMemoryProgram2ArtifactRepository()
+        )
+        program3_ledger = service3.ledger if service3 is not None else InMemoryPublishingLedgerRepository()
+        program3_authority_service = Program3AuthoritativeService(
+            decisions=program3_decisions,
+            artifacts=program3_artifacts,
+            execution=InMemoryProgram3ExecutionRepository(),
+            ledger=program3_ledger,
+            jobs=shared_job_engine,
+            guard=PublishingGuardEngine(),
         )
     app = FastAPI(title="MTAffiliatePlatform", version="0.2.0")
 
@@ -294,7 +372,7 @@ def create_app(
             raise HTTPException(status_code=404, detail=f"unknown worker: {worker_id}")
         return summary
 
-    if "program1" in enabled or "program2" in enabled:
+    if enabled.intersection({"program1", "program2", "program3"}):
         app.include_router(
             build_shared_job_router(
                 program1_jobs=program1_job_service if "program1" in enabled else None,
@@ -565,5 +643,107 @@ def create_app(
                 return service3.record_status(request.plan, request.status)
             except ValueError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        @app.post("/api/v1/program3/plans", response_model=Program3PlanPackage)
+        def build_program3_plan(request: Program3PlanRequest) -> Program3PlanPackage:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.build_publish_plan(
+                    handoff=request.handoff,
+                    plan_ref=request.plan_ref,
+                    publish_job_id=request.publish_job_id,
+                    target_account_id=request.target_account_id,
+                    video_id=request.video_id,
+                    video_sha256=request.video_sha256,
+                    created_at=request.created_at,
+                    caption=request.caption,
+                    tags=request.tags,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post("/api/v1/program3/plans/{plan_ref}/job")
+        def create_program3_job(plan_ref: str, request: Program3JobRequest):
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.create_publish_job(
+                    plan_ref=plan_ref,
+                    idempotency_key=request.idempotency_key,
+                    created_at=request.created_at,
+                    priority=request.priority,
+                )
+            except (ValueError, RuntimeError) as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program3/jobs/{publish_job_id}/pre-submit",
+            response_model=PreSubmitDecision,
+        )
+        def program3_pre_submit(
+            publish_job_id: str,
+            request: Program3PreSubmitRequest,
+        ) -> PreSubmitDecision:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.pre_submit(
+                    publish_job_id=publish_job_id,
+                    worker_id=request.worker_id,
+                    lease_token=request.lease_token,
+                    device_id=request.device_id,
+                    target_account_id=request.target_account_id,
+                    scene_ready=request.scene_ready,
+                    evaluated_at=request.evaluated_at,
+                    evidence_refs=request.evidence_refs,
+                )
+            except (KeyError, ValueError, RuntimeError) as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post("/api/v1/program3/submissions", response_model=SubmissionRecord)
+        def program3_post_submitted(request: Program3SubmittedRequest) -> SubmissionRecord:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.record_post_submitted(
+                    decision=request.decision,
+                    submitted_at=request.submitted_at,
+                    idempotency_key=request.idempotency_key,
+                    evidence_refs=request.evidence_refs,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program3/submissions/{submission_id}/reconcile",
+            response_model=ReconciliationDecision,
+        )
+        def program3_reconcile(
+            submission_id: str,
+            request: Program3ReconcileRequest,
+        ) -> ReconciliationDecision:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.reconcile(
+                    submission_id=submission_id,
+                    evaluated_at=request.evaluated_at,
+                    success_confirmed=request.success_confirmed,
+                    failure_safe_to_retry_confirmed=request.failure_safe_to_retry_confirmed,
+                    human_required=request.human_required,
+                    evidence_refs=request.evidence_refs,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+        @app.post(
+            "/api/v1/program3/publish/confirm",
+            response_model=PublishingLedgerEntry,
+        )
+        def program3_confirm(request: Program3ConfirmRequest) -> PublishingLedgerEntry:
+            assert program3_authority_service is not None
+            try:
+                return program3_authority_service.confirm_success(
+                    reconciliation=request.reconciliation,
+                    confirmed_at=request.confirmed_at,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     return app
