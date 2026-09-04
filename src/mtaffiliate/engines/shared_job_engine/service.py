@@ -70,14 +70,14 @@ class SharedJobEngine:
             created_at=created_at,
             updated_at=created_at,
         )
-        self.repository.add(job)
-        self.repository.append_event(
+        self.repository.add_with_event(
+            job,
             JobEvent(
                 event_type="JOB_CREATED",
                 job_id=job.job_id,
                 job_version=job.job_version,
                 emitted_at=created_at,
-            )
+            ),
         )
         return job
 
@@ -373,8 +373,8 @@ class SharedJobEngine:
                 "updated_at": at,
             }
         )
-        self.repository.replace(updated, expected_version=job.job_version)
-        self.repository.append_event(
+        self.repository.replace_with_event(
+            updated,
             JobEvent(
                 event_type=event_type,
                 job_id=updated.job_id,
@@ -382,6 +382,7 @@ class SharedJobEngine:
                 emitted_at=at,
                 worker_id=event_worker_id,
                 detail=event_detail,
-            )
+            ),
+            expected_version=job.job_version,
         )
         return updated
