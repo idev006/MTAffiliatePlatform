@@ -1,3 +1,4 @@
+import { createBackgroundExecutionController } from "./background_execution.mjs";
 import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";
 import { enqueue, readOutbox, removeByMessageId } from "./outbox.js";
 
@@ -6,6 +7,7 @@ const INSTALLATION_KEY = "program1_installation_id_v1";
 const RUN_STATE_KEY = "program1_run_state_v1";
 const HEARTBEAT_ALARM = "program1-heartbeat";
 const JOB_RENEW_ALARM = "program1-job-renew";
+const AUTO_RUN_ALARM = "program1-auto-run";
 const HEARTBEAT_PERIOD_MINUTES = 1;
 const JOB_RENEW_PERIOD_MINUTES = 1;
 const ACTIVE_JOB_KEY = "program1_active_job_v1";
@@ -151,6 +153,41 @@ function flushOutbox() {
   return outboxDrain;
 }
 
+async function queueObservationBatch(payload, { checkpoint = true } = {}) {
+  const envelope = {
+    message_id: crypto.randomUUID(),
+    created_at: new Date().toISOString(),
+    payload,
+  };
+  await enqueue(envelope);
+  const flush = await flushOutbox();
+  let checkpointResult = null;
+  if (checkpoint && flush.ok) {
+    const settings = await getSettings();
+    const activeJob = await jobLifecycle.activeState();
+    if (activeJob?.job_id && settings.worker_id) {
+      checkpointResult = await jobLifecycle.checkpoint(
+        settings.worker_id,
+        "OBSERVATION_BATCH_ACK",
+        {
+          batch_id: payload?.batch_id || null,
+          received_count: payload?.observations?.length || 0,
+          accepted_count: flush.accepted_observation_count,
+          outbox_remaining_count: flush.remaining_count,
+        },
+      );
+    }
+  }
+  return {
+    ok: flush.ok,
+    queued: true,
+    queued_message_id: envelope.message_id,
+    queued_observation_count: payload?.observations?.length || 0,
+    flush,
+    checkpoint: checkpointResult,
+  };
+}
+
 function errorMessage(error) {
   return error && typeof error.message === "string" ? error.message : String(error);
 }
@@ -203,6 +240,59 @@ function scheduleJobRenewAlarm() {
     // Best-effort only. Reconciliation on startup remains authoritative.
   }
 }
+
+async function scheduleAutoRunWake(when) {
+  if (typeof chrome.alarms === "undefined") {
+    throw new Error("ALARMS_UNAVAILABLE");
+  }
+  const result = chrome.alarms.create(AUTO_RUN_ALARM, { when });
+  if (result && typeof result.then === "function") await result;
+}
+
+async function cancelAutoRunWake() {
+  if (typeof chrome.alarms === "undefined") return false;
+  const result = chrome.alarms.clear(AUTO_RUN_ALARM);
+  if (result && typeof result.then === "function") return result;
+  return Boolean(result);
+}
+
+async function hasPagePermission(targetUrl) {
+  const parsed = new URL(targetUrl);
+  const origin = `${parsed.protocol}//${parsed.host}/*`;
+  return chrome.permissions.contains({ origins: [origin] });
+}
+
+function randomDelayBetween(minMs, maxMs) {
+  if (minMs >= maxMs) return minMs;
+  return Math.floor(minMs + Math.random() * (maxMs - minMs + 1));
+}
+
+async function sendTabCapture(tabId) {
+  return chrome.tabs.sendMessage(tabId, { type: "PROGRAM1_CAPTURE_CURRENT_PAGE" });
+}
+
+const backgroundExecution = createBackgroundExecutionController({
+  lifecycle: jobLifecycle,
+  getSettings,
+  loadRunState: getRunState,
+  saveRunState,
+  ensurePermission: hasPagePermission,
+  getTab: (tabId) => chrome.tabs.get(tabId),
+  createTab: (url) => chrome.tabs.create({ url, active: false }),
+  focusTab: (tabId) => chrome.tabs.update(tabId, { active: true }),
+  navigateTab: (tabId, url) => chrome.tabs.update(tabId, { url, active: false }),
+  injectCollector: (tabId) =>
+    chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["src/content.js"],
+    }),
+  captureTab: sendTabCapture,
+  deliverBatch: (payload) => queueObservationBatch(payload, { checkpoint: false }),
+  scheduleWake: scheduleAutoRunWake,
+  cancelWake: cancelAutoRunWake,
+  randomDelayMs: randomDelayBetween,
+  randomUUID: () => crypto.randomUUID(),
+});
 
 async function leaseAndStartNextJob() {
   const settings = await getSettings();
@@ -342,6 +432,11 @@ if (typeof chrome.alarms !== "undefined") {
         // Durable active-job state retains the error/reconciliation context.
       });
     }
+    if (alarm.name === AUTO_RUN_ALARM) {
+      backgroundExecution.resumeAfterWake().catch(() => {
+        // Run state is durable; the next operator/status read exposes the failure.
+      });
+    }
   });
 }
 
@@ -385,38 +480,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }), sendResponse);
   }
   if (message.type === "PROGRAM1_QUEUE_BATCH") {
-    return respondAsync(async () => {
-      const envelope = {
-        message_id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        payload: message.payload,
-      };
-      await enqueue(envelope);
-      const flush = await flushOutbox();
-      let checkpoint = null;
-      const settings = await getSettings();
-      const activeJob = await jobLifecycle.activeState();
-      if (flush.ok && activeJob?.job_id && settings.worker_id) {
-        checkpoint = await jobLifecycle.checkpoint(
-          settings.worker_id,
-          "OBSERVATION_BATCH_ACK",
-          {
-            batch_id: message.payload?.batch_id || null,
-            received_count: message.payload?.observations?.length || 0,
-            accepted_count: flush.accepted_observation_count,
-            outbox_remaining_count: flush.remaining_count,
-          },
-        );
-      }
-      return {
-        ok: flush.ok,
-        queued: true,
-        queued_message_id: envelope.message_id,
-        queued_observation_count: message.payload?.observations?.length || 0,
-        flush,
-        checkpoint,
-      };
-    }, sendResponse);
+    return respondAsync(
+      () => queueObservationBatch(message.payload, { checkpoint: true }),
+      sendResponse,
+    );
   }
   if (message.type === "PROGRAM1_FLUSH_OUTBOX") {
     return respondAsync(flushOutbox, sendResponse);
@@ -443,6 +510,18 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return jobLifecycle.verifyAndComplete(settings.worker_id);
     }, sendResponse);
   }
+  if (message.type === "PROGRAM1_START_BACKGROUND_RUN") {
+    return respondAsync(backgroundExecution.start, sendResponse);
+  }
+  if (message.type === "PROGRAM1_STOP_BACKGROUND_RUN") {
+    return respondAsync(
+      () => backgroundExecution.stop("Background run stopped by operator"),
+      sendResponse,
+    );
+  }
+  if (message.type === "PROGRAM1_RUN_BACKGROUND_CYCLE") {
+    return respondAsync(backgroundExecution.runOneCycle, sendResponse);
+  }
   return false;
 });
 
@@ -453,7 +532,13 @@ chrome.runtime.onStartup.addListener(async () => {
   const settings = await getSettings();
   if (settings.backend_url && settings.worker_id) {
     registerWorker()
-      .then(() => reconcileActiveJob())
+      .then(async () => {
+        await reconcileActiveJob();
+        const runState = await getRunState();
+        if (runState.desired) {
+          await scheduleAutoRunWake(Date.now());
+        }
+      })
       .catch(() => {});
   }
 });
