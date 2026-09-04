@@ -163,7 +163,8 @@ class Program3PreSubmitRequest(BaseModel):
 
 
 class Program3SubmittedRequest(BaseModel):
-    decision: PreSubmitDecision
+    decision_id: str = Field(min_length=1)
+    lease_token: str = Field(min_length=1)
     submitted_at: datetime
     idempotency_key: str = Field(min_length=1)
     evidence_refs: tuple[str, ...] = ()
@@ -703,7 +704,8 @@ def create_app(
             assert program3_authority_service is not None
             try:
                 return program3_authority_service.record_post_submitted(
-                    decision=request.decision,
+                    decision_id=request.decision_id,
+                    lease_token=request.lease_token,
                     submitted_at=request.submitted_at,
                     idempotency_key=request.idempotency_key,
                     evidence_refs=request.evidence_refs,
