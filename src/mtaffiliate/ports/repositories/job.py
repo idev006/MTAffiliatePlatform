@@ -5,6 +5,10 @@ from typing import Protocol
 from mtaffiliate.domain.job.models import JobEvent, JobRecord
 
 
+class JobRepositoryConflictError(RuntimeError):
+    pass
+
+
 class JobRepository(Protocol):
     def get(self, job_id: str) -> JobRecord | None: ...
 
