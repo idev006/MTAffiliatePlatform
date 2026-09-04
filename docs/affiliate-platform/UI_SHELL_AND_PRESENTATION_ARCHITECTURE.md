@@ -9,6 +9,20 @@ Ensure a future desktop UI can be added, replaced or removed without changing bu
 
 Baseline UI candidate remains PySide6/Qt 6, but no business component depends on Qt.
 
+## 1.1 User Capability Rule
+
+The presentation must support both technical and low-technical-knowledge operators.
+
+Normal operation should not require understanding:
+- JSON;
+- DOM selectors;
+- database schema;
+- lease tokens;
+- worker message protocols;
+- internal error enums.
+
+Use progressive disclosure: simple task/status first, explanation second, technical diagnostics third.
+
 ## 2. Core Rule
 
 > **The UI is a presentation shell over application commands, queries and event streams. It is never the system brain.**
