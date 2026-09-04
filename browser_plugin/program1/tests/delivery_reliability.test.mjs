@@ -35,12 +35,15 @@ test("permanent poison message is quarantined and later valid message continues"
     remove: async (id) => removed.push(id),
     quarantine: async (id, reason) => quarantined.push([id, reason]),
   });
-  assert.equal(result.ok, false);
+  assert.equal(result.ok, true);
   assert.equal(result.quarantined_count, 1);
   assert.equal(result.sent_count, 1);
   assert.deepEqual(removed, ["good"]);
   assert.equal(quarantined[0][0], "bad");
-  assert.equal(result.failure.category, "PERMANENT_PAYLOAD");
+  assert.equal(result.last_failure.category, "PERMANENT_PAYLOAD");
+  assert.equal(result.blocking_failure, null);
+  assert.deepEqual(result.sent_message_ids, ["good"]);
+  assert.deepEqual(result.quarantined_message_ids, ["bad"]);
 });
 
 test("transient or ambiguous failure retains current and later messages", async () => {
@@ -59,7 +62,7 @@ test("transient or ambiguous failure retains current and later messages", async 
   });
   assert.equal(result.attempted_count, 1);
   assert.equal(result.sent_count, 0);
-  assert.equal(result.failure.category, "TRANSIENT_RETRY");
+  assert.equal(result.blocking_failure.category, "TRANSIENT_RETRY");
   assert.deepEqual(removed, []);
   assert.deepEqual(quarantined, []);
 });
