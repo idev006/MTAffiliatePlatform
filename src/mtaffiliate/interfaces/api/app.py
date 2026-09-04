@@ -79,6 +79,9 @@ from mtaffiliate.ports.repositories.worker_registry import (
 class ObservationBatch(BaseModel):
     batch_id: str = Field(min_length=1)
     observations: list[ProductObservation]
+    job_id: str | None = Field(default=None, min_length=1)
+    worker_id: str | None = Field(default=None, min_length=1)
+    lease_token: str | None = Field(default=None, min_length=1)
 
 
 class OfferObservationBatch(BaseModel):
@@ -253,6 +256,35 @@ def create_app(
         @app.post("/api/v1/program1/observations")
         def ingest(batch: ObservationBatch) -> dict[str, int | str]:
             assert service1 is not None
+            bound_observations = [
+                observation
+                for observation in batch.observations
+                if observation.source_job_id is not None
+            ]
+            if bound_observations:
+                if not (batch.job_id and batch.worker_id and batch.lease_token):
+                    raise HTTPException(
+                        status_code=422,
+                        detail="job-bound observations require job_id, worker_id and lease_token",
+                    )
+                if any(
+                    observation.source_job_id != batch.job_id
+                    or observation.source_worker_id != batch.worker_id
+                    for observation in bound_observations
+                ):
+                    raise HTTPException(
+                        status_code=409,
+                        detail="observation provenance does not match execution envelope",
+                    )
+                try:
+                    shared_job_engine.validate_active_execution(
+                        batch.job_id,
+                        worker_id=batch.worker_id,
+                        lease_token=batch.lease_token,
+                        at=utc_now(),
+                    )
+                except (KeyError, ValueError, RuntimeError) as exc:
+                    raise HTTPException(status_code=409, detail=str(exc)) from exc
             try:
                 result = service1.ingest_batch(batch.batch_id, batch.observations)
             except (IngestionBatchConflictError, ObservationConflictError) as exc:
