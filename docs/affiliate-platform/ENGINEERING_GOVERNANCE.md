@@ -90,6 +90,31 @@ Before Implementation Ready:
 
 Governing detail: `TEST_STRATEGY_AND_QUALITY_GATES.md`.
 
+### G9A Operator Usability
+
+For affected operator-facing slices:
+- the normal workflow is understandable without implementation knowledge;
+- safe defaults exist where reasonable;
+- error states explain impact and next action;
+- internal transport/job/selector details are not required for ordinary use;
+- advanced diagnostics remain available for support;
+- UI close/restart cannot invalidate durable work.
+
+A technically correct feature that requires unnecessary specialist knowledge for normal operation has a usability design defect.
+
+### G9B Automated / Headless Verification
+
+Core correctness must be executable through automated non-UI paths whenever technically possible.
+
+Before Implementation Ready:
+- business rules have deterministic unit/component paths;
+- application use cases can run through fakes/in-memory ports;
+- UI is not the only way to exercise a state transition;
+- external/platform behavior is isolated behind adapters/fixtures;
+- CI or repeatable scripts can verify affected critical flows.
+
+Manual UI testing may complement but must not substitute for automatable core correctness.
+
 ### G10 Senior Review
 Senior Software Engineer/Architect and Senior Process Engineer pass; QA/Testability review passes for affected slice; unresolved CRITICAL/HIGH design issues = 0 for affected implementation.
 
