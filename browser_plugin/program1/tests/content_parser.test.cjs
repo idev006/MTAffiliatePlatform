@@ -16,6 +16,15 @@ global.document = {
 };
 global.crypto = { randomUUID() { return "test-uuid"; } };
 
+require("../src/collectors/core.js");
+require("../src/collectors/profiles/fixture.js");
+require("../src/collectors/profiles/shopee_common.js");
+require("../src/collectors/profiles/shopee_search_lab_v1.js");
+require("../src/collectors/profiles/shopee_category_lab_v1.js");
+require("../src/collectors/profiles/shopee_shop_lab_v1.js");
+require("../src/collectors/profiles/shopee_pdp_lab_v1.js");
+require("../src/collectors/router.js");
+
 const {
   captureCurrentPage,
   cleanProductNameText,
