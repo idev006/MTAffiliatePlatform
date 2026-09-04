@@ -103,6 +103,37 @@ class SharedJobEngine:
             job, at=at, event_type="JOB_QUEUED", state=JobState.QUEUED
         )
 
+    def lease_next(
+        self,
+        *,
+        worker_id: str,
+        worker_capabilities: set[str],
+        at: datetime,
+        lease_for: timedelta,
+    ) -> JobRecord | None:
+        if lease_for <= timedelta(0):
+            raise ValueError("lease_for must be positive")
+
+        candidates = [
+            job
+            for job in self.repository.list_jobs()
+            if job.state is JobState.QUEUED
+            and set(job.capability_requirements).issubset(worker_capabilities)
+        ]
+        candidates.sort(key=lambda job: (-job.priority, job.created_at, job.job_id))
+        for job in candidates:
+            try:
+                return self.lease_job(
+                    job.job_id,
+                    worker_id=worker_id,
+                    worker_capabilities=worker_capabilities,
+                    at=at,
+                    lease_for=lease_for,
+                )
+            except JobRepositoryConflictError:
+                continue
+        return None
+
     def lease_job(
         self,
         job_id: str,
