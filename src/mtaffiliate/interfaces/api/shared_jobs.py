@@ -63,7 +63,7 @@ class JobCheckpointRequest(JobLeaseIdentityRequest):
 def build_shared_job_router(
     *,
     program1_jobs: Program1DiscoveryJobService | None,
-    program2_jobs: Program2OfferDiscoveryJobService | None,
+    program2_jobs: Program2OfferDiscoveryJobService | None = None,
     jobs: SharedJobEngine,
     registry: WorkerRegistryService,
     lease_seconds: int,
