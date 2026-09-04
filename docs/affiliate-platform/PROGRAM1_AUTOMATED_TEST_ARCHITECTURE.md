@@ -121,6 +121,8 @@ Mandatory Program 1 scenarios:
 
 ## 8. Deterministic Browser E2E
 
+Governing implementation detail: `PROGRAM1_CHROMIUM_E2E_AND_RESTART_SPEC.md`.
+
 Goal:
 Test the real built extension and runtime collaboration without Shopee.
 
@@ -144,7 +146,7 @@ Build extension
  -> Assert DB/mock state
 ```
 
-The harness should run unattended in CI when browser infrastructure permits.
+The harness runs unattended in CI as a dedicated `program1-browser-e2e` job using real Playwright Chromium under Xvfb. It must prove persistent-profile restart/reconcile and must not depend on the Side Panel for correctness.
 
 ## 9. UI Automation Policy
 
