@@ -212,6 +212,27 @@ class SharedJobEngine:
             lease_until=at + lease_for,
         )
 
+    def validate_active_execution(
+        self,
+        job_id: str,
+        *,
+        worker_id: str,
+        lease_token: str,
+        at: datetime,
+    ) -> JobRecord:
+        job = self._require(job_id)
+        self._require_state(
+            job,
+            {JobState.LEASED, JobState.IN_PROGRESS, JobState.VERIFYING},
+        )
+        self._validate_active_lease(
+            job,
+            worker_id=worker_id,
+            lease_token=lease_token,
+            at=at,
+        )
+        return job
+
     def record_checkpoint(
         self,
         job_id: str,
