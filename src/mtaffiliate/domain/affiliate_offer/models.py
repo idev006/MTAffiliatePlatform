@@ -61,3 +61,34 @@ class OfferSelection(BaseModel):
     affiliate_account_id: str = Field(min_length=1)
     selected_at: datetime
     model_version: str = Field(min_length=1)
+
+
+class OfferDiscoveryPlan(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, frozen=True)
+
+    plan_id: str = Field(min_length=1)
+    campaign_id: str = Field(min_length=1)
+    hypothesis_id: str = Field(min_length=1)
+    source_program1_decision_id: str = Field(min_length=1)
+    product_key: tuple[str, str, str]
+    product_name: str = Field(min_length=1)
+    affiliate_account_id: str = Field(min_length=1)
+    collection_targets: tuple[str, ...] = ()
+    capability_requirements: tuple[str, ...] = ()
+    evidence_policy_version: str = Field(min_length=1)
+    collection_policy_version: str = Field(min_length=1)
+    created_at: datetime
+
+
+class OfferDiscoveryWorkPackage(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    upstream_handoff_id: str = Field(min_length=1)
+    upstream_decision_id: str = Field(min_length=1)
+    upstream_source_job_id: str = Field(min_length=1)
+    campaign_id: str = Field(min_length=1)
+    hypothesis_id: str = Field(min_length=1)
+    product_key: tuple[str, str, str]
+    product_name: str = Field(min_length=1)
+    affiliate_account_id: str = Field(min_length=1)
+    discovery_plan: OfferDiscoveryPlan
