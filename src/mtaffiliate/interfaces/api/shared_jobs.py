@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from mtaffiliate.adapters.persistence.inmemory.job import JobRepositoryConflictError
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
+from mtaffiliate.application.worker_registry import WorkerRegistryService
 from mtaffiliate.domain.job.models import JobRecord
 from mtaffiliate.domain.program1.models import (
     AffiliateSuccessHypothesis,
@@ -20,6 +20,7 @@ from mtaffiliate.engines.shared_job_engine.service import (
     SharedJobEngine,
     StaleLeaseError,
 )
+from mtaffiliate.ports.repositories.job import JobRepositoryConflictError
 
 
 class Program1DiscoveryJobRequest(BaseModel):
@@ -34,7 +35,6 @@ class Program1DiscoveryJobRequest(BaseModel):
 
 class JobLeaseRequest(BaseModel):
     worker_id: str = Field(min_length=1)
-    capabilities: set[str] = Field(default_factory=set)
 
 
 class JobLeaseIdentityRequest(BaseModel):
@@ -51,6 +51,7 @@ def build_shared_job_router(
     *,
     program1_jobs: Program1DiscoveryJobService,
     jobs: SharedJobEngine,
+    registry: WorkerRegistryService,
     lease_seconds: int,
     clock: Callable[[], datetime],
 ) -> APIRouter:
@@ -99,14 +100,38 @@ def build_shared_job_router(
             raise HTTPException(status_code=404, detail=f"unknown job: {job_id}")
         return job
 
+    def authoritative_worker(worker_id: str, *, at: datetime):
+        try:
+            return registry.execution_record(worker_id, now=at)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=f"unknown worker: {worker_id}") from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @router.post("/jobs/lease-next", response_model=JobRecord | None)
+    def lease_next_job(request: JobLeaseRequest) -> JobRecord | None:
+        at = clock()
+        worker = authoritative_worker(request.worker_id, at=at)
+        try:
+            return jobs.lease_next(
+                worker_id=worker.worker_id,
+                worker_capabilities=set(worker.capabilities),
+                at=at,
+                lease_for=timedelta(seconds=lease_seconds),
+            )
+        except Exception as exc:
+            raise translate_error(exc) from exc
+
     @router.post("/jobs/{job_id}/lease", response_model=JobRecord)
     def lease_job(job_id: str, request: JobLeaseRequest) -> JobRecord:
+        at = clock()
+        worker = authoritative_worker(request.worker_id, at=at)
         try:
             return jobs.lease_job(
                 job_id,
-                worker_id=request.worker_id,
-                worker_capabilities=request.capabilities,
-                at=clock(),
+                worker_id=worker.worker_id,
+                worker_capabilities=set(worker.capabilities),
+                at=at,
                 lease_for=timedelta(seconds=lease_seconds),
             )
         except Exception as exc:
