@@ -127,6 +127,10 @@ class SQLAlchemyJobRepository:
         try:
             with self._session_factory() as session, session.begin():
                 session.add(self._row(job))
+                # Flush the parent first because the rows are intentionally
+                # independent ORM objects; the FK still remains inside this
+                # single transaction and both writes roll back together.
+                session.flush()
                 session.add(self._event_row(event))
                 session.flush()
         except IntegrityError as exc:
