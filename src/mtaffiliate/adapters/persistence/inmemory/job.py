@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from threading import RLock
 
-from mtaffiliate.domain.job.models import JobRecord
+from mtaffiliate.domain.job.models import JobEvent, JobRecord
 
 
 class JobRepositoryConflictError(RuntimeError):
@@ -13,6 +13,7 @@ class InMemoryJobRepository:
     def __init__(self) -> None:
         self._jobs: dict[str, JobRecord] = {}
         self._by_idempotency: dict[str, str] = {}
+        self._events: dict[str, list[JobEvent]] = {}
         self._lock = RLock()
 
     def get(self, job_id: str) -> JobRecord | None:
@@ -51,3 +52,11 @@ class InMemoryJobRepository:
     def list_jobs(self) -> list[JobRecord]:
         with self._lock:
             return list(self._jobs.values())
+
+    def append_event(self, event: JobEvent) -> None:
+        with self._lock:
+            self._events.setdefault(event.job_id, []).append(event)
+
+    def list_events(self, job_id: str) -> list[JobEvent]:
+        with self._lock:
+            return list(self._events.get(job_id, []))
