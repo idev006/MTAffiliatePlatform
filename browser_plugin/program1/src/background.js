@@ -1,10 +1,14 @@
+import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";
 import { enqueue, readOutbox, removeByMessageId } from "./outbox.js";
 
 const SETTINGS_KEY = "program1_worker_settings_v1";
 const INSTALLATION_KEY = "program1_installation_id_v1";
 const RUN_STATE_KEY = "program1_run_state_v1";
 const HEARTBEAT_ALARM = "program1-heartbeat";
+const JOB_RENEW_ALARM = "program1-job-renew";
 const HEARTBEAT_PERIOD_MINUTES = 1;
+const JOB_RENEW_PERIOD_MINUTES = 1;
+const ACTIVE_JOB_KEY = "program1_active_job_v1";
 const WORKER_TYPE = "DISCOVERY_BROWSER_WORKER";
 const EXTENSION_CAPABILITIES = [
   "collector:shopee-current-page-lab-v2",
@@ -68,6 +72,36 @@ async function postJson(path, payload) {
   if (!response.ok) throw new Error(`HTTP_${response.status}`);
   return response.json();
 }
+
+async function getJson(path) {
+  const settings = await getSettings();
+  if (!settings.backend_url) {
+    throw new Error("BACKEND_URL_NOT_CONFIGURED");
+  }
+  const response = await fetch(`${settings.backend_url.replace(/\/$/, "")}${path}`);
+  if (!response.ok) throw new Error(`HTTP_${response.status}`);
+  return response.json();
+}
+
+async function loadActiveJob() {
+  const result = await chrome.storage.local.get(ACTIVE_JOB_KEY);
+  return result[ACTIVE_JOB_KEY] || null;
+}
+
+async function saveActiveJob(activeJob) {
+  if (activeJob === null) {
+    await chrome.storage.local.remove(ACTIVE_JOB_KEY);
+    return;
+  }
+  await chrome.storage.local.set({ [ACTIVE_JOB_KEY]: activeJob });
+}
+
+const jobLifecycle = createProgram1JobLifecycle({
+  postJson,
+  getJson,
+  loadState: loadActiveJob,
+  saveState: saveActiveJob,
+});
 
 function validateObservationBatchAck(payload, ack) {
   const observationCount = payload?.observations?.length || 0;
@@ -155,6 +189,50 @@ function scheduleHeartbeatAlarm() {
     // Best-effort only.
   }
 }
+
+function scheduleJobRenewAlarm() {
+  if (typeof chrome.alarms === "undefined") return;
+  try {
+    const result = chrome.alarms.create(JOB_RENEW_ALARM, {
+      periodInMinutes: JOB_RENEW_PERIOD_MINUTES,
+    });
+    if (result && typeof result.catch === "function") {
+      result.catch(() => {});
+    }
+  } catch (_error) {
+    // Best-effort only. Reconciliation on startup remains authoritative.
+  }
+}
+
+async function leaseAndStartNextJob() {
+  const settings = await getSettings();
+  if (!settings.worker_id) return { ok: false, error: "WORKER_ID_NOT_CONFIGURED" };
+  if (!settings.backend_url) return { ok: false, error: "BACKEND_URL_NOT_CONFIGURED" };
+  if (!registryState.registered) {
+    const registration = await registerWorker();
+    if (!registration.ok) return registration;
+  }
+  const result = await jobLifecycle.leaseAndStart(settings.worker_id);
+  if (result.ok && result.leased) scheduleJobRenewAlarm();
+  return result;
+}
+
+async function renewActiveJob() {
+  const settings = await getSettings();
+  if (!settings.worker_id || !settings.backend_url) {
+    return { ok: false, error: "WORKER_NOT_CONFIGURED" };
+  }
+  return jobLifecycle.renew(settings.worker_id);
+}
+
+async function reconcileActiveJob() {
+  const settings = await getSettings();
+  if (!settings.worker_id || !settings.backend_url) {
+    return { ok: false, error: "WORKER_NOT_CONFIGURED" };
+  }
+  return jobLifecycle.reconcile(settings.worker_id);
+}
+
 
 function extensionVersion() {
   return chrome.runtime?.getManifest?.()?.version || "unknown";
@@ -259,6 +337,11 @@ if (typeof chrome.alarms !== "undefined") {
         // Heartbeat failures are surfaced through registryState on status reads.
       });
     }
+    if (alarm.name === JOB_RENEW_ALARM) {
+      renewActiveJob().catch(() => {
+        // Durable active-job state retains the error/reconciliation context.
+      });
+    }
   });
 }
 
@@ -274,10 +357,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   if (message.type === "PROGRAM1_GET_PROCESS_STATUS") {
     return respondAsync(async () => {
-      const [settings, outbox, runState] = await Promise.all([
+      const [settings, outbox, runState, activeJob] = await Promise.all([
         getSettings(),
         readOutbox(),
         getRunState(),
+        jobLifecycle.activeState(),
       ]);
       return {
         ok: true,
@@ -287,6 +371,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         state: runState.desired ? "RECOVERABLE" : settings.backend_url ? "IDLE" : "CONFIG_REQUIRED",
         registry: { ...registryState },
         run_state: runState,
+        active_job: activeJob,
       };
     }, sendResponse);
   }
@@ -308,12 +393,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       };
       await enqueue(envelope);
       const flush = await flushOutbox();
+      let checkpoint = null;
+      const settings = await getSettings();
+      const activeJob = await jobLifecycle.activeState();
+      if (flush.ok && activeJob?.job_id && settings.worker_id) {
+        checkpoint = await jobLifecycle.checkpoint(
+          settings.worker_id,
+          "OBSERVATION_BATCH_ACK",
+          {
+            batch_id: message.payload?.batch_id || null,
+            received_count: message.payload?.observations?.length || 0,
+            accepted_count: flush.accepted_observation_count,
+            outbox_remaining_count: flush.remaining_count,
+          },
+        );
+      }
       return {
         ok: flush.ok,
         queued: true,
         queued_message_id: envelope.message_id,
         queued_observation_count: message.payload?.observations?.length || 0,
         flush,
+        checkpoint,
       };
     }, sendResponse);
   }
@@ -326,14 +427,33 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "PROGRAM1_HEARTBEAT") {
     return respondAsync(heartbeatNow, sendResponse);
   }
+  if (message.type === "PROGRAM1_LEASE_NEXT_JOB") {
+    return respondAsync(leaseAndStartNextJob, sendResponse);
+  }
+  if (message.type === "PROGRAM1_RENEW_ACTIVE_JOB") {
+    return respondAsync(renewActiveJob, sendResponse);
+  }
+  if (message.type === "PROGRAM1_RECONCILE_ACTIVE_JOB") {
+    return respondAsync(reconcileActiveJob, sendResponse);
+  }
+  if (message.type === "PROGRAM1_COMPLETE_ACTIVE_JOB") {
+    return respondAsync(async () => {
+      const settings = await getSettings();
+      if (!settings.worker_id) throw new Error("WORKER_ID_NOT_CONFIGURED");
+      return jobLifecycle.verifyAndComplete(settings.worker_id);
+    }, sendResponse);
+  }
   return false;
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   flushOutbox().catch(() => {});
   scheduleHeartbeatAlarm();
+  scheduleJobRenewAlarm();
   const settings = await getSettings();
   if (settings.backend_url && settings.worker_id) {
-    registerWorker().catch(() => {});
+    registerWorker()
+      .then(() => reconcileActiveJob())
+      .catch(() => {});
   }
 });
