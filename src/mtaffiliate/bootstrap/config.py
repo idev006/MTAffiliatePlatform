@@ -79,6 +79,7 @@ class Program3Config(BaseModel):
 
 class WorkerConfig(BaseModel):
     heartbeat_seconds: int = Field(default=30, ge=5)
+    lease_seconds: int = Field(default=120, ge=10)
     batch_size: int = Field(default=50, ge=1)
 
 
