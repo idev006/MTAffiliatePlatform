@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from mtaffiliate.application.program1 import Program1Service
+from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.application.program2 import Program2Service
 from mtaffiliate.application.program3 import Program3Service
 from mtaffiliate.application.worker_registry import WorkerRegistryService
@@ -18,7 +19,6 @@ from mtaffiliate.bootstrap.program3 import build_durable_program3
 from mtaffiliate.bootstrap.shared_job import build_durable_shared_job_engine
 from mtaffiliate.bootstrap.worker_registry import build_durable_worker_registry
 from mtaffiliate.engines.shared_job_engine.service import SharedJobEngine
-from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
 from mtaffiliate.interfaces.api.app import create_app
 
 VALID_PROGRAMS = frozenset({"program1", "program2", "program3"})
