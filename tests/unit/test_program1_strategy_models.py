@@ -60,6 +60,11 @@ def test_discovery_plan_rejects_duplicate_traceability_entries() -> None:
     [
         ("surface_scope", ("search", "search"), "surface_scope must be unique"),
         (
+            "collection_targets",
+            ("https://example.invalid/a", "https://example.invalid/a"),
+            "collection_targets must be unique",
+        ),
+        (
             "capability_requirements",
             ("collector:identity", "collector:identity"),
             "capability_requirements must be unique",
@@ -76,6 +81,7 @@ def test_discovery_plan_rejects_duplicate_scope_values(
         "required_signal_ids": ("signal-1",),
         "source_scope": "shopee",
         "surface_scope": ("search",),
+        "collection_targets": (),
         "capability_requirements": (),
         "evidence_policy_version": "evidence-v1",
         "collection_policy_version": "collection-v1",
