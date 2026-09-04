@@ -94,6 +94,7 @@ class OfferDiscoveryWorkPackage(BaseModel):
     campaign_id: str = Field(min_length=1)
     hypothesis_id: str = Field(min_length=1)
     product_key: tuple[str, str, str]
+    product_id: str = Field(min_length=1)
     product_name: str = Field(min_length=1)
     affiliate_account_id: str = Field(min_length=1)
     discovery_plan: OfferDiscoveryPlan
