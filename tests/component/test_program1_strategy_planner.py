@@ -2,7 +2,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from mtaffiliate.application.program1_strategy import Program1StrategyPlanner
+from mtaffiliate.application.program1_strategy import (
+    Program1StrategyPlanner,
+)
 from mtaffiliate.domain.program1.models import (
     AffiliateSuccessHypothesis,
     DiscoveryPlan,
