@@ -1,7 +1,7 @@
 # Development Handoff Master — Affiliate Platform
 
-Date: 2026-08-31
-Status: **FOUNDATION IMPLEMENTATION READY / FEATURE-GATED HANDOFF**
+Date: 2026-09-05
+Status: **PROGRAMS 1–3 ENGINEERING COMPLETE BASELINE / PRODUCTION EVIDENCE GATED**
 Implementation authority: governed by `ENGINEERING_GOVERNANCE.md`
 
 ## 1. Governing Principle
@@ -404,6 +404,8 @@ Before Done:
 
 ## 18. Handoff Statement
 
-The platform now has sufficient documentation for a development team to start **foundation and isolated vertical-slice implementation** without inventing architecture.
+Programs 1–3 now satisfy the current engineering-completion baseline and the maturity target recorded in `PROGRAMS_1_2_3_ENGINEERING_MATURITY_SCORECARD_2026-09-05.md`.
 
-This statement does not claim that unvalidated Shopee-specific behavior is frozen. Those production-facing details remain explicit validation gates and must be resolved through evidence, tests and document updates before affected production completion.
+The verified headless control plane includes durable Shared Job authority, Program 1 opportunity handoff, Program 2 commercial decision/link handoff, Program 3 durable publish/device/pre-submit/submission/reconciliation authority, and deterministic cross-program E2E coverage.
+
+This statement does not claim that unvalidated Shopee-specific behavior is production-approved. Live browser/affiliate/Android profiles remain explicit evidence gates and must be promoted through controlled evidence, tests and document updates.
