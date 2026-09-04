@@ -1,0 +1,78 @@
+[
+  {
+    "surface": "search",
+    "url": "https://shopee.co.th/search?keyword=ssd",
+    "keyword": "ssd",
+    "expected_count": 6,
+    "items": [
+      {
+        "href": "/Fikwot-FS810-2.5-SATA-SSD-i.1228919183.25473237549?extraParams=%7B%7D",
+        "name": "Fikwot FS810 2.5'' SATA SSD 128GB 256GB 512GB",
+        "text": "Fikwot FS810 2.5'' SATA SSD 128GB 256GB 512GB ฿ 499 169 sold"
+      },
+      {
+        "href": "/HOME-MALL-SSD-128GB-i.207554797.43507650536?extraParams=%7B%7D",
+        "name": "HOME MALL SSD 128GB",
+        "text": "HOME MALL SSD 128GB ฿ 299 1.2k sold"
+      },
+      {
+        "href": "/(มือ2)-SSD-พร้อมใช้-**กรุณาเช็ค-Bios-Mode-ก่อนสั่งซื้อ-SSDมือสอง-i.306315694.44911745388?extraParams=%7B%22display_model_id%22%3A341017384657%2C%22model_selection_logic%22%3A3%7D",
+        "name": "(มือ2) SSD พร้อมใช้ **กรุณาเช็ค Bios Mode ก่อนสั่งซื้อ / SSDมือสอง",
+        "text": "(มือ2) SSD พร้อมใช้ **กรุณาเช็ค Bios Mode ก่อนสั่งซื้อ / SSDมือสอง ฿ 699 ฿ 700 -1% 5.0 72 sold"
+      },
+      {
+        "href": "/HIKSEMI-128-GB-SSD-SATA-CITY-SSD-E100-STD-HS-SSD-E100-128G-A0151169-i.62824618.21589220547?extraParams=%7B%22display_model_id%22%3A165913446645%2C%22model_selection_logic%22%3A3%7D",
+        "name": "HIKSEMI 128 GB SSD SATA CITY SSD E100(STD) (HS-SSD-E100 128G) - A0151169",
+        "text": "HIKSEMI 128 GB SSD SATA CITY SSD E100(STD) (HS-SSD-E100 128G) - A0151169 ฿ 1,180 4.9 2k+ sold"
+      },
+      {
+        "href": "/870EVO-SATA3-Solid-State-Drives-ความเร็วสูง-เอสเอสดี-500GB-1TB-2TB-SSDพกพา-6.0Gb-s-Internal-hard-drive-2.5-i.1896393461.49015496819?extraParams=%7B%22display_model_id%22%3A316324735295%2C%22model_selection_logic%22%3A3%7D",
+        "name": "870EVO SATA3 Solid State Drives ความเร็วสูง เอสเอสดี 500GB/1TB/2TB SSDพกพา 6.0Gb/s Internal hard drive 2.5''",
+        "text": "870EVO SATA3 Solid State Drives ความเร็วสูง เอสเอสดี 500GB/1TB/2TB SSDพกพา 6.0Gb/s Internal hard drive 2.5'' ฿ 1,520 ฿ 3,100 -51% 4.5 20 sold"
+      },
+      {
+        "href": "/APACER-120-GB-SSD-SATA-AS340-AP120GAS340G-1-A0094540-i.62824618.24672867292?extraParams=%7B%22display_model_id%22%3A187419167985%2C%22model_selection_logic%22%3A3%7D",
+        "name": "APACER 120 GB SSD SATA AS340 (AP120GAS340G-1) - A0094540",
+        "text": "APACER 120 GB SSD SATA AS340 (AP120GAS340G-1) - A0094540 ฿ 1,180 4.9 259 sold"
+      }
+    ]
+  },
+  {
+    "surface": "category",
+    "url": "https://shopee.co.th/Internal-Solid-State-Drive-cat.11044958.11045198.11046028",
+    "keyword": null,
+    "expected_count": 1,
+    "items": [
+      {
+        "href": "/Category-Test-SSD-i.300000001.400000002",
+        "name": "Category Test SSD",
+        "text": "Category Test SSD ฿ 599 42 sold"
+      }
+    ]
+  },
+  {
+    "surface": "shop",
+    "url": "https://shopee.co.th/yyf.th#product_list",
+    "keyword": null,
+    "expected_count": 2,
+    "items": [
+      {
+        "href": "/Shop-SSD-Drive-i.500000001.600000002",
+        "name": "Shop SSD Drive",
+        "text": "Shop SSD Drive ฿ 899 88 sold"
+      },
+      {
+        "href": "/Shop-NVME-Drive-i.500000001.600000003",
+        "name": "Shop NVME Drive",
+        "text": "Shop NVME Drive ฿ 1299 33 sold"
+      }
+    ]
+  },
+  {
+    "surface": "product_detail",
+    "url": "https://shopee.co.th/Fikwot-FS810-i.1228919183.25473237549?extraParams=%7B%7D",
+    "keyword": null,
+    "expected_count": 1,
+    "title": "Fikwot FS810 SATA SSD ฿ 499 169 sold"
+  }
+]
