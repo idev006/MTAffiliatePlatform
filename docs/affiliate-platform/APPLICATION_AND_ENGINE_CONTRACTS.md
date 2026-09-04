@@ -124,6 +124,21 @@ Transitions are validated by Job Engine, not repository adapter.
 
 Governing strategy: `PROGRAM1_AFFILIATE_SUCCESS_STRATEGY.md`.
 
+### BuildDiscoveryPlan
+Input:
+- campaign / hypothesis reference;
+- required signal ids;
+- source/surface scope;
+- bounded collection targets (for example approved listing/search URLs or opaque target refs);
+- required worker capabilities;
+- evidence/collection policy versions.
+
+Output:
+- durable DiscoveryPlan reference suitable for worker execution.
+
+Rule:
+Collection targets describe bounded operational work. They must not embed DOM selectors or browser implementation policy.
+
 ### IngestProductObservationBatch
 Input:
 - batch_id
