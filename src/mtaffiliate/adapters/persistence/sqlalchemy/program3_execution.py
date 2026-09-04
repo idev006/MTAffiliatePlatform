@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from mtaffiliate.domain.publishing.models import (
+    PreSubmitDecision,
     Program3PlanPackage,
     ReconciliationDecision,
     SubmissionRecord,
@@ -14,6 +15,7 @@ from mtaffiliate.ports.repositories.program3_execution import Program3ExecutionC
 
 from .models import (
     Program3PlanRow,
+    Program3PreSubmitDecisionRow,
     Program3ReconciliationRow,
     Program3SubmissionRow,
 )
@@ -61,6 +63,34 @@ class SQLAlchemyProgram3ExecutionRepository:
         with self._session_factory() as session:
             row = session.get(Program3PlanRow, plan_ref)
             return None if row is None else Program3PlanPackage.model_validate_json(row.package_json)
+
+    def put_pre_submit(self, decision: PreSubmitDecision) -> None:
+        raw = decision.model_dump_json()
+        fingerprint = self._fingerprint_json(raw)
+        with self._session_factory() as session, session.begin():
+            existing = session.get(Program3PreSubmitDecisionRow, decision.decision_id)
+            if existing is not None:
+                if existing.fingerprint != fingerprint:
+                    raise Program3ExecutionConflictError(
+                        f"pre-submit decision conflict: {decision.decision_id}"
+                    )
+                return
+            session.add(
+                Program3PreSubmitDecisionRow(
+                    decision_id=decision.decision_id,
+                    publish_job_id=decision.publish_job_id,
+                    decision_json=raw,
+                    fingerprint=fingerprint,
+                    evaluated_at=decision.evaluated_at,
+                )
+            )
+
+    def get_pre_submit(self, decision_id: str) -> PreSubmitDecision | None:
+        with self._session_factory() as session:
+            row = session.get(Program3PreSubmitDecisionRow, decision_id)
+            return None if row is None else PreSubmitDecision.model_validate_json(
+                row.decision_json
+            )
 
     def put_submission(self, submission: SubmissionRecord) -> None:
         raw = submission.model_dump_json()
