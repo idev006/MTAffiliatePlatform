@@ -70,7 +70,7 @@ These follow-ups do not move business authority into the browser/UI and do not i
 
 ### PRODUCTION EVIDENCE-GATED
 
-- [ ] P1-I Search profile promotion from repeated independent Shopee evidence
+- [ ] P1-I Search profile promotion — `NEEDS_REAL_DATA`; evidence plan/tooling READY, profile remains LAB_VALIDATED
 - [ ] P1-J Category profile promotion
 - [ ] P1-K Shop profile promotion
 - [ ] P1-L PDP profile promotion
