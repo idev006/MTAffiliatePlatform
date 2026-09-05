@@ -5,7 +5,7 @@ Date: 2026-09-05
 
 | ID | Program | Evidence target | Current stage | Required next evidence | Promotion blocker |
 |---|---|---|---|---|---|
-| P1-E01 | Program 1 | Shopee search result profile | LAB_VALIDATED | second independent live search capture + repeat session/restart + field boundaries | previous traffic verification gate; second capture not yet complete |
+| P1-E01 | Program 1 | `shopee-search-lab-v1` Search profile | LAB_VALIDATED | fresh authorized evidence campaign: >=2 independent captures, negative evidence, field boundaries, fixtures/tests | `NEEDS_REAL_DATA`; prior cached/public retrieval is non-promotional |
 | P1-E02 | Program 1 | Category result profile | LAB_VALIDATED | second independent category capture + hydration behavior | insufficient repeat evidence |
 | P1-E03 | Program 1 | Shop result profile | LAB_VALIDATED | second independent shop capture + identity/name/price boundaries | insufficient repeat evidence |
 | P1-E04 | Program 1 | Product detail profile | LAB_VALIDATED | second independent PDP capture + identity/price/sold/rating field semantics | insufficient repeat evidence |
