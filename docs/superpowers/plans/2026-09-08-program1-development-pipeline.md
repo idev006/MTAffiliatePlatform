@@ -15,12 +15,12 @@
 
 ## Task 1: Shared verification entrypoint
 
-- [ ] Extract existing CI gate commands into `config/quality-gates.toml` without changing test selection or coverage scopes.
-- [ ] Add `tools/program1_verify.py`: explicit stage selection, checked runtime, fixed repository cwd, bounded subprocesses, fail-fast, per-step logs, atomic JSON report with Git context.
-- [ ] Add `tests/unit/test_program1_verify.py`: actual child-process failure/timeout, cwd-independent execution, interpreter reuse, honest partial-run status, report persistence.
-- [ ] Route CI gate execution through the same registry; retain dependency setup and upload reports even on failures.
-- [ ] Run narrow tests, static, core, SQLite, stress, extension and browser gates.
-- [ ] Update Program 1 Kanban/handoff and verification evidence; commit/push a recoverable checkpoint.
+- [x] Extract existing CI gate commands into `config/quality-gates.toml` without changing test selection or coverage scopes.
+- [x] Add `tools/program1_verify.py`: explicit stage selection, checked runtime, fixed repository cwd, bounded subprocesses, fail-fast, per-step logs, atomic JSON report with Git context.
+- [x] Add `tests/unit/test_program1_verify.py`: actual child-process failure/timeout, cwd-independent execution, interpreter reuse, honest partial-run status, report persistence.
+- [x] Route CI gate execution through the same registry; retain dependency setup and upload reports even on failures.
+- [x] Run narrow tests, static, core, SQLite, stress, extension and browser gates. Local browser launch failed; the same browser gate passed in CI `34192148182`.
+- [x] Update Program 1 Kanban/handoff and verification evidence; commit/push a recoverable checkpoint (PR #42).
 
 ## Acceptance
 

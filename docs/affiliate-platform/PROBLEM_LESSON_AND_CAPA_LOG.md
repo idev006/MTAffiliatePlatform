@@ -290,7 +290,7 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Date: 2026-09-08
 - Component: Program 1 development tooling / shared quality gates
 - Severity: MEDIUM process finding
-- Status: LOCAL VERIFIED; browser/CI verification pending
+- Status: VERIFIED — CI `34192148182` all five jobs PASS on code commit `3c3e50d`; local browser environment limitation retained
 - Evidence: current HEAD CI passed, while local Ruff 0.16.5 found four lint issues. Commands were manually repeated and local evidence lacked a common report.
 - Root cause: duplicated local/CI command entrypoints and no invocation-level runtime/failure record; dependencies permit tool-version changes.
 - Corrective action: four lint corrections without business-policy changes, shared TOML commands and an explicit-runtime runner used by existing CI jobs.

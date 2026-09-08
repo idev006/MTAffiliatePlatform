@@ -60,7 +60,7 @@ No fixed "final architecture" is assumed. Architecture evolves through versioned
 
 ### ENGINEERING / PRODUCT FOLLOW-UP
 
-- [ ] P1-DEV standard local/CI verification pipeline — VERIFY; see `PROGRAM1_DEVELOPMENT_PIPELINE.md` and `PROGRAM1_PIPELINE_VERIFICATION_2026-09-08.md`.
+- [x] P1-DEV standard local/CI verification pipeline — verified implementation in PR #42, CI `34192148182` all five jobs PASS; local browser environment limitation retained in `PROGRAM1_PIPELINE_VERIFICATION_2026-09-08.md`.
 - [ ] P1-C follow-up: reproduce/fix duplicate-observation ACK accounting and expose durable result categories; accepted observations are not a new-product count.
 
 - [x] P1-C worker delivery reliability: failure classification, durable poison quarantine, ACK ambiguity fail-closed, quarantine telemetry

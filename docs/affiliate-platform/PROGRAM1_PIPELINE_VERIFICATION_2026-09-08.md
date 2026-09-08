@@ -1,10 +1,16 @@
 # Program 1 Pipeline Verification — 2026-09-08
 
 Card: P1-DEV
-Status: IMPLEMENTED / LOCAL BROWSER ENVIRONMENT BLOCKED / CI PENDING
+Status: VERIFIED IN CI / LOCAL BROWSER ENVIRONMENT BLOCKED
 Baseline: `23ca5560bcc6e347b995084e39a36dd701eabcd2`, clean `main` before work.
 Branch: `codex/program1-development-pipeline`
 Baseline CI: https://github.com/idev006/MTAffiliatePlatform/actions/runs/33931865359 (success).
+
+## Verified implementation
+
+Code commit: `3c3e50d102df3932bb9a11495c31262bbd560557`.
+PR: https://github.com/idev006/MTAffiliatePlatform/pull/42 (not merged).
+CI: https://github.com/idev006/MTAffiliatePlatform/actions/runs/34192148182 — all five jobs PASS, including real Chromium MV3 restart/reconcile. Every job successfully uploaded verification evidence. Subsequent documentation-only changes record this verified code baseline; their own HEAD CI remains separately observable.
 
 ## Delivered
 
