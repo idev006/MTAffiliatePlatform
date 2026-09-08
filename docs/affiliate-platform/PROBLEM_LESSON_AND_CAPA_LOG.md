@@ -284,3 +284,17 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Verification evidence: CI run `33931305746` passed real Chromium restart/reconcile E2E and all existing core/SQLite/stress/extension/conformance jobs.
 - Lesson learned: event schedulers are delivery mechanisms, not business authorities; tests should prove durable state/reconciliation independently and then exercise the bounded command behind the scheduler.
 - Cross-program applicability: YES — browser alarms, scheduled worker wakes, device host timers and other orchestration triggers.
+
+
+## PL-2026-012 — Local verification lacked a shared executable gate registry
+- Date: 2026-09-08
+- Component: Program 1 development tooling / shared quality gates
+- Severity: MEDIUM process finding
+- Status: LOCAL VERIFIED; browser/CI verification pending
+- Evidence: current HEAD CI passed, while local Ruff 0.16.5 found four lint issues. Commands were manually repeated and local evidence lacked a common report.
+- Root cause: duplicated local/CI command entrypoints and no invocation-level runtime/failure record; dependencies permit tool-version changes.
+- Corrective action: four lint corrections without business-policy changes, shared TOML commands and an explicit-runtime runner used by existing CI jobs.
+- Preventive action: reports record runtime/tool versions, HEAD/dirty state, individual logs and failed/unrun steps; CI always uploads evidence. No lint/coverage threshold was reduced.
+- Regression: tests/unit/test_program1_verify.py covers real failed subprocesses, timeout, interruption, runtime rejection and scoped/full distinction.
+- Observed limitation: local Chromium launch failed with spawn UNKNOWN before leasing or collecting. Full report remains FAILED; no Brave/Shopee acceptance claim.
+- Lesson: a historic CI PASS cannot replace verification of the current tree with the current toolchain.

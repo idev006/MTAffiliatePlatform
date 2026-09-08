@@ -158,6 +158,8 @@ Commit messages should state intent, for example:
 
 ## 10. Developer Verification Before Push
 
+Use `PROGRAM1_DEVELOPMENT_PIPELINE.md` and `tools/program1_verify.py` for shared local/CI gates. Commands live in `config/quality-gates.toml`. Invoke `python tools/program1_verify.py --profile full` using the approved virtual environment. Scoped success is not full verification or live platform acceptance.
+
 At minimum run the narrowest relevant checks first, then the required repository gates.
 
 Typical Python:

@@ -227,10 +227,10 @@ class OpportunityIntelligenceEngine:
     ) -> OpportunityThesis:
         features = self.derive_features(history, as_of=as_of)
         decision = self.qualify(features, evaluated_at=as_of)
-        latest = sorted(
+        latest = max(
             history,
             key=lambda item: (item.collected_at, item.observation_id),
-        )[-1]
+        )
 
         evidence: list[str] = []
         if features.latest_sold_signal is not None:

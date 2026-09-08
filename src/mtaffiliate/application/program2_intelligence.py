@@ -155,8 +155,10 @@ class Program2OfferDecisionService:
         )
         reasons = (
             "Eligible offers passed account-scoped freshness/evidence gates",
-            "Preferred offer selected by transparent laboratory ordering "
-            "(commission, rating, reviews, demand, identity)",
+            (
+                "Preferred offer selected by transparent laboratory ordering "
+                "(commission, rating, reviews, demand, identity)"
+            ),
         )
         risks = tuple(
             sorted(
