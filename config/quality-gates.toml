@@ -1,0 +1,155 @@
+# Shared local/CI commands. Setup remains a CI/bootstrap concern.
+schema_version = 1
+
+[profiles]
+fast = ["static", "extension"]
+full = ["static", "core", "sqlite", "stress", "extension", "browser"]
+
+[stages.static]
+cwd = "."
+timeout_seconds = 900
+commands = [
+  [
+    "{python}",
+    "-m",
+    "ruff",
+    "check",
+    "src",
+    "tests",
+    "migrations",
+    "tools/program1_verify.py",
+  ],
+  [
+    "{python}",
+    "tools/program1_conformance_check.py",
+  ],
+  [
+    "{python}",
+    "tools/program2_conformance_check.py",
+  ],
+  [
+    "{python}",
+    "tools/program3_conformance_check.py",
+  ],
+]
+
+[stages.core]
+cwd = "."
+timeout_seconds = 900
+commands = [
+  [
+    "{python}",
+    "-m",
+    "pytest",
+    "-m",
+    "not stress and not integration",
+    "--cov=mtaffiliate.domain.product",
+    "--cov=mtaffiliate.domain.program1",
+    "--cov=mtaffiliate.domain.job",
+    "--cov=mtaffiliate.domain.affiliate_offer",
+    "--cov=mtaffiliate.domain.publishing",
+    "--cov=mtaffiliate.domain.scene",
+    "--cov=mtaffiliate.domain.device",
+    "--cov=mtaffiliate.domain.worker_registry",
+    "--cov=mtaffiliate.engines.product_intelligence_engine",
+    "--cov=mtaffiliate.engines.opportunity_intelligence_engine",
+    "--cov=mtaffiliate.engines.affiliate_offer_engine",
+    "--cov=mtaffiliate.engines.publishing_guard_engine",
+    "--cov=mtaffiliate.engines.scene_engine",
+    "--cov=mtaffiliate.engines.device_host_engine",
+    "--cov=mtaffiliate.application.program1",
+    "--cov=mtaffiliate.application.program1_strategy",
+    "--cov=mtaffiliate.application.program1_jobs",
+    "--cov=mtaffiliate.application.program1_opportunity",
+    "--cov=mtaffiliate.engines.shared_job_engine",
+    "--cov=mtaffiliate.adapters.persistence.inmemory.job",
+    "--cov=mtaffiliate.application.program2",
+    "--cov=mtaffiliate.application.program2_jobs",
+    "--cov=mtaffiliate.application.program2_intelligence",
+    "--cov=mtaffiliate.application.program2_artifacts",
+    "--cov=mtaffiliate.application.program3",
+    "--cov=mtaffiliate.application.program3_authority",
+    "--cov=mtaffiliate.application.program3_device",
+    "--cov=mtaffiliate.application.program3_worker",
+    "--cov=mtaffiliate.application.program3_workflow",
+    "--cov=mtaffiliate.application.worker_registry",
+    "--cov=mtaffiliate.bootstrap.config",
+    "--cov=mtaffiliate.bootstrap.paths",
+    "--cov=mtaffiliate.adapters.persistence.inmemory",
+    "--cov=mtaffiliate.adapters.workers",
+    "--cov=mtaffiliate.adapters.android",
+    "--cov=mtaffiliate.adapters.affiliate_export",
+    "--cov=mtaffiliate.interfaces.api",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-fail-under=95",
+  ],
+]
+
+[stages.sqlite]
+cwd = "."
+timeout_seconds = 900
+commands = [
+  [
+    "{python}",
+    "-m",
+    "pytest",
+    "-m",
+    "integration",
+    "tests/integration/sqlite",
+    "--timeout=60",
+    "--cov=mtaffiliate.adapters.persistence.sqlalchemy",
+    "--cov=mtaffiliate.bootstrap.migrations",
+    "--cov=mtaffiliate.bootstrap.program1",
+    "--cov=mtaffiliate.bootstrap.program2_program3",
+    "--cov=mtaffiliate.bootstrap.program2_jobs",
+    "--cov=mtaffiliate.bootstrap.program2_intelligence",
+    "--cov=mtaffiliate.bootstrap.program2_artifacts",
+    "--cov=mtaffiliate.bootstrap.program3_authority",
+    "--cov=mtaffiliate.bootstrap.worker_registry",
+    "--cov=mtaffiliate.bootstrap.shared_job",
+    "--cov=mtaffiliate.bootstrap.program1_opportunity",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-fail-under=95",
+  ],
+]
+
+[stages.stress]
+cwd = "."
+timeout_seconds = 900
+commands = [
+  [
+    "{python}",
+    "-m",
+    "pytest",
+    "-m",
+    "stress",
+    "--timeout=60",
+  ],
+]
+
+[stages.extension]
+cwd = "browser_plugin/program1"
+timeout_seconds = 900
+commands = [
+  [
+    "{node}",
+    "node_modules/vite/bin/vite.js",
+    "build",
+  ],
+  [
+    "{node}",
+    "--test",
+  ],
+]
+
+[stages.browser]
+cwd = "."
+timeout_seconds = 900
+commands = [
+  [
+    "{python}",
+    "tools/program1_chromium_restart_e2e.py",
+  ],
+]

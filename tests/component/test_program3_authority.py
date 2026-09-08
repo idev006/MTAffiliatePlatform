@@ -259,7 +259,7 @@ def test_unvalidated_program2_artifact_blocks_plan() -> None:
 
 def test_pre_submit_fails_closed_for_scene_account_staleness_and_prior_submission() -> None:
     service, _ledger, jobs = build(handoff_age=timedelta(minutes=5))
-    package = create_plan_and_started_job(service, jobs, valid_at=NOW)
+    create_plan_and_started_job(service, jobs, valid_at=NOW)
 
     wrong_account = service.pre_submit(
         publish_job_id="program3-job-1",

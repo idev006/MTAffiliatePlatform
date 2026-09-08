@@ -91,14 +91,14 @@ def test_qualified_handoff_creates_queued_offer_discovery_job_and_durable_work()
 
 def test_same_logical_creation_is_idempotent() -> None:
     service, _work_repo, _jobs_repo = build()
-    kwargs = dict(
-        handoff=handoff(),
-        discovery_plan=plan(),
-        work_ref="program2-work:offer-plan-1:v1",
-        job_id="program2-job-1",
-        idempotency_key="campaign-1:decision-1:affiliate-account-1",
-        created_at=NOW,
-    )
+    kwargs = {
+        "handoff": handoff(),
+        "discovery_plan": plan(),
+        "work_ref": "program2-work:offer-plan-1:v1",
+        "job_id": "program2-job-1",
+        "idempotency_key": "campaign-1:decision-1:affiliate-account-1",
+        "created_at": NOW,
+    }
 
     first = service.create_offer_discovery_job(**kwargs)
     replay = service.create_offer_discovery_job(**kwargs)
