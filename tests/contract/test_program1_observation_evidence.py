@@ -47,3 +47,38 @@ def test_evidence_is_stored_history_newest_first_and_bounded() -> None:
 def test_program1_evidence_route_is_not_exposed_in_program2_runtime() -> None:
     client = TestClient(create_app(Settings(), enabled_programs={"program2"}))
     assert client.get("/api/v1/program1/products/shopee/shop/item/observations").status_code == 404
+
+
+def test_product_evidence_page_is_ordered_bounded_and_latest() -> None:
+    service = build_inmemory_program1(Settings())
+    from mtaffiliate.domain.product.models import ProductObservation
+
+    for hour, (oid, item_id) in enumerate([("older", "b"), ("a", "a"), ("newer", "b")]):
+        service.ingest(
+            [
+                ProductObservation(
+                    observation_id=oid,
+                    platform="shopee",
+                    shop_id="s",
+                    item_id=item_id,
+                    product_name=oid,
+                    collected_at=datetime(2026, 9, 9, hour, tzinfo=UTC),
+                )
+            ]
+        )
+    client = TestClient(create_app(Settings(), program1=service, enabled_programs={"program1"}))
+    result = client.get("/api/v1/program1/products?limit=1&offset=0").json()
+    assert result["total"] == 2
+    assert result["items"][0]["item_id"] == "a"
+    assert (
+        client.get("/api/v1/program1/products?limit=1&offset=1").json()["items"][0][
+            "observation_id"
+        ]
+        == "newer"
+    )
+    assert client.get("/api/v1/program1/products?offset=100").json()["items"] == []
+    for query in ["limit=0", "limit=101", "offset=-1"]:
+        assert client.get("/api/v1/program1/products?" + query).status_code == 422
+    for limit, offset in [(0, 0), (101, 0), (1, -1)]:
+        with pytest.raises(ValueError):
+            service.product_evidence_page(limit=limit, offset=offset)

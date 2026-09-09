@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from mtaffiliate.application.program1 import Program1Service
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
@@ -112,7 +113,7 @@ def create_runtime_app(
             jobs=shared_jobs,
         )
 
-    return create_app(
+    app = create_app(
         settings,
         program1=program1,
         program2=program2,
@@ -127,3 +128,7 @@ def create_runtime_app(
         program3_authority=program3_authority,
         enabled_programs=enabled_programs,
     )
+    ui_assets = root / "browser_plugin" / "program1" / "dist"
+    if "program1" in enabled_programs and (ui_assets / "backoffice.html").is_file():
+        app.mount("/program1/ui", StaticFiles(directory=ui_assets), name="program1-ui")
+    return app

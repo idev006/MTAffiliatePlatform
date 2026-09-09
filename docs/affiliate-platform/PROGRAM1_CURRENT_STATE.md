@@ -209,3 +209,7 @@ Program 1 reaches its next maturity stage when:
 - opportunity feature/thesis contracts exist in code and tests;
 - real-platform evidence is sufficient to promote selected collection profiles;
 - downstream attribution can begin evaluating candidate quality.
+
+## P1-UI-READ priority amendment — 2026-09-09
+
+User authorized finishing usable Program1. A bounded read-only product/history review screen is now prioritized to remove SQL/Swagger dependency for evidence review; this does not authorize a full dashboard redesign. Contract and sequence: PROGRAM1_OPERATOR_REVIEW_CONTRACT.md. No business transition ownership moves into the UI.

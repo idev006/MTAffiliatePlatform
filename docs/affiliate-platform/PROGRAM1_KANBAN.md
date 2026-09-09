@@ -146,3 +146,7 @@ Do not optimize vanity metrics such as raw commit count, scraped product count o
 - [ ] IN VERIFY: optional primary image reference validation, SQLite migration/roundtrip, backward-compatible receipt fingerprints and bounded observation evidence API. No live Shopee image extraction or downloads yet. See PROGRAM1_IMAGE_REFERENCE_CONTRACT.md.
 
 Next sequence: (1) validate Search image association and pagination from fresh evidence, (2) operator product/history review and guided recovery, with priority amendment before a full campaign dashboard, (3) explainable opportunity decisions and qualified Program2 handoff. Production scoring and outcome claims remain gated.
+
+## P1-UI-READ — 2026-09-09
+
+- [ ] IN VERIFY: read-only daisyUI product/history screen, bounded latest-product API, same-origin Program1-only static UI. Live Brave readback succeeded; full gates/CI recorded in PROGRAM1_OPERATOR_REVIEW_VERIFICATION_2026-09-09.md.

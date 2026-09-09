@@ -122,3 +122,11 @@ class Program1Service:
             raise ValueError("observation evidence limit must be between 1 and 100")
         history = self.repository.observation_history(product_key)
         return list(reversed(history[-limit:]))
+
+    def product_evidence_page(
+        self, *, limit: int = 50, offset: int = 0
+    ) -> tuple[list[ProductObservation], int]:
+        if not 1 <= limit <= 100 or offset < 0:
+            raise ValueError("invalid product evidence page bounds")
+        items = sorted(self.repository.latest_observations(), key=lambda item: item.canonical_key)
+        return items[offset : offset + limit], len(items)
