@@ -309,3 +309,10 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Historical boundary: existing missing provenance is not repaired without evidence; observation counts do not establish new products.
 - Evidence: PROGRAM1_ACK_ACCOUNTING_VERIFICATION_2026-09-09.md; no gate thresholds reduced.
 
+
+## PL-2026-014 — Manual capture omitted collector bootstrap dependencies
+- Date: 2026-09-09
+- Root cause: manual UI bridge retained single-file injection after collection behavior moved into collectors/router; background path loaded the full sequence.
+- Correction: align manual injection with background dependency order. No Shopee profile changes.
+- Prevention: execute actual manual-injected files on a fresh VM and assert the receiver exists and remains singular after reinjection.
+- Evidence: live Brave missing-receiver screenshot; automated regression passes. Live recapture remains pending extension reload.

@@ -33,3 +33,7 @@ The Chromium E2E now uses real SQLite ingestion alongside mock job lifecycle and
 
 Kanban, contract, UML, pipeline runbook and CAPA PL-2026-013 updated. No database migration required.
 
+
+## 2026-09-09 manual capture bootstrap defect
+
+Live Brave screenshot showed Receiving end does not exist after Capture Current Page. Source inspection found the manual bridge injected content.js alone although its documented bootstrap requires collectors/router first. Align the manual injection order with the existing background controller; no selector or business-policy change. Regression executes the actual injected scripts in a fresh VM and verifies one receiver after first injection and reinjection. Live acceptance requires rebuilding/reloading the extension and repeating Capture; do not infer success from registration.

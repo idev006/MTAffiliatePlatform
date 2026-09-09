@@ -79,7 +79,17 @@ export function createWorkerBridge(chromeApi) {
   async function injectCollector(tabId) {
     return chrome.scripting.executeScript({
       target: { tabId },
-      files: ["src/content.js"],
+      files: [
+        "src/collectors/core.js",
+        "src/collectors/profiles/fixture.js",
+        "src/collectors/profiles/shopee_common.js",
+        "src/collectors/profiles/shopee_search_lab_v1.js",
+        "src/collectors/profiles/shopee_category_lab_v1.js",
+        "src/collectors/profiles/shopee_shop_lab_v1.js",
+        "src/collectors/profiles/shopee_pdp_lab_v1.js",
+        "src/collectors/router.js",
+        "src/content.js",
+      ],
     });
   }
 
