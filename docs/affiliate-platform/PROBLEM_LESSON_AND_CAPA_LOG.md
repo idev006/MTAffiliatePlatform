@@ -302,9 +302,10 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 ## PL-2026-013 — Duplicate ACK rejection and missing batch provenance
 - Date: 2026-09-09
 - Component: Program 1 ingestion / browser delivery
-- Status: IN VERIFY; local non-browser gates pass, CI and Brave acceptance tracked separately.
+- Status: AUTOMATED VERIFICATION PASS — local non-browser gates and all five CI jobs (34309195647); Brave acceptance remains open.
 - Root cause: worker treated accepted inserts as the only valid received total; batch ORM mapping omitted source_job_id despite an existing column. Aggregate drain totals could also contaminate a current-page checkpoint.
 - Correction: additive versioned accepted/duplicate/accounted receipt, strict worker validation, per-message checkpoint accounting, source_job_id round-trip, serialized outbox mutations and atomic persisted display receipt.
 - Prevention: actual SQLite row/receipt checks across engine restart and conflicting replay; malformed ACK, backlog, storage-failure and concurrency regressions; Chromium harness now uses real SQLite ingestion.
 - Historical boundary: existing missing provenance is not repaired without evidence; observation counts do not establish new products.
 - Evidence: PROGRAM1_ACK_ACCOUNTING_VERIFICATION_2026-09-09.md; no gate thresholds reduced.
+

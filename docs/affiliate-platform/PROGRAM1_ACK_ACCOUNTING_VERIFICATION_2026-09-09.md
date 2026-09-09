@@ -22,13 +22,14 @@ Full pipeline report: runtime/verification/20260909T035430Z-050ff0fa/report.json
 
 SQLite regressions dispose/recompose the engine, verify mixed and duplicate-only receipts, replay and conflict behavior, and query actual rows: two observations and three receipts, with source_job_id retained. A real HTTP/SQLite harness regression also proves one observation and two receipts across restart/replay. Worker tests cover malformed/legacy ACKs, backlog isolation, storage failure, concurrent enqueue/remove/quarantine, and receipt restoration.
 
-The Chromium E2E now uses real SQLite ingestion alongside mock job lifecycle and fixture DOM, checking duplicate replay plus restored receipt UI. Its browser portion still requires CI execution; it does not establish Shopee or Brave acceptance.
+The Chromium E2E now uses real SQLite ingestion alongside mock job lifecycle and fixture DOM, checking duplicate replay plus restored receipt UI. The Chromium scenario passed in CI run 34309195647; it does not establish Shopee or Brave acceptance.
 
 ## Remaining evidence
 
-- Current slice CI: pending push/run; baseline 6144d90 CI run 34192288649 passed.
+- Code commit 9ad41141fd9e0d678474c416612d75c3774f50c9: all five CI jobs PASS, including Chromium receipt/restart scenario: https://github.com/idev006/MTAffiliatePlatform/actions/runs/34309195647. Draft PR #43 is stacked on pipeline PR #42. Baseline 6144d90 CI run 34192288649 passed.
 - Visible Brave: existing Default profile and installed extension page opened. Computer Use stopped because it could not establish the browser URL confidently; no further UI actions were attempted. Receipt UI acceptance on Brave is unverified.
 - Live Shopee pagination/DOM: unchanged and not newly verified by this slice.
 - Actual new-product totals require product identity evidence; observation ACK counts cannot establish them.
 
 Kanban, contract, UML, pipeline runbook and CAPA PL-2026-013 updated. No database migration required.
+
