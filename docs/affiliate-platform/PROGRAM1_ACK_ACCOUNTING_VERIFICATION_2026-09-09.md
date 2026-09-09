@@ -37,3 +37,7 @@ Kanban, contract, UML, pipeline runbook and CAPA PL-2026-013 updated. No databas
 ## 2026-09-09 manual capture bootstrap defect
 
 Live Brave screenshot showed Receiving end does not exist after Capture Current Page. Source inspection found the manual bridge injected content.js alone although its documented bootstrap requires collectors/router first. Align the manual injection order with the existing background controller; no selector or business-policy change. Regression executes the actual injected scripts in a fresh VM and verifies one receiver after first injection and reinjection. Live acceptance requires rebuilding/reloading the extension and repeating Capture; do not infer success from registration.
+
+## 2026-09-09 narrow-panel telemetry UX
+
+User screenshot showed overlapping metric labels. Root cause: daisyUI stats column auto-flow combined with grid-cols-2, creating compressed implicit columns. Replaced with a bounded overflow-x:auto region, readable 9rem minimum columns, keyboard focus outline and scroll hint. Receipt metrics use the same layout; worker registration badge wraps instead of clipping. UX governing document updated before implementation. Extension build and suites PASS: runtime/verification/20260909T050226Z-c4ee928f/report.json. Visual acceptance in Brave remains pending extension/panel reload; browser tools previously blocked extension URL access.

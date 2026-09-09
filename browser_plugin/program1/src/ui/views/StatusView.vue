@@ -28,7 +28,8 @@ const toneClass = computed(() => {
         </div>
         <template v-if="process.lastDeliveryReceipt">
           <span class="badge badge-success badge-sm">ส่งสำเร็จและได้รับใบรับ</span>
-          <div class="stats grid grid-cols-2 rounded-none shadow-none" aria-live="polite">
+          <div class="metric-scroll" tabindex="0" role="region" aria-label="ใบรับข้อมูล เลื่อนแนวนอนเพื่อดูทุกคอลัมน์">
+          <div class="stats rounded-none shadow-none" aria-live="polite">
             <MetricTile label="บันทึก observation ใหม่" value-id="receiptAccepted"
               :value="process.lastDeliveryReceipt.accepted_count" />
             <MetricTile label="observation ซ้ำตรงกัน" value-id="receiptDuplicate"
@@ -38,6 +39,8 @@ const toneClass = computed(() => {
             <MetricTile label="รายการที่ส่งในชุดนี้" value-id="receiptReceived"
               :value="process.lastDeliveryReceipt.received_count" />
           </div>
+          </div>
+          <p class="text-xs text-base-content/60">เลื่อนแนวนอนเพื่อดูทุกคอลัมน์ ↔</p>
           <p class="text-xs text-base-content/70">
             เป็นผลการบันทึกครั้งแรกของชุดข้อมูลนี้ การส่งซ้ำใช้ใบรับเดิม
             รายการใหม่อาจเป็นข้อมูลครั้งใหม่ของสินค้าเดิม จึงยังใช้ระบุจำนวนสินค้าใหม่ไม่ได้
@@ -59,7 +62,8 @@ const toneClass = computed(() => {
         <h2 class="text-xs font-bold uppercase tracking-wider text-base-content/60">Process telemetry</h2>
         <span id="state" class="badge badge-sm font-bold" :class="toneClass">{{ process.state }}</span>
       </div>
-      <div class="stats grid grid-cols-2 rounded-none shadow-none">
+      <div class="metric-scroll" tabindex="0" role="region" aria-label="Process telemetry เลื่อนแนวนอนเพื่อดูทุกคอลัมน์">
+      <div class="stats rounded-none shadow-none">
         <MetricTile label="Captured Obs" value-id="capturedCount" :value="process.capturedCount" />
         <MetricTile label="Accepted Obs" value-id="acceptedCount" :value="process.acceptedCount" />
         <MetricTile label="Queued Obs" value-id="queuedCount" :value="process.queuedCount" />
@@ -73,10 +77,12 @@ const toneClass = computed(() => {
         />
         <MetricTile label="Rate Obs/Hr" value-id="ratePerHour" :value="process.ratePerHour" />
       </div>
+      </div>
+      <p class="px-3 py-1 text-xs text-base-content/60">เลื่อนแนวนอนเพื่อดูทุกคอลัมน์ ↔</p>
       <div class="space-y-1 border-t border-base-300 px-3 py-2 text-xs">
         <p id="lastEvent" class="text-base-content/60">Last event: {{ process.lastEvent }}</p>
-        <p id="step">{{ process.displayStep }}</p>
-        <p v-if="process.lastError" id="lastError" class="text-error">{{ process.lastError }}</p>
+        <p id="step" class="break-words">{{ process.displayStep }}</p>
+        <p v-if="process.lastError" id="lastError" class="break-words text-error">{{ process.lastError }}</p>
       </div>
     </section>
 
