@@ -1,11 +1,12 @@
 import { createBackgroundExecutionController } from "./background_execution.mjs";
 import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";
-import { drainObservationOutbox } from "./delivery_reliability.mjs";
+import { drainObservationOutbox, validateObservationBatchAck } from "./delivery_reliability.mjs";
 import {
   enqueue,
   quarantineByMessageId,
   readOutbox,
   readQuarantine,
+  readLastDeliveryReceipt,
   removeByMessageId,
 } from "./outbox.js";
 
@@ -72,8 +73,8 @@ async function saveRunState(runState) {
   return next;
 }
 
-async function postJson(path, payload) {
-  const settings = await getSettings();
+async function postJson(path, payload, settings = null) {
+  settings = settings || await getSettings();
   if (!settings.backend_url) {
     throw new Error("BACKEND_URL_NOT_CONFIGURED");
   }
@@ -116,25 +117,15 @@ const jobLifecycle = createProgram1JobLifecycle({
   saveState: saveActiveJob,
 });
 
-function validateObservationBatchAck(payload, ack) {
-  const observationCount = payload?.observations?.length || 0;
-  if (ack?.batch_id !== payload?.batch_id) {
-    throw new Error("ACK_BATCH_ID_MISMATCH");
-  }
-  if (ack?.received_count !== observationCount) {
-    throw new Error("ACK_RECEIVED_COUNT_MISMATCH");
-  }
-  if (ack?.accepted_count !== observationCount) {
-    throw new Error("ACK_ACCEPTED_COUNT_MISMATCH");
-  }
-}
-
 async function drainOutboxOnce() {
+  const settings = await getSettings();
   const result = await drainObservationOutbox({
     messages: await readOutbox(),
-    deliver: (message) => postJson("/api/v1/program1/observations", message.payload),
+    deliver: (message) => postJson("/api/v1/program1/observations", message.payload, settings),
     validateAck: validateObservationBatchAck,
-    remove: removeByMessageId,
+    remove: (id, receipt) => removeByMessageId(id, {
+      ...receipt, backend_url: settings.backend_url.replace(/\/$/, ""),
+    }),
     quarantine: quarantineByMessageId,
   });
   const [remaining, quarantine] = await Promise.all([readOutbox(), readQuarantine()]);
@@ -161,6 +152,7 @@ async function queueObservationBatch(payload, { checkpoint = true } = {}) {
   await enqueue(envelope);
   const flush = await flushOutbox();
   const currentSent = flush.sent_message_ids.includes(envelope.message_id);
+  const receipt = flush.receipts.find((item) => item.message_id === envelope.message_id) || null;
   const currentQuarantined = flush.quarantined_message_ids.includes(envelope.message_id);
   let checkpointResult = null;
   if (checkpoint && currentSent) {
@@ -173,7 +165,9 @@ async function queueObservationBatch(payload, { checkpoint = true } = {}) {
         {
           batch_id: payload?.batch_id || null,
           received_count: payload?.observations?.length || 0,
-          accepted_count: flush.accepted_observation_count,
+          accepted_count: receipt.accepted_count,
+          duplicate_count: receipt.duplicate_count,
+          accounted_count: receipt.accounted_count,
           outbox_remaining_count: flush.remaining_count,
         },
       );
@@ -187,6 +181,7 @@ async function queueObservationBatch(payload, { checkpoint = true } = {}) {
     queued_message_id: envelope.message_id,
     queued_observation_count: payload?.observations?.length || 0,
     flush,
+    receipt,
     checkpoint: checkpointResult,
   };
 }
@@ -465,12 +460,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   if (message.type === "PROGRAM1_GET_PROCESS_STATUS") {
     return respondAsync(async () => {
-      const [settings, outbox, quarantine, runState, activeJob] = await Promise.all([
+      const [settings, outbox, quarantine, runState, activeJob, lastReceipt] = await Promise.all([
         getSettings(),
         readOutbox(),
         readQuarantine(),
         getRunState(),
         jobLifecycle.activeState(),
+        readLastDeliveryReceipt(),
       ]);
       return {
         ok: true,
@@ -482,6 +478,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         registry: { ...registryState },
         run_state: runState,
         active_job: activeJob,
+        last_delivery_receipt: lastReceipt?.backend_url === settings.backend_url?.replace(/\/$/, "")
+          ? lastReceipt : null,
       };
     }, sendResponse);
   }

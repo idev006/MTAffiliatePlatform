@@ -20,9 +20,43 @@ const toneClass = computed(() => {
 
 <template>
   <div class="space-y-3">
+    <section class="card card-border bg-base-100 shadow-sm" aria-labelledby="receiptHeading">
+      <div class="card-body gap-2 p-3">
+        <div class="flex items-center justify-between gap-2">
+          <h2 id="receiptHeading" class="text-sm font-semibold">ใบรับข้อมูลล่าสุดจาก Back Office</h2>
+          <button class="btn btn-ghost btn-xs" @click="process.refreshStatus()">อ่านผลล่าสุด</button>
+        </div>
+        <template v-if="process.lastDeliveryReceipt">
+          <span class="badge badge-success badge-sm">ส่งสำเร็จและได้รับใบรับ</span>
+          <div class="stats grid grid-cols-2 rounded-none shadow-none" aria-live="polite">
+            <MetricTile label="บันทึก observation ใหม่" value-id="receiptAccepted"
+              :value="process.lastDeliveryReceipt.accepted_count" />
+            <MetricTile label="observation ซ้ำตรงกัน" value-id="receiptDuplicate"
+              :value="process.lastDeliveryReceipt.duplicate_count" />
+            <MetricTile label="ยืนยันข้อมูลครบ" value-id="receiptAccounted"
+              :value="process.lastDeliveryReceipt.accounted_count" />
+            <MetricTile label="รายการที่ส่งในชุดนี้" value-id="receiptReceived"
+              :value="process.lastDeliveryReceipt.received_count" />
+          </div>
+          <p class="text-xs text-base-content/70">
+            เป็นผลการบันทึกครั้งแรกของชุดข้อมูลนี้ การส่งซ้ำใช้ใบรับเดิม
+            รายการใหม่อาจเป็นข้อมูลครั้งใหม่ของสินค้าเดิม จึงยังใช้ระบุจำนวนสินค้าใหม่ไม่ได้
+          </p>
+          <details class="text-xs">
+            <summary class="cursor-pointer">รายละเอียดใบรับ</summary>
+            <p class="break-all">ชุดข้อมูล: {{ process.lastDeliveryReceipt.batch_id }}</p>
+            <p>ได้รับเมื่อ: {{ process.lastDeliveryReceipt.acknowledged_at }}</p>
+          </details>
+        </template>
+        <p v-else class="text-xs text-base-content/70">ยังไม่มีใบรับที่ยืนยันสำหรับ Back Office นี้</p>
+        <p v-if="process.outboxCount" class="text-xs text-warning">
+          ยังมี {{ process.outboxCount }} ชุดรอส่ง ข้อมูลอยู่ในคิวของ worker
+        </p>
+      </div>
+    </section>
     <section class="card card-border bg-base-100 shadow-sm">
       <div class="card-title flex items-center justify-between px-3 py-2 text-sm">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-base-content/60">Process</h2>
+        <h2 class="text-xs font-bold uppercase tracking-wider text-base-content/60">Process telemetry</h2>
         <span id="state" class="badge badge-sm font-bold" :class="toneClass">{{ process.state }}</span>
       </div>
       <div class="stats grid grid-cols-2 rounded-none shadow-none">

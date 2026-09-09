@@ -36,9 +36,12 @@ def test_ingest_then_shortlist_contract() -> None:
     )
     assert response.status_code == 200
     assert response.json() == {
+        "ack_schema_version": "program1-observation-ack-v2",
         "batch_id": "batch-1",
         "received_count": 1,
         "accepted_count": 1,
+        "duplicate_count": 0,
+        "accounted_count": 1,
     }
 
     shortlist = client.get("/api/v1/program1/shortlist")
@@ -58,12 +61,37 @@ def test_same_batch_retry_returns_same_ack() -> None:
     assert retry.json()["accepted_count"] == 1
 
 
+def test_new_batch_accounts_for_existing_and_new_observations() -> None:
+    client = TestClient(create_app(Settings()))
+    client.post(
+        "/api/v1/program1/observations", json={"batch_id": "first", "observations": [observation()]}
+    )
+    payload = {
+        "batch_id": "mixed",
+        "observations": [observation(), observation("o2"), observation()],
+    }
+    result = client.post("/api/v1/program1/observations", json=payload)
+    assert result.status_code == 200
+    assert result.json() == {
+        "ack_schema_version": "program1-observation-ack-v2",
+        "batch_id": "mixed",
+        "received_count": 3,
+        "accepted_count": 1,
+        "duplicate_count": 2,
+        "accounted_count": 3,
+    }
+    assert client.post("/api/v1/program1/observations", json=payload).json() == result.json()
+
+
 def test_reusing_batch_id_with_different_payload_returns_409() -> None:
     client = TestClient(create_app(Settings()))
-    assert client.post(
-        "/api/v1/program1/observations",
-        json={"batch_id": "batch-1", "observations": [observation("o1", "A")]},
-    ).status_code == 200
+    assert (
+        client.post(
+            "/api/v1/program1/observations",
+            json={"batch_id": "batch-1", "observations": [observation("o1", "A")]},
+        ).status_code
+        == 200
+    )
     conflict = client.post(
         "/api/v1/program1/observations",
         json={"batch_id": "batch-1", "observations": [observation("o2", "B")]},
@@ -73,10 +101,13 @@ def test_reusing_batch_id_with_different_payload_returns_409() -> None:
 
 def test_observation_id_collision_returns_409() -> None:
     client = TestClient(create_app(Settings()))
-    assert client.post(
-        "/api/v1/program1/observations",
-        json={"batch_id": "batch-1", "observations": [observation("same", "A")]},
-    ).status_code == 200
+    assert (
+        client.post(
+            "/api/v1/program1/observations",
+            json={"batch_id": "batch-1", "observations": [observation("same", "A")]},
+        ).status_code
+        == 200
+    )
     conflict = client.post(
         "/api/v1/program1/observations",
         json={"batch_id": "batch-2", "observations": [observation("same", "B")]},

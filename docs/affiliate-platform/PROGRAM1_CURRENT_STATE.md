@@ -47,7 +47,7 @@ Current verified foundation includes:
 - SQLite/Alembic foundation;
 - Program 1 API runtime profile;
 - worker registry + heartbeat;
-- Manifest V3 Program 1 browser worker **0.1.26**;
+- Manifest V3 Program 1 browser worker **0.1.27**;
 - durable local outbox + permanent-payload quarantine + conservative failure classification;
 - Shared Job lease/renew/checkpoint/reconcile/verify/complete lifecycle owned by background runtime + Back Office;
 - Collection Router + versioned fixture/search/category/shop/PDP profiles;

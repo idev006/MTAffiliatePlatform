@@ -144,3 +144,7 @@ P1-H is Done when:
 - docs/Kanban updated;
 - extension/core/SQLite/stress/conformance remain green;
 - defects discovered during implementation have RCA/CAPA and regression coverage.
+
+## ACK accounting extension — 2026-09-09
+
+P1-C-ACK follows PROGRAM1_ACK_ACCOUNTING_CONTRACT.md. The fixture harness retains mock job lifecycle but ingests through the real Program1Service and SQLite atomic receipt adapter. After restart it submits a duplicate-only batch, restarts ingestion again, replays that batch, queries two observations/three receipts and reloads the panel to verify the persisted duplicate receipt. This proves observation accounting, not new-product totals or live Shopee/Brave behavior.

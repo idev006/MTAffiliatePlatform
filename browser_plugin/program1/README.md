@@ -1,7 +1,7 @@
 # Program 1 Browser Plugin
 
 Status: laboratory / evidence-gated implementation.
-Current extension version: `0.1.26`.
+Current extension version: `0.1.27`.
 
 This Manifest V3 extension is the Product Discovery Worker for Program 1. It intentionally does **not** contain production Shopee selectors yet. Real collection profiles remain a validation gate in the governing documents.
 
@@ -12,7 +12,9 @@ Current implemented capabilities:
 - target page URL shortcut for opening a supported Shopee page from the worker UI;
 - local durable outbox;
 - durable quarantine for clearly permanent payload failures so a poison message cannot block later valid batches indefinitely;
-- ACK-style removal only after Back Office confirms `batch_id`, `received_count` and `accepted_count`;
+- versioned ACK accounting: exact duplicates may be durably accounted without new inserts; malformed/unknown ACKs remain fail closed (legacy ACKs still require full acceptance);
+- last validated Back Office receipt survives panel/background restart and distinguishes new observations, exact duplicates and accounted entries; these are original-batch counts, not new-product counts;
+- serialized enqueue/remove/quarantine with last-receipt persistence in the removal update; page checkpoints use their own receipt rather than backlog totals;
 - serialized outbox flushing to avoid concurrent read/mutate/write drains;
 - conservative failure classification: permanent payload errors quarantine, while auth/config, transient/network and ACK ambiguity stop fail-closed without deleting the message;
 - queue/flush status that reports captured observations, queued observations, delivered batches, accepted observations, remaining and delivery error counts;
@@ -174,7 +176,7 @@ Controlled evidence capture (2026-09-05):
 - each capture writes an evidence manifest with classification, blocked state, promotion decision, browser/session category, code version and SHA-256;
 - a successful capture is still `HOLD`; profile promotion requires repeated independent live evidence under `CONTROLLED_PRODUCTION_EVIDENCE_VALIDATION_STANDARD.md`.
 
-Collection Router + Versioned Profile Registry (0.1.26):
+Collection Router + Versioned Profile Registry (0.1.27):
 - `content.js` is now only the message bridge/bootstrap; parsing responsibilities live under `src/collectors/`;
 - background injection order is core -> fixture/Shopee helpers -> search/category/shop/PDP profiles -> router -> bridge;
 - each profile declares profile id/version, surface, evidence stage, required/optional indicators, extracted/unknown fields, compatibility scope, evidence refs and failure modes;

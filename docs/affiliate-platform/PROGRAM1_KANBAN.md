@@ -61,7 +61,7 @@ No fixed "final architecture" is assumed. Architecture evolves through versioned
 ### ENGINEERING / PRODUCT FOLLOW-UP
 
 - [x] P1-DEV standard local/CI verification pipeline — verified implementation in PR #42, CI `34192148182` all five jobs PASS; local browser environment limitation retained in `PROGRAM1_PIPELINE_VERIFICATION_2026-09-08.md`.
-- [ ] P1-C follow-up: reproduce/fix duplicate-observation ACK accounting and expose durable result categories; accepted observations are not a new-product count.
+- [ ] P1-C-ACK — IN VERIFY: duplicate ACK accounting, job provenance and durable receipt presentation implemented against `PROGRAM1_ACK_ACCOUNTING_CONTRACT.md`; local non-browser gates pass. CI and visible Brave acceptance tracked in `PROGRAM1_ACK_ACCOUNTING_VERIFICATION_2026-09-09.md`.
 
 - [x] P1-C worker delivery reliability: failure classification, durable poison quarantine, ACK ambiguity fail-closed, quarantine telemetry
 - [x] P1-D Collection Router + Versioned Profile Registry: modular fixture/search/category/shop/PDP adapters, deterministic routing, evidence-stage gate

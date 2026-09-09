@@ -4,9 +4,11 @@ const path = require("node:path");
 const test = require("node:test");
 const vm = require("node:vm");
 
-function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null, alarmsCreateVoid = false } = {}) {
+function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null,
+  failReceiptStorage = false, alarmsCreateVoid = false } = {}) {
   const storage = { ...initialStorage };
   const listeners = [];
+  const checkpoints = [];
   const context = {
     chrome: {
       runtime: {
@@ -40,10 +42,13 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
         local: {
           async get(key) {
             if (storageGetError) throw storageGetError;
-            return { [key]: storage[key] };
+            return structuredClone({ [key]: storage[key] });
           },
           async set(values) {
-            Object.assign(storage, values);
+            if (failReceiptStorage && values.program1_last_delivery_receipt_v1) {
+              throw new Error("STORAGE_WRITE_FAILED");
+            }
+            Object.assign(storage, structuredClone(values));
           },
           async remove(key) {
             delete storage[key];
@@ -58,81 +63,6 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
     },
     fetch: fetchImpl,
     console,
-    enqueue: async (message) => {
-      const items = Array.isArray(storage.program1_outbox_v1)
-        ? storage.program1_outbox_v1
-        : [];
-      storage.program1_outbox_v1 = [...items, message];
-    },
-    readOutbox: async () => storage.program1_outbox_v1 || [],
-    removeByMessageId: async (messageId) => {
-      storage.program1_outbox_v1 = (storage.program1_outbox_v1 || []).filter(
-        (message) => message.message_id !== messageId,
-      );
-    },
-    readQuarantine: async () => storage.program1_outbox_quarantine_v1 || [],
-    quarantineByMessageId: async (messageId, reason) => {
-      const items = storage.program1_outbox_v1 || [];
-      const message = items.find((item) => item.message_id === messageId);
-      if (!message) return false;
-      storage.program1_outbox_v1 = items.filter((item) => item.message_id !== messageId);
-      storage.program1_outbox_quarantine_v1 = [
-        ...(storage.program1_outbox_quarantine_v1 || []),
-        { ...message, quarantine_reason: reason, quarantined_at: "2026-09-05T00:00:00Z" },
-      ];
-      return true;
-    },
-    drainObservationOutbox: async ({ messages, deliver, validateAck, remove, quarantine }) => {
-      let attemptedCount = 0;
-      let sentCount = 0;
-      let acceptedObservationCount = 0;
-      const sentMessageIds = [];
-      const quarantinedMessageIds = [];
-      let lastFailure = null;
-      let blockingFailure = null;
-      for (const message of messages) {
-        attemptedCount += 1;
-        try {
-          const ack = await deliver(message);
-          validateAck(message.payload, ack);
-          await remove(message.message_id);
-          sentCount += 1;
-          sentMessageIds.push(message.message_id);
-          acceptedObservationCount += ack.accepted_count;
-        } catch (error) {
-          const detail = error && typeof error.message === "string" ? error.message : String(error);
-          const permanent = ["HTTP_400", "HTTP_409", "HTTP_413", "HTTP_415", "HTTP_422"].includes(detail);
-          lastFailure = {
-            category: permanent ? "PERMANENT_PAYLOAD" : detail.startsWith("ACK_")
-              ? "AMBIGUOUS_RECONCILE"
-              : "TRANSIENT_OR_BLOCKED",
-            message: detail,
-            message_id: message.message_id,
-          };
-          if (permanent) {
-            await quarantine(message.message_id, {
-              category: lastFailure.category,
-              error: detail,
-            });
-            quarantinedMessageIds.push(message.message_id);
-            continue;
-          }
-          blockingFailure = lastFailure;
-          break;
-        }
-      }
-      return {
-        ok: blockingFailure === null,
-        attempted_count: attemptedCount,
-        sent_count: sentCount,
-        sent_message_ids: sentMessageIds,
-        quarantined_count: quarantinedMessageIds.length,
-        quarantined_message_ids: quarantinedMessageIds,
-        accepted_observation_count: acceptedObservationCount,
-        last_failure: lastFailure,
-        blocking_failure: blockingFailure,
-      };
-    },
     createBackgroundExecutionController: () => ({
       async start() {
         return { ok: true, run_state: storage.program1_run_state_v1 || null };
@@ -157,7 +87,8 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
       async renew() {
         return { ok: true, renewed: false, reason: "NO_ACTIVE_JOB", active_job: null };
       },
-      async checkpoint() {
+      async checkpoint(...args) {
+        checkpoints.push(args);
         return { ok: true, active_job: storage.program1_active_job_v1 || null };
       },
       async verifyAndComplete() {
@@ -170,13 +101,18 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
     }),
   };
   vm.createContext(context);
+  for (const file of ["outbox.js", "delivery_reliability.mjs"]) {
+    const actual = fs.readFileSync(path.join(__dirname, "..", "src", file), "utf8")
+      .replace(/export /g, "");
+    new vm.Script(actual, { filename: file }).runInContext(context);
+  }
 
   const filePath = path.join(__dirname, "..", "src", "background.js");
   const source = fs
     .readFileSync(filePath, "utf8")
     .replace('import { createBackgroundExecutionController } from "./background_execution.mjs";', "")
     .replace('import { createProgram1JobLifecycle } from "./job_lifecycle.mjs";', "")
-    .replace('import { drainObservationOutbox } from "./delivery_reliability.mjs";', "")
+    .replace('import { drainObservationOutbox, validateObservationBatchAck } from "./delivery_reliability.mjs";', "")
     .replace(/import \{[\s\S]*?\} from "\.\/outbox\.js";/, "");
   new vm.Script(source, { filename: filePath }).runInContext(context);
 
@@ -187,7 +123,7 @@ function loadBackground({ fetchImpl, initialStorage = {}, storageGetError = null
     });
   }
 
-  return { sendMessage, storage };
+  return { sendMessage, storage, outbox: context, checkpoints };
 }
 
 function jsonResponse(body) {
@@ -198,6 +134,81 @@ function jsonResponse(body) {
     },
   };
 }
+
+test("duplicate-only v2 ACK drains safely and survives background restart", async () => {
+  const receipt = {
+    ack_schema_version: "program1-observation-ack-v2",
+    batch_id: "duplicate-batch", received_count: 1, accepted_count: 0,
+    duplicate_count: 1, accounted_count: 1,
+  };
+  const harness = loadBackground({
+    initialStorage: { program1_worker_settings_v1: { backend_url: "http://127.0.0.1:8000" } },
+    fetchImpl: async () => jsonResponse(receipt),
+  });
+  const result = await harness.sendMessage({ type: "PROGRAM1_QUEUE_BATCH",
+    payload: { batch_id: "duplicate-batch", observations: [{ observation_id: "old" }] } });
+  assert.equal(result.ok, true);
+  assert.equal(result.receipt.duplicate_count, 1);
+  assert.equal(harness.storage.program1_outbox_v1.length, 0);
+  const restarted = loadBackground({ initialStorage: harness.storage });
+  const status = await restarted.sendMessage({ type: "PROGRAM1_GET_PROCESS_STATUS" });
+  assert.equal(status.last_delivery_receipt.batch_id, "duplicate-batch");
+  assert.equal(status.last_delivery_receipt.accepted_count, 0);
+});
+
+test("backlog drain checkpoints only current receipt and hides another backend's receipt", async () => {
+  const h = loadBackground({
+    initialStorage: {
+      program1_worker_settings_v1: { backend_url: "http://127.0.0.1:8000", worker_id: "w" },
+      program1_active_job_v1: { job_id: "job" },
+      program1_outbox_v1: [{ message_id: "backlog", payload: { batch_id: "old",
+        observations: [{}, {}, {}] } }],
+    },
+    fetchImpl: async (_url, options) => {
+      const payload = JSON.parse(options.body);
+      const count = payload.observations.length;
+      return jsonResponse({ ack_schema_version: "program1-observation-ack-v2",
+        batch_id: payload.batch_id, received_count: count, accepted_count: count,
+        duplicate_count: 0, accounted_count: count });
+    },
+  });
+  const result = await h.sendMessage({ type: "PROGRAM1_QUEUE_BATCH",
+    payload: { batch_id: "current", observations: [{}] } });
+  assert.equal(result.flush.accepted_observation_count, 4);
+  assert.equal(result.receipt.accepted_count, 1);
+  assert.equal(h.checkpoints[0][2].accepted_count, 1);
+  h.storage.program1_worker_settings_v1.backend_url = "http://127.0.0.1:9000";
+  const status = await h.sendMessage({ type: "PROGRAM1_GET_PROCESS_STATUS" });
+  assert.equal(status.last_delivery_receipt, null);
+});
+
+test("receipt storage failure retains outbox and cannot claim delivery", async () => {
+  const h = loadBackground({ failReceiptStorage: true,
+    initialStorage: { program1_worker_settings_v1: { backend_url: "http://127.0.0.1:8000" } },
+    fetchImpl: async () => jsonResponse({ batch_id: "b", received_count: 1, accepted_count: 1 }),
+  });
+  const result = await h.sendMessage({ type: "PROGRAM1_QUEUE_BATCH",
+    payload: { batch_id: "b", observations: [{}] } });
+  assert.equal(result.ok, false);
+  assert.equal(result.flush.sent_count, 0);
+  assert.equal(h.storage.program1_outbox_v1.length, 1);
+  assert.equal(h.storage.program1_last_delivery_receipt_v1, undefined);
+});
+
+test("concurrent outbox mutations preserve new messages and quarantine evidence", async () => {
+  const h = loadBackground({ initialStorage: {
+    program1_outbox_v1: [{ message_id: "old" }, { message_id: "poison" }],
+  } });
+  await Promise.all([
+    h.outbox.enqueue({ message_id: "new-1" }),
+    h.outbox.removeByMessageId("old", { batch_id: "old", accepted_count: 1 }),
+    h.outbox.enqueue({ message_id: "new-2" }),
+    h.outbox.quarantineByMessageId("poison", { error: "HTTP_422" }),
+  ]);
+  assert.deepEqual(h.storage.program1_outbox_v1.map(item => item.message_id), ["new-1", "new-2"]);
+  assert.equal(h.storage.program1_outbox_quarantine_v1[0].message_id, "poison");
+  assert.equal(h.storage.program1_last_delivery_receipt_v1.batch_id, "old");
+});
 
 test("queue batch reports backend configuration failure and keeps durable outbox item", async () => {
   const { sendMessage, storage } = loadBackground();
@@ -237,7 +248,7 @@ test("queue batch reports sent counts after backend acknowledgement and clears o
   assert.equal(response.flush.accepted_observation_count, 1);
   assert.equal(response.flush.remaining_count, 0);
   assert.equal(response.flush.error, null);
-  assert.deepEqual(storage.program1_outbox_v1, []);
+  assert.equal(storage.program1_outbox_v1.length, 0);
 });
 
 test("queue batch keeps outbox item when backend ack does not match payload", async () => {
@@ -294,6 +305,7 @@ test("process status reports configuration, outbox and registry state", async ()
       updated_at: null,
     },
     active_job: null,
+    last_delivery_receipt: null,
   });
 });
 
