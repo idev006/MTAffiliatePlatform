@@ -9,3 +9,5 @@ Back Office was restarted onto current source after SQLite backup runtime/backup
 Local full report runtime/verification/20260909T053816Z-f4cf47bc/report.json: static PASS; core 297 passed/95.08%; SQLite 60 passed + 1 skipped/96.24%; stress and extension PASS. Local Playwright browser launch fails; full local gate remains FAILED. Extension rebuilt after history scrolling change: runtime/verification/20260909T053918Z-e3f08c74/report.json PASS. Current CI pending.
 
 Remaining: live image extraction, worker/job management UI, real pagination/restart acceptance, product-level search/filter and database-level pagination. This screen is not the complete Program1 application.
+
+Code commit 0be398b0fb4b7c8b6b9bb07952c2e8d5bb33fa49 CI PASS: https://github.com/idev006/MTAffiliatePlatform/actions/runs/34315858473. Draft PR #45. Read-only review slice verified; broader Program1 acceptance remains open.
