@@ -71,3 +71,29 @@ def test_repeated_upgrade_is_idempotent(tmp_path) -> None:
     config = alembic_config(root, f"sqlite:///{database.as_posix()}")
     command.upgrade(config, "head")
     command.upgrade(config, "head")
+
+
+def test_image_upgrade_preserves_existing_observations_and_receipts(tmp_path) -> None:
+    root = Path(__file__).resolve().parents[3]
+    url = f"sqlite:///{(tmp_path / 'legacy-image.db').as_posix()}"
+    config = alembic_config(root, url)
+    command.upgrade(config, "0011_program3_devices")
+    engine = create_engine(url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql(
+            "INSERT INTO product_observations (observation_id, platform, shop_id, item_id, collected_at, product_name) VALUES ('old', 'shopee', 's', 'i', '2026-09-09 00:00:00', 'Legacy')"
+        )
+        connection.exec_driver_sql(
+            "INSERT INTO ingestion_batches (batch_id, fingerprint, accepted_count, received_count) VALUES ('old-batch', 'legacy-hash', 1, 1)"
+        )
+    engine.dispose()
+    command.upgrade(config, "head")
+    engine = create_engine(url)
+    with engine.connect() as connection:
+        assert connection.exec_driver_sql(
+            "SELECT observation_id, primary_image_url FROM product_observations"
+        ).all() == [("old", None)]
+        assert connection.exec_driver_sql(
+            "SELECT fingerprint, accepted_count, received_count FROM ingestion_batches"
+        ).all() == [("legacy-hash", 1, 1)]
+    engine.dispose()

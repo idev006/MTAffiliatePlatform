@@ -41,3 +41,7 @@ Live Brave screenshot showed Receiving end does not exist after Capture Current 
 ## 2026-09-09 narrow-panel telemetry UX
 
 User screenshot showed overlapping metric labels. Root cause: daisyUI stats column auto-flow combined with grid-cols-2, creating compressed implicit columns. Replaced with a bounded overflow-x:auto region, readable 9rem minimum columns, keyboard focus outline and scroll hint. Receipt metrics use the same layout; worker registration badge wraps instead of clipping. UX governing document updated before implementation. Extension build and suites PASS: runtime/verification/20260909T050226Z-c4ee928f/report.json. Visual acceptance in Brave remains pending extension/panel reload; browser tools previously blocked extension URL access.
+
+## Live Brave single-page evidence — 2026-09-09
+
+User-operated Capture on https://shopee.co.th/search?keyword=ssd with worker brave-program1-01 produced receipt 7c56fced-13e9-4408-be21-d49be053b478. Read-only SQLite verification found accepted_count=20, received_count=20 and 20 observations for the worker. User screenshot confirms receipt and horizontal telemetry scrolling. This closes single-page manual ingestion/display evidence only; it does not establish live pagination, restart/recovery, duplicate replay, image extraction or production profile promotion.

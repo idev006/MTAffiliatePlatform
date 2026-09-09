@@ -103,3 +103,9 @@ A Program 1 PR/card is incomplete if a material change cannot identify:
 - evidence gate.
 
 If a source change introduces a new responsibility not represented in this matrix or the architecture documents, documentation must be updated first or in the same coherent change.
+
+## Image evidence foundation — 2026-09-09
+
+| Card | Rationale | Contract/data | Verification | Evidence boundary |
+|---|---|---|---|---|
+| P1-IMG-1 | Operator product evidence review | Optional observed primary image URL | Domain validation, API readback, nullable migration, receipt compatibility/restart tests | PROGRAM1_IMAGE_REFERENCE_CONTRACT.md; live image extraction pending |

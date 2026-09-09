@@ -454,3 +454,7 @@ Breaking public API/worker payload changes require new schema/API version or exp
 Domain internal refactors do not require public version change if semantic contract is unchanged.
 
 Persist model/ruleset/selector/algorithm versions alongside decisions where later audit/reproduction depends on them.
+
+## Program 1 observation evidence read contract (2026-09-09)
+
+GET /api/v1/program1/products/{platform}/{shop_id}/{item_id}/observations returns stored observations newest first, limit 1..100 (default 50), empty list when absent. Includes optional primary_image_url as data only. Application uses existing history port; response bounding does not imply storage pagination. See PROGRAM1_IMAGE_REFERENCE_CONTRACT.md.

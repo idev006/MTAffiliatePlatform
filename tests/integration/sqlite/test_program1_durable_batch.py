@@ -104,3 +104,23 @@ def test_batch_preserves_job_provenance_and_duplicate_receipt_after_restart(tmp_
         assert session.scalar(select(func.count()).select_from(IngestionBatchRow)) == 3
         assert set(session.scalars(select(ProductObservationRow.source_job_id))) == {"job-1"}
     engine3.dispose()
+
+
+def test_image_reference_survives_restart_and_conflicting_replay(tmp_path) -> None:
+    service, engine = service_for(tmp_path)
+    item = observation().model_copy(
+        update={"primary_image_url": "https://example.test/product.jpg"}
+    )
+    receipt = service.ingest_batch("image-batch", [item])
+    engine.dispose()
+    service, engine = service_for(tmp_path)
+    assert service.repository.latest_observations()[0].primary_image_url == item.primary_image_url
+    assert service.ingest_batch("image-batch", [item]) == receipt
+    assert service.ingest_batch("image-duplicate", [item]).duplicate_count == 1
+    changed = item.model_copy(update={"primary_image_url": "https://example.test/changed.jpg"})
+    with pytest.raises(IngestionBatchConflictError):
+        service.ingest_batch("image-batch", [changed])
+    with pytest.raises(ObservationConflictError):
+        service.ingest_batch("image-conflict", [changed])
+    assert service.repository.observation_history(item.canonical_key) == [item]
+    engine.dispose()
