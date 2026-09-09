@@ -9,3 +9,7 @@ Migration test upgrades a populated previous schema and verifies original observ
 Team reviewed the contract and recommended staged progress: trustworthy acquisition/evidence, operator review/recovery, then explainable opportunity decisions. Kanban, data model, application contract and traceability updated. Pending: CI, live image association evidence, fixture-backed extraction, image artifact lifecycle, operator image review UI. No production readiness claim.
 
 CI code commit fde439ecc922730538bfe116ab37f5d07f35b933: PASS, run https://github.com/idev006/MTAffiliatePlatform/actions/runs/34314604811 (including Chromium). Draft PR #44. Storage/API foundation verified; live image extraction is not implemented or claimed.
+
+## UML coverage refresh — 2026-09-09
+
+D21-D27 cover registration/heartbeat, manual collector bootstrap, background pagination/checkpoint, atomic ACK/image reference, retry/quarantine, observation readback and receipt restoration. PROGRAM1_UML_AND_RUNTIME_DIAGRAMS.md includes a use-case/contract/test matrix. Target composition and pending UI/download behavior are explicitly distinguished from current implementation. Verification: 27 unique diagram IDs, balanced fenced blocks, referenced test files exist, git diff --check. Mermaid rendering not verified in this documentation-only update.
