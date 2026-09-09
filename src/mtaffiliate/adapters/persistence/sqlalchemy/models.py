@@ -9,6 +9,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
@@ -108,6 +109,7 @@ class ProductObservationRow(Base):
     collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     product_name: Mapped[str] = mapped_column(String(1024), nullable=False)
     product_url: Mapped[str | None] = mapped_column(String(4096))
+    primary_image_url: Mapped[str | None] = mapped_column(Text)
     price_current: Mapped[Decimal | None] = mapped_column(Numeric(20, 4))
     sold_signal: Mapped[int | None] = mapped_column(Integer)
     rating: Mapped[float | None]

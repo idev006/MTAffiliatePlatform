@@ -140,3 +140,9 @@ Track:
 
 Do not optimize vanity metrics such as raw commit count, scraped product count or test count without quality context.
 
+
+## P1-IMG-1 continuation — 2026-09-09
+
+- [ ] IN VERIFY: optional primary image reference validation, SQLite migration/roundtrip, backward-compatible receipt fingerprints and bounded observation evidence API. No live Shopee image extraction or downloads yet. See PROGRAM1_IMAGE_REFERENCE_CONTRACT.md.
+
+Next sequence: (1) validate Search image association and pagination from fresh evidence, (2) operator product/history review and guided recovery, with priority amendment before a full campaign dashboard, (3) explainable opportunity decisions and qualified Program2 handoff. Production scoring and outcome claims remain gated.

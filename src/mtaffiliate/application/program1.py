@@ -80,6 +80,9 @@ class Program1Service:
     @staticmethod
     def _batch_fingerprint(observations: list[ProductObservation]) -> str:
         payload = [observation.model_dump(mode="json") for observation in observations]
+        for item in payload:
+            if item["primary_image_url"] is None:
+                del item["primary_image_url"]
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
 
@@ -111,3 +114,11 @@ class Program1Service:
             limit=self.shortlist_limit,
             minimum_score=self.minimum_score,
         )
+
+    def observation_evidence(
+        self, product_key: tuple[str, str, str], *, limit: int = 50
+    ) -> list[ProductObservation]:
+        if not 1 <= limit <= 100:
+            raise ValueError("observation evidence limit must be between 1 and 100")
+        history = self.repository.observation_history(product_key)
+        return list(reversed(history[-limit:]))

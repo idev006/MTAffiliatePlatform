@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from mtaffiliate.adapters.persistence.inmemory.affiliate_offer import (
@@ -410,6 +410,19 @@ def create_app(
         )
 
     if "program1" in enabled:
+
+        @app.get(
+            "/api/v1/program1/products/{platform}/{shop_id}/{item_id}/observations",
+            response_model=list[ProductObservation],
+        )
+        def observation_evidence(
+            platform: str,
+            shop_id: str,
+            item_id: str,
+            limit: int = Query(default=50, ge=1, le=100),
+        ) -> list[ProductObservation]:
+            assert service1 is not None
+            return service1.observation_evidence((platform, shop_id, item_id), limit=limit)
 
         @app.post("/api/v1/program1/observations")
         def ingest(batch: ObservationBatch) -> dict[str, int | str]:

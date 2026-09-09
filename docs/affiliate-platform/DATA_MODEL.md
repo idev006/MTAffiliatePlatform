@@ -519,3 +519,6 @@ Still not frozen:
 - final duplicate database constraint form across SQLite/PostgreSQL.
 
 These open items must not be guessed into irreversible schema without an ADR/migration plan.
+## P1-IMG-1 — primary image reference (2026-09-09)
+
+Optional primary_image_url extends ProductObservation as observed evidence. Contract: PROGRAM1_IMAGE_REFERENCE_CONTRACT.md. Existing rows remain null; image URL is not a local file or rights claim. Existing receipt hashes remain stable for missing/null image references. A changed non-null URL participates in payload conflict detection. No network operation occurs during ingestion.
