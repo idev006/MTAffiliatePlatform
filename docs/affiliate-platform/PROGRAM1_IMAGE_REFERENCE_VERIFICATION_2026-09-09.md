@@ -7,3 +7,5 @@ Local full pipeline runtime/verification/20260909T051813Z-aab248a2/report.json: 
 Migration test upgrades a populated previous schema and verifies original observation/receipt values unchanged. Restart test checks actual image URL readback, duplicate-only ACK, original receipt replay and changed-image conflicts. API tests check newest-first bounded readback, absent product, invalid limits and Program1-only routing. Unit tests verify accepted/missing/rejected URLs and byte-compatible old fingerprint calculation.
 
 Team reviewed the contract and recommended staged progress: trustworthy acquisition/evidence, operator review/recovery, then explainable opportunity decisions. Kanban, data model, application contract and traceability updated. Pending: CI, live image association evidence, fixture-backed extraction, image artifact lifecycle, operator image review UI. No production readiness claim.
+
+CI code commit fde439ecc922730538bfe116ab37f5d07f35b933: PASS, run https://github.com/idev006/MTAffiliatePlatform/actions/runs/34314604811 (including Chromium). Draft PR #44. Storage/API foundation verified; live image extraction is not implemented or claimed.
