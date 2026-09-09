@@ -14,6 +14,22 @@ from pathlib import Path
 from typing import Any
 
 from playwright.async_api import BrowserContext, async_playwright
+from sqlalchemy import func, select
+
+from mtaffiliate.adapters.persistence.sqlalchemy.base import Base
+from mtaffiliate.adapters.persistence.sqlalchemy.factory import build_engine, build_session_factory
+from mtaffiliate.adapters.persistence.sqlalchemy.ingestion import SQLAlchemyProgram1BatchIngestor
+from mtaffiliate.adapters.persistence.sqlalchemy.models import (
+    IngestionBatchRow,
+    ProductObservationRow,
+)
+from mtaffiliate.adapters.persistence.sqlalchemy.product import SQLAlchemyProductRepository
+from mtaffiliate.application.program1 import Program1Service
+from mtaffiliate.domain.product.models import ProductObservation
+from mtaffiliate.engines.product_intelligence_engine.service import (
+    ProductIntelligenceEngine,
+    ScoringPolicy,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 EXTENSION_DIR = ROOT / "browser_plugin" / "program1"
@@ -42,6 +58,35 @@ class DeterministicProgram1Backend:
         self._lock = threading.Lock()
         self._server: ThreadingHTTPServer | None = None
         self._thread: threading.Thread | None = None
+        self._database_root = tempfile.TemporaryDirectory(prefix="mta-p1-receipts-")
+        self._engine = build_engine(
+            "sqlite:///data/receipts.db", project_root=Path(self._database_root.name)
+        )
+        Base.metadata.create_all(self._engine)
+        self._sessions = build_session_factory(self._engine)
+        self.ingestion = self._ingestion_service()
+
+    def _ingestion_service(self) -> Program1Service:
+        return Program1Service(
+            SQLAlchemyProductRepository(self._sessions),
+            ProductIntelligenceEngine(ScoringPolicy()),
+            shortlist_limit=20,
+            minimum_score=0,
+            batch_ingestor=SQLAlchemyProgram1BatchIngestor(self._sessions),
+        )
+
+    def restart_ingestion(self) -> None:
+        self._engine.dispose()
+        self.ingestion = self._ingestion_service()
+
+    def saved_counts(self) -> dict[str, int]:
+        with self._sessions() as session:
+            return {
+                "observations": session.scalar(
+                    select(func.count()).select_from(ProductObservationRow)
+                ),
+                "receipts": session.scalar(select(func.count()).select_from(IngestionBatchRow)),
+            }
 
     @property
     def base_url(self) -> str:
@@ -59,6 +104,8 @@ class DeterministicProgram1Backend:
             self._server.server_close()
         if self._thread is not None:
             self._thread.join(timeout=5)
+        self._engine.dispose()
+        self._database_root.cleanup()
 
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
@@ -126,7 +173,9 @@ class DeterministicProgram1Backend:
 
             def _record(self, method: str, payload: Any = None) -> None:
                 with backend._lock:
-                    backend.requests.append({"method": method, "path": self.path, "payload": payload})
+                    backend.requests.append(
+                        {"method": method, "path": self.path, "payload": payload}
+                    )
 
             def _json(self, payload: Any, status: int = 200) -> None:
                 raw = json.dumps(payload).encode("utf-8")
@@ -226,7 +275,9 @@ class DeterministicProgram1Backend:
                 if self.path == f"/api/v1/jobs/{JOB_ID}/renew":
                     with backend._lock:
                         backend.renew_count += 1
-                        backend.lease_until = (datetime.now(UTC) + timedelta(minutes=10)).isoformat()
+                        backend.lease_until = (
+                            datetime.now(UTC) + timedelta(minutes=10)
+                        ).isoformat()
                         response = backend._job_payload()
                     self._json(response)
                     return
@@ -254,13 +305,20 @@ class DeterministicProgram1Backend:
 
                 if self.path == "/api/v1/program1/observations":
                     observations = payload.get("observations") or []
+                    result = backend.ingestion.ingest_batch(
+                        payload["batch_id"],
+                        [ProductObservation.model_validate(item) for item in observations],
+                    )
                     with backend._lock:
                         backend.observation_batches.append(payload)
                     self._json(
                         {
+                            "ack_schema_version": "program1-observation-ack-v2",
                             "batch_id": payload.get("batch_id"),
-                            "received_count": len(observations),
-                            "accepted_count": len(observations),
+                            "received_count": result.received_count,
+                            "accepted_count": result.accepted_count,
+                            "duplicate_count": result.duplicate_count,
+                            "accounted_count": result.accounted_count,
                         }
                     )
                     return
@@ -287,7 +345,7 @@ async def extension_command(page, message: dict[str, Any]) -> dict[str, Any]:
         message,
     )
     if not isinstance(result, dict):
-        raise RuntimeError(f"extension returned non-object response: {result!r}")
+        raise TypeError(f"extension returned non-object response: {result!r}")
     return result
 
 
@@ -317,14 +375,14 @@ async def drive_background_until(
             raise RuntimeError(f"{label} background cycle failed: {result}")
         await asyncio.sleep(interval)
     status = await extension_command(page, {"type": "PROGRAM1_GET_PROCESS_STATUS"})
-    raise TimeoutError(
-        f"timed out waiting for {label}; status={json.dumps(status, default=str)}"
-    )
+    raise TimeoutError(f"timed out waiting for {label}; status={json.dumps(status, default=str)}")
 
 
 async def open_control_page(context: BrowserContext, extension_id: str):
     page = await context.new_page()
-    await page.goto(f"{EXTENSION_SCHEME}{extension_id}/dist/sidepanel.html", wait_until="domcontentloaded")
+    await page.goto(
+        f"{EXTENSION_SCHEME}{extension_id}/dist/sidepanel.html", wait_until="domcontentloaded"
+    )
     return page
 
 
@@ -404,13 +462,17 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
                 label="first durable page checkpoint",
             )
 
-            status_before = await extension_command(control1, {"type": "PROGRAM1_GET_PROCESS_STATUS"})
+            status_before = await extension_command(
+                control1, {"type": "PROGRAM1_GET_PROCESS_STATUS"}
+            )
             if status_before.get("active_job", {}).get("job_id") != JOB_ID:
                 raise AssertionError(f"active job missing before restart: {status_before}")
             if not status_before.get("run_state", {}).get("desired"):
                 raise AssertionError(f"run state not durable before restart: {status_before}")
             if "page=1" not in str(status_before.get("run_state", {}).get("current_target_url")):
-                raise AssertionError(f"next target not checkpointed before restart: {status_before}")
+                raise AssertionError(
+                    f"next target not checkpointed before restart: {status_before}"
+                )
 
             report["before_restart"] = status_before
             report["backend_before_restart"] = backend.snapshot()
@@ -419,7 +481,9 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
             context2 = await launch_context(playwright, profile_dir)
             extension_id2 = await extension_id_from_context(context2)
             if extension_id2 != extension_id:
-                raise AssertionError(f"extension id changed across restart: {extension_id} -> {extension_id2}")
+                raise AssertionError(
+                    f"extension id changed across restart: {extension_id} -> {extension_id2}"
+                )
             control2 = await open_control_page(context2, extension_id2)
 
             await wait_until(
@@ -427,7 +491,9 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
                 timeout=15,
                 label="startup reconcile/renew",
             )
-            status_after = await extension_command(control2, {"type": "PROGRAM1_GET_PROCESS_STATUS"})
+            status_after = await extension_command(
+                control2, {"type": "PROGRAM1_GET_PROCESS_STATUS"}
+            )
             if status_after.get("active_job", {}).get("job_id") != JOB_ID:
                 raise AssertionError(f"active job not recovered after restart: {status_after}")
             if not status_after.get("run_state", {}).get("desired"):
@@ -440,12 +506,16 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
                 label="job completion after restart",
             )
             await asyncio.sleep(0.5)
-            final_status = await extension_command(control2, {"type": "PROGRAM1_GET_PROCESS_STATUS"})
+            final_status = await extension_command(
+                control2, {"type": "PROGRAM1_GET_PROCESS_STATUS"}
+            )
             snapshot = backend.snapshot()
             report["restart_cycle_transcript"] = restart_transcript
 
             if len(snapshot["observation_batches"]) != 2:
-                raise AssertionError(f"expected exactly 2 observation batches, got {len(snapshot['observation_batches'])}")
+                raise AssertionError(
+                    f"expected exactly 2 observation batches, got {len(snapshot['observation_batches'])}"
+                )
             observed_items = [
                 observation["item_id"]
                 for batch in snapshot["observation_batches"]
@@ -454,7 +524,9 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
             if observed_items != ["2000", "2001"]:
                 raise AssertionError(f"unexpected/duplicate observation lineage: {observed_items}")
             if len(snapshot["checkpoints"]) != 2:
-                raise AssertionError(f"expected exactly 2 checkpoints, got {len(snapshot['checkpoints'])}")
+                raise AssertionError(
+                    f"expected exactly 2 checkpoints, got {len(snapshot['checkpoints'])}"
+                )
             if snapshot["lease_count"] != 1:
                 raise AssertionError(f"job was leased more than once: {snapshot['lease_count']}")
             if final_status.get("active_job") is not None:
@@ -467,6 +539,50 @@ async def run_scenario(profile_dir: Path) -> dict[str, Any]:
                 raise AssertionError(f"outbox not empty after completion: {final_status}")
 
             report["after_restart"] = status_after
+            # Real SQLite receipts survive service reconstruction and duplicate delivery.
+            backend.restart_ingestion()
+            duplicate_payload = {
+                **snapshot["observation_batches"][-1],
+                "batch_id": "duplicate-observation-evidence",
+            }
+            duplicate_result = await extension_command(
+                control2,
+                {
+                    "type": "PROGRAM1_QUEUE_BATCH",
+                    "payload": duplicate_payload,
+                },
+            )
+            if (
+                not duplicate_result.get("ok")
+                or duplicate_result["receipt"]["duplicate_count"] != 1
+            ):
+                raise AssertionError(f"duplicate observation was not accounted: {duplicate_result}")
+            backend.restart_ingestion()
+            replay = await extension_command(
+                control2,
+                {
+                    "type": "PROGRAM1_QUEUE_BATCH",
+                    "payload": duplicate_payload,
+                },
+            )
+            if not replay.get("ok") or replay["receipt"]["accepted_count"] != 0:
+                raise AssertionError(f"duplicate receipt replay changed: {replay}")
+            if backend.saved_counts() != {"observations": 2, "receipts": 3}:
+                raise AssertionError(f"unexpected persisted counts: {backend.saved_counts()}")
+            await control2.reload(wait_until="domcontentloaded")
+            await control2.locator("#receiptDuplicate").wait_for()
+            if await control2.locator("#receiptDuplicate").inner_text() != "1":
+                raise AssertionError("reopened panel did not restore duplicate receipt")
+            if await control2.locator("#receiptAccepted").inner_text() != "0":
+                raise AssertionError("reopened panel misreported new observations")
+            report["receipt_accounting"] = {
+                "saved_counts": backend.saved_counts(),
+                "duplicate": duplicate_result,
+                "replay": replay,
+                "panel_restored": True,
+                "lifecycle_authority": "mock",
+                "ingestion_persistence": "real SQLite",
+            }
             report["final_status"] = final_status
             report["backend_final"] = snapshot
             report["passed"] = True
@@ -492,7 +608,11 @@ async def main() -> None:
     args = parser.parse_args()
 
     owned_temp = args.profile_dir is None
-    profile_dir = Path(args.profile_dir).resolve() if args.profile_dir else Path(tempfile.mkdtemp(prefix="mta-p1-e2e-"))
+    profile_dir = (
+        Path(args.profile_dir).resolve()
+        if args.profile_dir
+        else Path(tempfile.mkdtemp(prefix="mta-p1-e2e-"))
+    )
     if profile_dir.exists() and owned_temp:
         # tempfile already creates it; Chromium requires an empty usable directory.
         pass

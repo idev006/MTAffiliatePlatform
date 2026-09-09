@@ -15,3 +15,26 @@ body {
 #app {
   min-height: 100vh;
 }
+
+/* Keep daisyUI stats on one readable row inside a bounded scroll region. */
+.metric-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: auto;
+}
+.metric-scroll:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+.metric-scroll > .stats {
+  width: max-content;
+  min-width: 100%;
+  overflow: visible;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(9rem, max-content);
+}
+.metric-scroll .stat {
+  min-width: 9rem;
+}

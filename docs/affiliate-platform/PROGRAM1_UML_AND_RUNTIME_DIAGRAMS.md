@@ -166,7 +166,9 @@ sequenceDiagram
   API->>DB: lookup durable receipt/idempotency
   DB-->>API: same accounted result
   API-->>BW: reproducible ACK
-  BW->>OUT: remove B-101
+  BW->>BW: validate version + accepted/duplicate/accounted counts
+  BW->>OUT: persist last receipt + remove B-101 in one serialized update
+  Note over BW,OUT: Panel projects last receipt; checkpoint uses this batch only
 ```
 
 ## D6 — Poison Message / Quarantine Decision

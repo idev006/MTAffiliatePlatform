@@ -101,6 +101,7 @@ test("processViewFromCapture distinguishes delivered from queued delivery block"
       ok: true,
       queued: true,
       queued_observation_count: 2,
+      receipt: { accepted_count: 2 },
       flush: { sent_count: 1, accepted_observation_count: 2, remaining_count: 0, error: null },
     },
     createIndicators({ autoRunCount: 3, sessionAcceptedTotal: 2, sessionStartedAt: Date.now() - 60000 }),
@@ -117,6 +118,13 @@ test("processViewFromCapture distinguishes delivered from queued delivery block"
   assert.equal(view.cycle_count, 3);
   assert.ok(view.rate_per_hour > 0);
   assert.match(view.last_event, /\d/);
+});
+
+test("capture metrics cannot substitute aggregate backlog counts for the current receipt", () => {
+  const result = captureStatus({ observations: [{}] }, { ok: true,
+    receipt: { accepted_count: 0, duplicate_count: 1 },
+    flush: { accepted_observation_count: 99 } });
+  assert.equal(result.queue.accepted_observation_count, 0);
 });
 
 test("createIndicators accumulates session totals and derives rate per hour", () => {

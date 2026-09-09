@@ -247,3 +247,7 @@ Any operator-facing card is not Done unless:
 - technical detail is not required for normal operation;
 - close/reopen does not corrupt durable work;
 - headless core tests exist independently of UI tests.
+
+## Narrow browser panel overflow — 2026-09-09
+
+Telemetry and receipt columns must retain readable minimum widths. When their total width exceeds the panel, use a labelled, keyboard-focusable horizontal scroll region with a visible scroll hint. Do not compress columns until labels overlap or introduce page-wide horizontal scrolling. Preserve daisyUI and existing metric IDs/count semantics.

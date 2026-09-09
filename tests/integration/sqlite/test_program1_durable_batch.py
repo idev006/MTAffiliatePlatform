@@ -2,10 +2,15 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import func, select
 
 from mtaffiliate.adapters.persistence.sqlalchemy.base import Base
 from mtaffiliate.adapters.persistence.sqlalchemy.factory import build_engine, build_session_factory
 from mtaffiliate.adapters.persistence.sqlalchemy.ingestion import SQLAlchemyProgram1BatchIngestor
+from mtaffiliate.adapters.persistence.sqlalchemy.models import (
+    IngestionBatchRow,
+    ProductObservationRow,
+)
 from mtaffiliate.adapters.persistence.sqlalchemy.product import SQLAlchemyProductRepository
 from mtaffiliate.application.program1 import IngestionBatchConflictError, Program1Service
 from mtaffiliate.domain.product.models import ProductObservation
@@ -13,6 +18,7 @@ from mtaffiliate.engines.product_intelligence_engine.service import (
     ProductIntelligenceEngine,
     ScoringPolicy,
 )
+from mtaffiliate.ports.repositories.product import ObservationConflictError
 
 pytestmark = pytest.mark.integration
 
@@ -68,3 +74,33 @@ def test_batch_id_collision_remains_conflict_after_restart(tmp_path) -> None:
     with pytest.raises(IngestionBatchConflictError):
         restarted_service.ingest_batch("batch-1", [observation("item-B")])
     engine2.dispose()
+
+
+def test_batch_preserves_job_provenance_and_duplicate_receipt_after_restart(tmp_path) -> None:
+    service, engine = service_for(tmp_path)
+    original = observation().model_copy(
+        update={"source_job_id": "job-1", "source_worker_id": "worker-1"}
+    )
+    service.ingest_batch("original", [original])
+    assert service.repository.observation_history(original.canonical_key) == [original]
+    engine.dispose()
+
+    restarted, engine2 = service_for(tmp_path)
+    newer = original.model_copy(update={"observation_id": "obs-2"})
+    mixed = restarted.ingest_batch("mixed", [original, newer, original])
+    assert (mixed.accepted_count, mixed.duplicate_count, mixed.accounted_count) == (1, 2, 3)
+    engine2.dispose()
+
+    final, engine3 = service_for(tmp_path)
+    assert final.ingest_batch("mixed", [original, newer, original]) == mixed
+    duplicate = final.ingest_batch("duplicate-only", [original])
+    assert (duplicate.accepted_count, duplicate.duplicate_count) == (0, 1)
+    with pytest.raises(ObservationConflictError):
+        final.ingest_batch(
+            "conflicting-job", [original.model_copy(update={"source_job_id": "job-2"})]
+        )
+    with build_session_factory(engine3)() as session:
+        assert session.scalar(select(func.count()).select_from(ProductObservationRow)) == 2
+        assert session.scalar(select(func.count()).select_from(IngestionBatchRow)) == 3
+        assert set(session.scalars(select(ProductObservationRow.source_job_id))) == {"job-1"}
+    engine3.dispose()

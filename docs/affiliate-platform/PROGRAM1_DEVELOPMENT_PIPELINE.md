@@ -48,7 +48,7 @@ Local verification is sequential to avoid coverage-file contention; CI isolates 
 
 ## Live acceptance boundary
 
-The browser stage uses Chromium/local fixtures/mock Back Office. It is not visible Brave acceptance, real SQLite browser E2E proof, or Shopee profile promotion. Reports explicitly record `live_brave_shopee_acceptance: NOT_RUN`.
+The browser stage uses Chromium/local fixtures with mock job lifecycle. The P1-C-ACK follow-up adds real SQLite ingestion/receipt replay and panel receipt restoration to this laboratory. It is not visible Brave acceptance or Shopee profile promotion. Reports explicitly record `live_brave_shopee_acceptance: NOT_RUN`.
 
 For runtime/product slices, separately test in visible Brave using the existing user profile. Verify saved observations/receipts/checkpoints and distinguish new product identities, new observations, exact duplicate observations and delivered batches. Never infer these from UI counters. Pagination/DOM changes require real sanitized evidence and fail closed on access-control challenges.
 

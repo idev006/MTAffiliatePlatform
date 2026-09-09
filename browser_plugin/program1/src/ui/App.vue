@@ -16,7 +16,7 @@ onMounted(() => {
         <h1 class="text-sm font-bold tracking-wide">Program 1 Worker</h1>
         <span
           id="registryStatus"
-          class="badge badge-outline badge-sm max-w-40 truncate font-normal"
+          class="badge badge-outline badge-sm h-auto max-w-48 shrink-0 whitespace-normal break-words py-1 text-right font-normal"
           :title="process.registryText"
         >
           {{ process.registryText }}
@@ -50,7 +50,7 @@ onMounted(() => {
       </nav>
     </header>
 
-    <main class="flex-1 px-3 py-3">
+    <main class="min-w-0 flex-1 px-3 py-3">
       <RouterView />
     </main>
   </div>

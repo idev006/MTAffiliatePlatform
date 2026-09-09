@@ -140,6 +140,8 @@ Rule:
 Collection targets describe bounded operational work. They must not embed DOM selectors or browser implementation policy.
 
 ### IngestProductObservationBatch
+Additive ACK v2 accounting and compatibility are governed by `PROGRAM1_ACK_ACCOUNTING_CONTRACT.md`. The atomic receipt distinguishes newly inserted observations from exact duplicates; both are durably accounted. Neither count is a new-product metric.
+
 Input:
 - batch_id
 - worker/source provenance

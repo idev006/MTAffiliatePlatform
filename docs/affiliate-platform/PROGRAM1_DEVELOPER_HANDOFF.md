@@ -85,7 +85,7 @@ Verified baseline:
 - typed QualifiedOpportunityHandoff to Program 2;
 - durable outbox delivery classification + poison-message quarantine;
 - Collection Router + versioned fixture/search/category/shop/PDP profiles with evidence-stage gating;
-- Program 1 extension **0.1.26** with current CI-authoritative Node suite;
+- Program 1 extension **0.1.27** with current CI-authoritative Node suite;
 - real Playwright Chromium MV3 restart/reconcile CI: page-1 ACK/checkpoint -> browser restart -> startup reconcile/renew -> stale-tab recovery -> page-2 ACK/checkpoint -> verify/complete;
 - deterministic Program 1 -> Program 2 -> Program 3 closed-loop contract;
 - Program 1/2/3 conformance gates.

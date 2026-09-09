@@ -53,6 +53,7 @@ export const useProcessStore = defineStore("process", {
     activeTargetTabId: null,
     countdownSeconds: null,
     lastPayload: null,
+    lastDeliveryReceipt: null,
     activity: [],
   }),
 
@@ -115,6 +116,7 @@ export const useProcessStore = defineStore("process", {
 
     async refreshStatus() {
       const response = await bridge.sendRuntimeMessage({ type: "PROGRAM1_GET_PROCESS_STATUS" });
+      this.lastDeliveryReceipt = response?.last_delivery_receipt || null;
       this.setView(processViewFromStatus(response, this.indicators(0)));
       if (response?.run_state) {
         this.applyRunState(response.run_state);
@@ -137,6 +139,11 @@ export const useProcessStore = defineStore("process", {
       this.sessionStartedAt = runState.session_started_at ?? this.sessionStartedAt;
       if (runState.last_step) this.step = runState.last_step;
       if (runState.last_error) this.lastError = runState.last_error;
+    },
+
+    async refreshDeliveryReceipt() {
+      const response = await bridge.sendRuntimeMessage({ type: "PROGRAM1_GET_PROCESS_STATUS" });
+      this.lastDeliveryReceipt = response?.ok ? response.last_delivery_receipt || null : null;
     },
 
     async persistRunState(desired = this.autoRunning, extra = {}) {
@@ -204,6 +211,7 @@ export const useProcessStore = defineStore("process", {
       });
       await this.persistRunState(this.autoRunning);
       this.show(response);
+      await this.refreshDeliveryReceipt();
       return response;
     },
 
@@ -288,10 +296,11 @@ export const useProcessStore = defineStore("process", {
           processViewFromCapture(
             response,
             queueResponse,
-            this.indicators(queueResponse?.flush?.accepted_observation_count || 0),
+            this.indicators(queueResponse?.receipt?.accepted_count || 0),
           ),
         );
         await this.persistRunState(this.autoRunning);
+        await this.refreshDeliveryReceipt();
         const result = {
           ...captureStatus(response, queueResponse),
           pagination: response?.pagination || null,

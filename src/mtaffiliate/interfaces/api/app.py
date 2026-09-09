@@ -448,9 +448,12 @@ def create_app(
             except (IngestionBatchConflictError, ObservationConflictError) as exc:
                 raise HTTPException(status_code=409, detail=str(exc)) from exc
             return {
+                "ack_schema_version": "program1-observation-ack-v2",
                 "batch_id": batch.batch_id,
                 "received_count": result.received_count,
                 "accepted_count": result.accepted_count,
+                "duplicate_count": result.duplicate_count,
+                "accounted_count": result.accounted_count,
             }
 
         @app.get("/api/v1/program1/shortlist", response_model=list[ShortlistEntry])

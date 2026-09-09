@@ -263,13 +263,20 @@ export function createBackgroundExecutionController({
         return { ok: false, delivery, run_state: stopped };
       }
 
+      const receipt = delivery.receipt;
+      if (!receipt || receipt.batch_id !== batchId || receipt.accounted_count !== observations.length) {
+        throw new Error("ACK_CURRENT_BATCH_RECEIPT_MISSING");
+      }
+
       await lifecycle.checkpoint(
         settings.worker_id,
         "OBSERVATION_BATCH_ACK",
         {
           batch_id: batchId,
           received_count: observations.length,
-          accepted_count: delivery?.flush?.accepted_observation_count ?? observations.length,
+          accepted_count: receipt.accepted_count,
+          duplicate_count: receipt.duplicate_count,
+          accounted_count: receipt.accounted_count,
           page_url: capture.page_url || targetUrl,
           pagination: capture.pagination || null,
         },
@@ -280,7 +287,7 @@ export function createBackgroundExecutionController({
       const nextCycleCount = stateAfterAck?.cycle_count || 0;
       const nextAccepted =
         (stateAfterAck?.session_accepted_count || 0) +
-        (delivery?.flush?.accepted_observation_count || 0);
+        receipt.accepted_count;
 
       if (capture.pagination?.has_next === false) {
         const completed = await lifecycle.verifyAndComplete(settings.worker_id);

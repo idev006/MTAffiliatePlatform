@@ -30,7 +30,7 @@ export function withWorkerId(observations, workerIdValue) {
 }
 
 export function captureStatus(captureResponse, queueResponse) {
-  const acceptedObservationCount = queueResponse?.flush?.accepted_observation_count || 0;
+  const acceptedObservationCount = queueResponse?.receipt?.accepted_count || 0;
   return {
     ok: Boolean(queueResponse?.ok),
     capture: {

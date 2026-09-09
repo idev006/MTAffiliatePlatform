@@ -4,7 +4,38 @@ import test from "node:test";
 import {
   classifyDeliveryFailure,
   drainObservationOutbox,
+  validateObservationBatchAck,
 } from "../src/delivery_reliability.mjs";
+
+const v2 = { ack_schema_version: "program1-observation-ack-v2", batch_id: "b",
+  received_count: 2, accepted_count: 1, duplicate_count: 1, accounted_count: 2 };
+const batch = { batch_id: "b", observations: [{}, {}] };
+
+test("v2 validates mixed, duplicate-only and empty accounted receipts", () => {
+  assert.equal(validateObservationBatchAck(batch, v2).duplicate_count, 1);
+  assert.equal(validateObservationBatchAck(batch, { ...v2, accepted_count: 0,
+    duplicate_count: 2 }).accounted_count, 2);
+  assert.equal(validateObservationBatchAck({ batch_id: "b", observations: [] }, {
+    ...v2, received_count: 0, accepted_count: 0, duplicate_count: 0, accounted_count: 0,
+  }).accounted_count, 0);
+});
+
+test("malformed and unknown v2 receipts fail closed", () => {
+  for (const patch of [
+    { accepted_count: -1, duplicate_count: 3 }, { accepted_count: "1" },
+    { accepted_count: 0.5, duplicate_count: 1.5 }, { duplicate_count: null },
+    { duplicate_count: 0 }, { accounted_count: 1 }, { accounted_count: "2" },
+    { ack_schema_version: "future" }, { ack_schema_version: null },
+    { batch_id: "other" }, { received_count: 3 },
+  ]) assert.throws(() => validateObservationBatchAck(batch, { ...v2, ...patch }), /ACK_/);
+});
+
+test("legacy compatibility does not infer duplicates or trust extra unversioned counts", () => {
+  const legacy = { batch_id: "b", received_count: 2, accepted_count: 2, duplicate_count: 99 };
+  assert.equal(validateObservationBatchAck(batch, legacy).duplicate_count, 0);
+  assert.throws(() => validateObservationBatchAck(batch, { ...legacy, accepted_count: 1 }),
+    /ACK_ACCEPTED_COUNT_MISMATCH/);
+});
 
 test("classifies payload errors for quarantine and contract/auth/transient errors for stop", () => {
   assert.equal(classifyDeliveryFailure(new Error("HTTP_422")).action, "QUARANTINE_CONTINUE");

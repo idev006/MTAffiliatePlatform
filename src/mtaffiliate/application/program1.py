@@ -20,6 +20,15 @@ class IngestResult:
     accepted_count: int
     received_count: int
 
+    @property
+    def duplicate_count(self) -> int:
+        """Exact entries already represented at the original atomic commit."""
+        return self.received_count - self.accepted_count
+
+    @property
+    def accounted_count(self) -> int:
+        return self.received_count
+
 
 class _EphemeralBatchIngestor:
     """Atomic within one process; production composition injects a durable ingestor."""

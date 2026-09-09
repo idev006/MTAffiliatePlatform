@@ -119,6 +119,9 @@ function buildHarness({
       return (
         deliveryResult || {
           ok: true,
+          receipt: { batch_id: payload.batch_id, received_count: payload.observations.length,
+            accepted_count: payload.observations.length, duplicate_count: 0,
+            accounted_count: payload.observations.length },
           flush: {
             accepted_observation_count: payload.observations.length,
             remaining_count: 0,
@@ -221,6 +224,34 @@ test("loaded cycle captures, delivers, checkpoints and advances using alarm", as
   assert.equal(h.getRunState().session_accepted_count, 1);
   assert.equal(h.wakes.at(-1), 1_800_000_030_000);
   assert.ok(h.calls.some((call) => call[0] === "checkpoint"));
+});
+
+test("background checkpoint uses duplicate-only current receipt despite backlog totals", async () => {
+  const h = buildHarness({ activeJob, deliveryResult: {
+    ok: true,
+    receipt: { batch_id: "batch-1", received_count: 1, accepted_count: 0,
+      duplicate_count: 1, accounted_count: 1 },
+    flush: { accepted_observation_count: 99 },
+  } });
+  h.setRunState({ desired: true, active_target_tab_id: 77,
+    current_target_url: "https://example.invalid/list?page=0", session_accepted_count: 4 });
+  const result = await h.controller.runOneCycle();
+  assert.equal(result.ok, true);
+  const checkpoint = h.calls.find(call => call[0] === "checkpoint")[3];
+  assert.equal(checkpoint.accepted_count, 0);
+  assert.equal(checkpoint.duplicate_count, 1);
+  assert.equal(h.getRunState().session_accepted_count, 4);
+});
+
+test("background cannot checkpoint a delivery without the current batch receipt", async () => {
+  const h = buildHarness({ activeJob, deliveryResult: { ok: true,
+    flush: { accepted_observation_count: 1 } } });
+  h.setRunState({ desired: true, active_target_tab_id: 77,
+    current_target_url: "https://example.invalid/list?page=0" });
+  const result = await h.controller.runOneCycle();
+  assert.equal(result.ok, false);
+  assert.equal(result.error, "ACK_CURRENT_BATCH_RECEIPT_MISSING");
+  assert.equal(h.calls.some(call => call[0] === "checkpoint"), false);
 });
 
 test("last page verifies, completes and clears desired run state", async () => {

@@ -2,6 +2,31 @@ function messageOf(error) {
   return error && typeof error.message === "string" ? error.message : String(error);
 }
 
+export function validateObservationBatchAck(payload, ack) {
+  const count = payload?.observations?.length || 0;
+  if (ack?.batch_id !== payload?.batch_id) throw new Error("ACK_BATCH_ID_MISMATCH");
+  if (ack?.received_count !== count) throw new Error("ACK_RECEIVED_COUNT_MISMATCH");
+  if (ack.ack_schema_version === undefined) {
+    if (ack.accepted_count !== count) throw new Error("ACK_ACCEPTED_COUNT_MISMATCH");
+  } else {
+    if (ack.ack_schema_version !== "program1-observation-ack-v2") {
+      throw new Error("ACK_SCHEMA_VERSION_UNSUPPORTED");
+    }
+    const counts = [ack.accepted_count, ack.duplicate_count, ack.accounted_count];
+    if (counts.some((value) => !Number.isSafeInteger(value) || value < 0) ||
+        ack.accounted_count !== count ||
+        ack.accepted_count + ack.duplicate_count !== count) {
+      throw new Error("ACK_ACCOUNTED_COUNT_MISMATCH");
+    }
+  }
+  return {
+    ack_schema_version: ack.ack_schema_version || "legacy",
+    batch_id: ack.batch_id, received_count: count, accepted_count: ack.accepted_count,
+    duplicate_count: ack.ack_schema_version === undefined ? 0 : ack.duplicate_count,
+    accounted_count: count,
+  };
+}
+
 export function classifyDeliveryFailure(error) {
   const message = messageOf(error);
   if (message.startsWith("ACK_")) {
@@ -38,6 +63,9 @@ export async function drainObservationOutbox({
   let sentCount = 0;
   let quarantinedCount = 0;
   let acceptedObservationCount = 0;
+  let duplicateObservationCount = 0;
+  let accountedObservationCount = 0;
+  const receipts = [];
   const sentMessageIds = [];
   const quarantinedMessageIds = [];
   let lastFailure = null;
@@ -47,11 +75,14 @@ export async function drainObservationOutbox({
     attemptedCount += 1;
     try {
       const ack = await deliver(message);
-      validateAck(message.payload, ack);
-      await remove(message.message_id);
+      const receipt = validateAck(message.payload, ack) || ack;
+      await remove(message.message_id, receipt);
       sentCount += 1;
       sentMessageIds.push(message.message_id);
-      acceptedObservationCount += ack.accepted_count;
+      receipts.push({ message_id: message.message_id, ...receipt });
+      acceptedObservationCount += receipt.accepted_count;
+      duplicateObservationCount += receipt.duplicate_count ?? 0;
+      accountedObservationCount += receipt.accounted_count ?? receipt.received_count;
     } catch (error) {
       const classified = classifyDeliveryFailure(error);
       lastFailure = { ...classified, message_id: message.message_id };
@@ -77,6 +108,9 @@ export async function drainObservationOutbox({
     quarantined_count: quarantinedCount,
     quarantined_message_ids: quarantinedMessageIds,
     accepted_observation_count: acceptedObservationCount,
+    duplicate_observation_count: duplicateObservationCount,
+    accounted_observation_count: accountedObservationCount,
+    receipts,
     last_failure: lastFailure,
     blocking_failure: blockingFailure,
   };
