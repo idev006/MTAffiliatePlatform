@@ -154,3 +154,9 @@ Next sequence: (1) validate Search image association and pagination from fresh e
 ## P1-UI-FIND — 2026-09-14
 
 - [ ] IN VERIFY: bounded literal product search by latest name/identity, filtering before pagination. API tests and Brave match/empty scenarios pass; code `247bbb4` CI #679 PASS (run `34815019063`). Local automated browser spawn limitation remains open; see operator review verification. No scoring or product identity semantics changed.
+
+## P1-UI-JOBS — 2026-09-14
+
+- [ ] IN VERIFY: bounded Program1 job monitor with Thai state/guidance, persisted checkpoint/failure diagnostics and horizontal table overflow. Governing: PROGRAM1_OPERATOR_JOBS_CONTRACT.md.
+- [ ] HIGH follow-up: cooperative operator pause does not conform to section 7.2 of JOB_LEASE_PAUSE_RESUME_SPEC; see CAPA PL-2026-015. Existing P1-B foundation completion is not proof of this operator acceptance scenario. Controls remain unexposed until resolved.
+

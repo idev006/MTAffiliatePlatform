@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from mtaffiliate.application.program1_jobs import Program1DiscoveryJobService
@@ -92,6 +92,19 @@ def build_shared_job_router(
         return HTTPException(status_code=500, detail="unexpected job lifecycle error")
 
     if program1_jobs is not None:
+
+        @router.get("/program1/discovery-jobs")
+        def list_program1_discovery_jobs(
+            limit: int = Query(default=20, ge=1, le=100),
+            offset: int = Query(default=0, ge=0),
+        ) -> dict[str, object]:
+            items, total = program1_jobs.list_discovery_jobs(limit=limit, offset=offset)
+            return {
+                "items": [job.model_dump(mode="json", exclude={"lease_token"}) for job in items],
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+            }
 
         @router.post("/program1/discovery-jobs", response_model=JobRecord)
         def create_program1_discovery_job(request: Program1DiscoveryJobRequest) -> JobRecord:

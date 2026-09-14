@@ -316,3 +316,11 @@ Every meaningful defect, near miss, design miss, CI gate failure or operational 
 - Correction: align manual injection with background dependency order. No Shopee profile changes.
 - Prevention: execute actual manual-injected files on a fresh VM and assert the receiver exists and remains singular after reinjection.
 - Evidence: live Brave missing-receiver screenshot; automated regression passes. Live recapture remains pending extension reload.
+
+## PL-2026-015 — Operator pause semantics do not yet match cooperative pause specification
+- Date: 2026-09-14. Status: OPEN, HIGH for operator pause acceptance.
+- Evidence: SharedJobEngine.pause_job immediately writes PAUSED and clears lease fields; specs/JOB_LEASE_PAUSE_RESUME_SPEC.md section 7.2 requires pause request, completion of safe unit, checkpoint, then release. Existing tests prove immediate revocation, not cooperative pause.
+- Root cause: implemented lifecycle subset was reported as complete without distinguishing graceful operator pause from immediate lease revocation.
+- Containment: P1-UI-JOBS is read-only; do not expose a misleading safe-pause control or certify full Program1 completion.
+- Required correction: define durable pause request/worker reconciliation, preserve ACK-before-checkpoint ordering, test pause during capture and Back Office/browser restart, stale lease rejection, lost response, resume from last acknowledged safe unit. Reconcile governing documents before enabling controls.
+- Prevention: acceptance matrix must test operator-triggered pause during in-flight work rather than only direct engine transitions. No thresholds weakened.

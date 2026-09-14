@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick } from "vue";
+import JobMonitor from "./JobMonitor.vue";
 
 const items = ref([]), total = ref(0), offset = ref(0), loading = ref(false), error = ref("");
 const selected = ref(null), history = ref([]), historyError = ref(""), historyLoading = ref(false);
@@ -43,6 +44,7 @@ onMounted(() => load());
 
 <template>
   <main class="mx-auto max-w-7xl space-y-5 p-4 sm:p-6">
+    <JobMonitor />
     <header class="flex flex-wrap items-start justify-between gap-3">
       <div><p class="text-sm text-base-content/60">Program 1 · Back Office</p><h1 class="text-2xl font-bold">ตรวจข้อมูลสินค้า</h1><p class="mt-1 text-sm">ข้อมูลล่าสุดที่บันทึกจริง พร้อมประวัติและแหล่งที่มา</p></div>
       <button class="btn btn-outline btn-sm" :disabled="loading" @click="load()">อ่านข้อมูลล่าสุด</button>
