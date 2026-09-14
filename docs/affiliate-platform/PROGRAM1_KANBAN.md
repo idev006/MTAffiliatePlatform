@@ -150,3 +150,7 @@ Next sequence: (1) validate Search image association and pagination from fresh e
 ## P1-UI-READ — 2026-09-09
 
 - [ ] IN VERIFY: read-only daisyUI product/history screen, bounded latest-product API, same-origin Program1-only static UI. Live Brave readback succeeded; full gates/CI recorded in PROGRAM1_OPERATOR_REVIEW_VERIFICATION_2026-09-09.md.
+
+## P1-UI-FIND — 2026-09-14
+
+- [ ] IN VERIFY: bounded literal product search by latest name/identity, filtering before pagination. API tests and Brave match/empty scenarios pass; CI recorded in operator review verification. No scoring or product identity semantics changed.

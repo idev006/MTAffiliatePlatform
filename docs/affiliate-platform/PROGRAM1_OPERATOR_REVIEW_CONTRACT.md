@@ -41,3 +41,9 @@ sequenceDiagram
 ```
 
 Acceptance: bounded/order/API tests, frontend build/suites, runtime static mount separation, browser read-only review of actual stored data when available, standard gates and explicit remaining evidence. CRITICAL/HIGH open design issues: zero for this read-only scope.
+
+## P1-UI-FIND — 2026-09-14
+
+Add bounded query q (maximum 200 characters) to latest-product evidence. Trim and Unicode-casefold; literal substring match against latest product_name, platform, shop_id or item_id only. Filter before counting/paging; total means matching product keys, not observations or new products. Empty query retains existing behavior. No wildcard interpretation or scoring. UI applies search explicitly, resets offset to zero and retains applied query across paging/refresh; failed reads remain errors. Existing memory-backed repository query limitation remains documented.
+
+Sequence: Operator submits text -> UI sends q and offset=0 -> API validates bounds -> application filters latest observations -> repository facts remain unchanged -> UI presents matching count and rows/empty/error. Tests must cover case/Thai text, identity, latest-only matching, literal wildcard characters and count/page consistency.

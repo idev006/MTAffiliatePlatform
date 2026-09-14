@@ -124,9 +124,20 @@ class Program1Service:
         return list(reversed(history[-limit:]))
 
     def product_evidence_page(
-        self, *, limit: int = 50, offset: int = 0
+        self, *, limit: int = 50, offset: int = 0, q: str = ""
     ) -> tuple[list[ProductObservation], int]:
         if not 1 <= limit <= 100 or offset < 0:
             raise ValueError("invalid product evidence page bounds")
+        if len(q) > 200:
+            raise ValueError("product evidence query exceeds 200 characters")
+        query = q.strip().casefold()
         items = sorted(self.repository.latest_observations(), key=lambda item: item.canonical_key)
+        if query:
+            items = [
+                item
+                for item in items
+                if any(
+                    query in value.casefold() for value in (item.product_name, *item.canonical_key)
+                )
+            ]
         return items[offset : offset + limit], len(items)

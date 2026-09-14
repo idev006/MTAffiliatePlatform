@@ -82,3 +82,39 @@ def test_product_evidence_page_is_ordered_bounded_and_latest() -> None:
     for limit, offset in [(0, 0), (101, 0), (1, -1)]:
         with pytest.raises(ValueError):
             service.product_evidence_page(limit=limit, offset=offset)
+
+
+def test_product_search_matches_latest_facts_before_paging() -> None:
+    from mtaffiliate.domain.product.models import ProductObservation
+
+    service = build_inmemory_program1(Settings())
+    for hour, (oid, key, name) in enumerate(
+        [
+            ("old", "a", "retired name"),
+            ("new", "a", "SSD รุ่นใหม่"),
+            ("second", "b", "ssd storage"),
+            ("literal", "c", "100% disk"),
+        ]
+    ):
+        service.ingest(
+            [
+                ProductObservation(
+                    observation_id=oid,
+                    platform="shopee",
+                    shop_id="shop42",
+                    item_id=key,
+                    product_name=name,
+                    collected_at=datetime(2026, 9, 9, hour, tzinfo=UTC),
+                )
+            ]
+        )
+    client = TestClient(create_app(Settings(), program1=service))
+    url = "/api/v1/program1/products"
+    result = client.get(url, params={"q": " SSD ", "limit": 1, "offset": 1}).json()
+    assert result["total"] == 2
+    assert [row["item_id"] for row in result["items"]] == ["b"]
+    for query, expected in [("รุ่นใหม่", 1), ("SHOP42", 3), ("retired name", 0), ("%", 1), ("   ", 3)]:
+        assert client.get(url, params={"q": query}).json()["total"] == expected
+    assert client.get(url, params={"q": "x" * 201}).status_code == 422
+    with pytest.raises(ValueError, match="200"):
+        service.product_evidence_page(q="x" * 201)

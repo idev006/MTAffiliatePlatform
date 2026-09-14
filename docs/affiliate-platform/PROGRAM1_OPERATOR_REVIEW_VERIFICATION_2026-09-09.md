@@ -11,3 +11,11 @@ Local full report runtime/verification/20260909T053816Z-f4cf47bc/report.json: st
 Remaining: live image extraction, worker/job management UI, real pagination/restart acceptance, product-level search/filter and database-level pagination. This screen is not the complete Program1 application.
 
 Code commit 0be398b0fb4b7c8b6b9bb07952c2e8d5bb33fa49 CI PASS: https://github.com/idev006/MTAffiliatePlatform/actions/runs/34315858473. Draft PR #45. Read-only review slice verified; broader Program1 acceptance remains open.
+
+## P1-UI-FIND — 2026-09-14
+
+Added literal case-insensitive latest-product search by name/platform/shop/item. Applied query persists across paging/refresh and resets offset on explicit search. Unknown result is distinguished from read failure. Contract amendment precedes code; sequence is described in PROGRAM1_OPERATOR_REVIEW_CONTRACT.md.
+
+Tests: API cases cover Thai, case, literal %, latest-only search, bounded query, count-before-page. Core 298 passed/95.09%; SQLite, stress, extension and static pass in runtime/verification/20260914T064632Z-761b7b37/report.json. Local Chromium fails spawn UNKNOWN; full local report remains FAILED. Final extension build/suites pass in runtime/verification/20260914T064804Z-7dfa0ec8/report.json.
+
+Actual Brave existing profile: initial 751 product keys, query 44250274664 returns exactly one stored product, nonmatching query returns zero with explicit query text. Back Office started on port 8001 using approved .venv. No database changes/migration or Shopee collection in this slice. CI pending current commit.

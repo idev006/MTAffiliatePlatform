@@ -4,6 +4,7 @@ import { ref, onMounted, nextTick } from "vue";
 const items = ref([]), total = ref(0), offset = ref(0), loading = ref(false), error = ref("");
 const selected = ref(null), history = ref([]), historyError = ref(""), historyLoading = ref(false);
 const historySection = ref(null);
+const searchText = ref(""), appliedSearch = ref("");
 const limit = 20;
 let historyRequest = 0;
 function safeLink(value) {
@@ -17,11 +18,11 @@ async function read(path) {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();
 }
-async function load(next = offset.value) {
+async function load(next = offset.value, query = appliedSearch.value) {
   loading.value = true; error.value = ""; selected.value = null; historyRequest++;
   try {
-    const result = await read(`/api/v1/program1/products?limit=${limit}&offset=${next}`);
-    items.value = result.items; total.value = result.total; offset.value = next;
+    const result = await read(`/api/v1/program1/products?limit=${limit}&offset=${next}&q=${encodeURIComponent(query)}`);
+    items.value = result.items; total.value = result.total; offset.value = next; appliedSearch.value = query;
   } catch (failure) { error.value = `อ่านข้อมูลไม่ได้ (${failure.message}) กรุณาลองใหม่`; }
   finally { loading.value = false; }
 }
@@ -47,11 +48,16 @@ onMounted(() => load());
       <button class="btn btn-outline btn-sm" :disabled="loading" @click="load()">อ่านข้อมูลล่าสุด</button>
     </header>
     <p class="text-sm text-base-content/70">หนึ่งแถวต่อรหัสสินค้าที่ระบบบันทึกไว้ ภาพเป็น URL อ้างอิงเท่านั้น ยังไม่ได้ดาวน์โหลดไฟล์หรือยืนยันสิทธิ์ใช้งาน</p>
+    <form class="flex flex-wrap items-end gap-2" @submit.prevent="load(0, searchText.trim())">
+      <label class="form-control min-w-0 flex-1"><span class="label text-sm">ค้นหาชื่อสินค้า รหัสร้าน หรือรหัสสินค้า</span><input v-model="searchText" type="search" maxlength="200" class="input input-bordered w-full" :disabled="loading" /></label>
+      <button class="btn btn-primary" :disabled="loading" type="submit">ค้นหา</button>
+      <button class="btn btn-ghost" :disabled="loading" type="button" @click="searchText = ''; load(0, '')">ล้างค้นหา</button>
+    </form>
     <p v-if="loading" role="status" class="flex items-center gap-2"><span class="loading loading-spinner loading-sm"></span>กำลังอ่านข้อมูลจาก Back Office</p>
     <div v-else-if="error" role="alert" class="alert alert-error"><span>{{ error }}</span><button class="btn btn-sm" @click="load()">ลองใหม่</button></div>
     <template v-else>
-      <p role="status" class="text-sm">มี {{ total }} รหัสสินค้าในข้อมูลที่บันทึก</p>
-      <p v-if="!items.length" class="rounded-box border border-base-300 p-6">ไม่มีรายการในหน้านี้ ให้เก็บข้อมูลผ่าน worker หรือกลับไปหน้าแรก <button v-if="offset" class="btn btn-sm" @click="load(0)">หน้าแรก</button></p>
+      <p role="status" class="text-sm">พบ {{ total }} รหัสสินค้า<span v-if="appliedSearch"> สำหรับ “{{ appliedSearch }}”</span><span v-else>ในข้อมูลที่บันทึก</span></p>
+      <p v-if="!items.length" class="rounded-box border border-base-300 p-6"><span v-if="appliedSearch">ไม่พบสินค้าในหน้านี้ ลองเปลี่ยนคำค้นหาหรือล้างค้นหา</span><span v-else>ไม่มีรายการในหน้านี้ ให้เก็บข้อมูลผ่าน worker หรือกลับไปหน้าแรก</span> <button v-if="offset" class="btn btn-sm" @click="load(0)">หน้าแรก</button></p>
       <div v-else class="max-w-full overflow-x-auto rounded-box border border-base-300 focus-visible:outline-2 focus-visible:outline-primary" tabindex="0" role="region" aria-label="ตารางสินค้า เลื่อนแนวนอนเพื่อดูทุกคอลัมน์">
         <table class="table table-zebra min-w-[960px]">
           <caption class="p-3 text-left text-xs">เลื่อนแนวนอนเพื่อดูทุกคอลัมน์ ↔ · เลือกประวัติเพื่อตรวจ observations</caption>
