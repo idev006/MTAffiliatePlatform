@@ -153,4 +153,4 @@ Next sequence: (1) validate Search image association and pagination from fresh e
 
 ## P1-UI-FIND — 2026-09-14
 
-- [ ] IN VERIFY: bounded literal product search by latest name/identity, filtering before pagination. API tests and Brave match/empty scenarios pass; CI recorded in operator review verification. No scoring or product identity semantics changed.
+- [ ] IN VERIFY: bounded literal product search by latest name/identity, filtering before pagination. API tests and Brave match/empty scenarios pass; code `247bbb4` CI #679 PASS (run `34815019063`). Local automated browser spawn limitation remains open; see operator review verification. No scoring or product identity semantics changed.

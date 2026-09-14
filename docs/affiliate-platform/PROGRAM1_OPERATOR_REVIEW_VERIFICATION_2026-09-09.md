@@ -18,4 +18,8 @@ Added literal case-insensitive latest-product search by name/platform/shop/item.
 
 Tests: API cases cover Thai, case, literal %, latest-only search, bounded query, count-before-page. Core 298 passed/95.09%; SQLite, stress, extension and static pass in runtime/verification/20260914T064632Z-761b7b37/report.json. Local Chromium fails spawn UNKNOWN; full local report remains FAILED. Final extension build/suites pass in runtime/verification/20260914T064804Z-7dfa0ec8/report.json.
 
-Actual Brave existing profile: initial 751 product keys, query 44250274664 returns exactly one stored product, nonmatching query returns zero with explicit query text. Back Office started on port 8001 using approved .venv. No database changes/migration or Shopee collection in this slice. CI pending current commit.
+Actual Brave existing profile: initial 751 product keys, query 44250274664 returns exactly one stored product, nonmatching query returns zero with explicit query text. Back Office started on port 8001 using approved .venv. No database changes/migration or Shopee collection in this slice.
+
+Code commit 247bbb45ef7c0a6831de137ff428d032244106c7: CI #679 completed successfully, freshly verified on 2026-09-14: https://github.com/idev006/MTAffiliatePlatform/actions/runs/34815019063. This verifies the search implementation; the local browser launch failure remains an explicit environment limitation, not a local full PASS. Search is implemented and CI-verified; Kanban remains IN VERIFY until the documented local gate limitation is resolved. No new RCA/CAPA defect was established during this evidence reconciliation.
+
+Continuation: database-level filtering/pagination remains a scalability gap; worker/job management UI and real Shopee image/pagination acceptance remain separate incomplete slices. Do not infer Program 1 completion from this read-only screen.
