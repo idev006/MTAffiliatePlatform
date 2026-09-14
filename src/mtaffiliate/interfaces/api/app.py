@@ -411,6 +411,16 @@ def create_app(
 
     if "program1" in enabled:
 
+        @app.get("/api/v1/program1/products")
+        def product_evidence_page(
+            limit: int = Query(default=50, ge=1, le=100),
+            offset: int = Query(default=0, ge=0),
+            q: str = Query(default="", max_length=200),
+        ) -> dict[str, object]:
+            assert service1 is not None
+            items, total = service1.product_evidence_page(limit=limit, offset=offset, q=q)
+            return {"items": items, "total": total, "limit": limit, "offset": offset}
+
         @app.get(
             "/api/v1/program1/products/{platform}/{shop_id}/{item_id}/observations",
             response_model=list[ProductObservation],

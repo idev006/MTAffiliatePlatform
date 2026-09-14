@@ -18,7 +18,10 @@ export default defineConfig({
     outDir: resolve(projectRoot, "dist"),
     emptyOutDir: true,
     rollupOptions: {
-      input: resolve(uiRoot, "sidepanel.html"),
+      input: {
+        sidepanel: resolve(uiRoot, "sidepanel.html"),
+        backoffice: resolve(uiRoot, "backoffice.html"),
+      },
     },
     target: "chrome124",
   },

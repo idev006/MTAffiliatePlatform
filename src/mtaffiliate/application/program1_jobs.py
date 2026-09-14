@@ -29,6 +29,22 @@ class Program1DiscoveryJobService:
         self.strategy_repository = strategy_repository
         self.jobs = jobs
 
+    def list_discovery_jobs(
+        self, *, limit: int = 20, offset: int = 0
+    ) -> tuple[list[JobRecord], int]:
+        if not 1 <= limit <= 100 or offset < 0:
+            raise ValueError("limit must be 1..100 and offset non-negative")
+        matching = sorted(
+            (
+                job
+                for job in self.jobs.repository.list_jobs()
+                if job.domain == self.DOMAIN and job.job_type == self.JOB_TYPE
+            ),
+            key=lambda job: (job.created_at, job.job_id),
+            reverse=True,
+        )
+        return matching[offset : offset + limit], len(matching)
+
     def create_discovery_job(
         self,
         *,

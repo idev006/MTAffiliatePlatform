@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -115,6 +116,50 @@ def create_payload() -> dict[str, object]:
     }
 
 
+def test_operator_job_page_is_bounded_and_hides_lease_token() -> None:
+    c = client()
+    assert c.get("/api/v1/program1/discovery-jobs").json()["total"] == 0
+    assert c.post("/api/v1/program1/discovery-jobs", json=create_payload()).status_code == 200
+    c.post("/api/v1/jobs/job-1/lease", json={"worker_id": "worker-1"})
+    page = c.get("/api/v1/program1/discovery-jobs?limit=1").json()
+    assert page["total"] == 1
+    assert page["items"][0]["state"] == "LEASED"
+    assert "lease_token" not in page["items"][0]
+    assert c.get("/api/v1/program1/discovery-jobs?offset=1").json()["items"] == []
+    for query in ("limit=0", "limit=101", "offset=-1"):
+        assert c.get(f"/api/v1/program1/discovery-jobs?{query}").status_code == 422
+
+
+def test_operator_job_page_filters_domain_and_type_before_count_and_order() -> None:
+    engine = SharedJobEngine(InMemoryJobRepository())
+    service = Program1DiscoveryJobService(
+        Program1StrategyPlanner(), InMemoryProgram1StrategyRepository(), engine
+    )
+    for job_id, domain, job_type in (
+        ("a", "program1", "DISCOVER_PRODUCTS"),
+        ("b", "program1", "DISCOVER_PRODUCTS"),
+        ("c", "program2", "DISCOVER_PRODUCTS"),
+        ("d", "program1", "OTHER"),
+    ):
+        engine.create_job(
+            job_id=job_id,
+            domain=domain,
+            job_type=job_type,
+            payload_ref=job_id,
+            idempotency_key=job_id,
+            created_at=NOW,
+        )
+    first, total = service.list_discovery_jobs(limit=1)
+    assert total == 2
+    assert [job.job_id for job in first] == ["b"]
+    second, total = service.list_discovery_jobs(limit=1, offset=1)
+    assert total == 2
+    assert [job.job_id for job in second] == ["a"]
+    for limit, offset in ((0, 0), (101, 0), (1, -1)):
+        with pytest.raises(ValueError):
+            service.list_discovery_jobs(limit=limit, offset=offset)
+
+
 def test_full_api_lifecycle_without_ui() -> None:
     c = client()
     created = c.post("/api/v1/program1/discovery-jobs", json=create_payload())
@@ -171,10 +216,13 @@ def test_pause_resume_requires_new_lease() -> None:
         json={"worker_id": "worker-1"},
     ).json()
     token = leased["lease_token"]
-    assert c.post(
-        "/api/v1/jobs/job-1/start",
-        json={"worker_id": "worker-1", "lease_token": token},
-    ).status_code == 200
+    assert (
+        c.post(
+            "/api/v1/jobs/job-1/start",
+            json={"worker_id": "worker-1", "lease_token": token},
+        ).status_code
+        == 200
+    )
 
     paused = c.post("/api/v1/jobs/job-1/pause")
     assert paused.status_code == 200
@@ -203,12 +251,8 @@ def test_incompatible_worker_cannot_lease_job() -> None:
     incompatible_payload["idempotency_key"] = "campaign-1:plan-2"
     incompatible_payload["discovery_plan_ref"] = "program1-plan:plan-2:v1"
     incompatible_payload["discovery_plan"]["plan_id"] = "plan-2"
-    incompatible_payload["discovery_plan"]["capability_requirements"] = [
-        "collector:shop-lab"
-    ]
-    assert c.post(
-        "/api/v1/program1/discovery-jobs", json=incompatible_payload
-    ).status_code == 200
+    incompatible_payload["discovery_plan"]["capability_requirements"] = ["collector:shop-lab"]
+    assert c.post("/api/v1/program1/discovery-jobs", json=incompatible_payload).status_code == 200
     denied = c.post("/api/v1/jobs/job-2/lease", json={"worker_id": "worker-1"})
     assert denied.status_code == 409
     assert "lacks required capabilities" in denied.json()["detail"]
@@ -325,13 +369,9 @@ def test_program1_worker_can_read_durable_discovery_work_package() -> None:
     body = response.json()
     assert body["hypothesis"]["hypothesis_id"] == "hyp-1"
     assert body["discovery_plan"]["plan_id"] == "plan-1"
-    assert body["discovery_plan"]["capability_requirements"] == [
-        "collector:search-lab"
-    ]
+    assert body["discovery_plan"]["capability_requirements"] == ["collector:search-lab"]
 
 
 def test_program1_work_package_endpoint_rejects_unknown_job() -> None:
-    response = client().get(
-        "/api/v1/program1/discovery-jobs/missing/work-package"
-    )
+    response = client().get("/api/v1/program1/discovery-jobs/missing/work-package")
     assert response.status_code == 404

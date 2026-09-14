@@ -744,3 +744,7 @@ sequenceDiagram
   end
   Note over UI,ST: Panel reopen never owns job transitions or reconstructs success from UI counters
 ```
+
+## D28 — Operator Product Review
+
+The governing sequence and failure branches are in PROGRAM1_OPERATOR_REVIEW_CONTRACT.md. It extends D26 with a paged latest-product list and a read-only daisyUI shell. Implementation: Program1Service.product_evidence_page, Program1 runtime static mount, BackOffice.vue. Evidence: tests/contract/test_program1_observation_evidence.py and real Brave list/history readback. No remote image fetch or business mutations.
